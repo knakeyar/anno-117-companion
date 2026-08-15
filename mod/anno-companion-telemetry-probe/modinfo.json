@@ -1,0 +1,31 @@
+{
+  "Anno": 8,
+  "Version": "0.1.0",
+  "ModID": "anno-companion-telemetry-probe-local",
+  "Difficulty": "unchanged",
+  "Category": {
+    "English": "Utility"
+  },
+  "ModName": {
+    "English": "Anno Companion Telemetry Probe"
+  },
+  "Description": {
+    "English": "Read-only diagnostic probe for Anno 117 Lua telemetry bindings. Writes uniquely prefixed JSON records to the game log and, when permitted, logs/anno-companion-probe.jsonl."
+  },
+  "CreatorName": "Local research",
+  "GameSetup": {
+    "RequiresNewGame": false,
+    "SafeToRemove": true,
+    "Campaign": true,
+    "Multiplayer": false
+  },
+  "scripts": {
+    "modules": [
+      "anno-companion/telemetry-probe.lua"
+    ],
+    "Init": "AnnoCompanionTelemetryProbe = require(\"telemetry-probe\"); AnnoCompanionTelemetryProbe:Init()",
+    "Load": "AnnoCompanionTelemetryProbe:Load()",
+    "Unload": "AnnoCompanionTelemetryProbe:Unload()",
+    "Tick": "AnnoCompanionTelemetryProbe:Tick()"
+  }
+}
