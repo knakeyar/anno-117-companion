@@ -12,6 +12,8 @@ export interface CatalogSummary {
   label?: string
   source_hash?: string
   products: number
+  telemetry_products?: number
+  factories?: number
   recipes: number
   coverage: 'missing' | 'starter' | 'partial' | 'complete'
   coverage_note?: string | null
@@ -88,7 +90,9 @@ export interface TransferCandidate {
 
 export interface TradeResponse {
   meta: ObservationMeta
+  catalog: CatalogSummary
   items: TransferCandidate[]
+  suggested_routes: SuggestedRoute[]
   notice: string
 }
 
@@ -106,6 +110,35 @@ export interface Finance {
     localized_label: string | null
     value: number | null
   }>
+}
+
+export interface FinanceAnalysis {
+  reported_balance: number | null
+  reported_balance_is_negative: boolean
+  treasury: number | null
+  treasury_is_falling: boolean
+  treasury_change: number | null
+  treasury_change_per_game_minute: number | null
+  trade_balance: { total: number | null; passive: number | null; active: number | null }
+  largest_positive_categories: Finance['categories']
+  largest_negative_categories: Finance['categories']
+  estimated_base_maintenance: {
+    total: number
+    notice: string
+    cities: Array<{
+      area_pk: number
+      area_name: string
+      estimated_base_maintenance: number
+      factories: Array<{
+        building_guid: string
+        building_name: string
+        count: number
+        base_maintenance_each: number
+        estimated_base_maintenance: number
+      }>
+    }>
+  }
+  guidance: Array<{ code: string; title: string; suggestion: string; evidence: Record<string, unknown> }>
 }
 
 export interface WorkforceItem {
@@ -134,6 +167,9 @@ export interface OverviewResponse {
   meta: ObservationMeta
   catalog: CatalogSummary
   finance: Finance | null
+  balance_analysis: FinanceAnalysis | null
+  actions: ManagementAction[]
+  suggested_routes: SuggestedRoute[]
   signals: ManagementSignal[]
   transfer_candidates: TransferCandidate[]
   route_issues: RouteIssue[]
@@ -158,6 +194,14 @@ export interface Area {
   region_evidence: string | null
   first_seen_at: string
   last_seen_at: string
+  persistent: boolean
+  telemetry_active: boolean
+  position: { x: number; y: number } | null
+  position_source: 'manual' | 'telemetry' | null
+  location_status: 'success' | 'not_observed' | 'failed'
+  location_error: string | null
+  manual_placement: boolean
+  latest_observation: { observed_at: string; is_historical: boolean }
 }
 
 export interface Campaign {
@@ -207,7 +251,75 @@ export interface ProductionChain {
   cycle_seconds: number | null
   items: RecipeItem[]
   inferred_pressures: ManagementSignal[]
+  associated_regions: string[]
+  base_maintenance: number | null
+  city_states: ChainCityState[]
   measurement_notice: string
+}
+
+export interface ChainCityState {
+  area_pk: number
+  area_name: string
+  region_guid: string | null
+  building_count: number | null
+  presence_status: 'installed' | 'not_installed' | 'unknown'
+  observed_at: string | null
+  inferred_pressures: ManagementSignal[]
+  stocks: Array<RecipeItem & { stock: number | null; capacity: number | null; fill_ratio: number | null; net_stock_change: Velocity | null }>
+}
+
+export interface SuggestedRoute {
+  suggestion_id: string
+  action_id: string
+  source_area_pk: number
+  source_area_name: string
+  destination_area_pk: number
+  destination_area_name: string
+  goods: Array<{ product_guid: string; product_name: string; advisory_amount: number; active_production_input?: boolean; imminent_stockout?: boolean }>
+  confidence: 'high' | 'medium' | 'low'
+  reason: string
+  evidence: Record<string, unknown>
+  route_feasibility: 'unknown'
+}
+
+export interface ManagementAction {
+  action_id: string
+  campaign_id: string
+  kind: string
+  severity: 'critical' | 'warning' | 'info'
+  title: string
+  summary: string
+  evidence: Record<string, unknown>
+  deep_link: string | null
+  status: 'active' | 'accepted' | 'snoozed' | 'dismissed' | 'completed' | 'resolved'
+  snoozed_until: string | null
+  first_seen_at: string
+  last_seen_at: string
+  resolved_at: string | null
+}
+
+export interface TradePlan {
+  trade_plan_id: string
+  campaign_id: string
+  source_area_pk: number
+  source_area_name: string
+  destination_area_pk: number
+  destination_area_name: string
+  status: 'planned' | 'implemented_unverified' | 'completed' | 'dismissed'
+  reason: string | null
+  evidence: Record<string, unknown>
+  goods: Array<{ product_guid: string; product_name: string | null; amount: number }>
+  created_at: string
+  updated_at: string
+}
+
+export interface AdvisorConversation {
+  conversation_id: string
+  campaign_id: string
+  title: string | null
+  available?: boolean
+  error?: string | null
+  messages: Array<{ message_id: number; role: 'user' | 'assistant'; content: string; action_ids: string[]; created_at: string }>
 }
 
 export interface StatusResponse {
@@ -237,4 +349,6 @@ export interface StatusResponse {
   }
   latest_snapshot: ObservationMeta
   catalog: CatalogSummary
+  selected_campaign_id: string | null
+  advisor: { configured: boolean; model: string; reasoning_effort: string; on_demand_only: boolean }
 }

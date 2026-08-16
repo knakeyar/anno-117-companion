@@ -8,10 +8,10 @@ describe('first-class management dashboard', () => {
   it('shows actionable command-center evidence and honest scope language', async () => {
     installFetchMock()
     renderApp(<App />)
-    expect(await screen.findByRole('heading', { name: 'Keep every island moving.' })).toBeInTheDocument()
-    expect(screen.getByText('Stock is below the management target')).toBeInTheDocument()
-    expect(screen.getByText('Route feasibility unknown')).toBeInTheDocument()
-    expect(screen.getByText(/Current-area workforce/i)).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Decide what to fix next.' })).toBeInTheDocument()
+    expect(screen.getByText('Move Timber from observed surplus.')).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: /Latium city map/i })).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /Ask advisor/i }).length).toBeGreaterThan(0)
     expect(screen.queryByText(/measured production rate/i)).not.toBeInTheDocument()
   })
 
@@ -25,26 +25,26 @@ describe('first-class management dashboard', () => {
     expect(screen.getByText(/nothing has been reset to zero/i)).toBeInTheDocument()
   })
 
-  it('supports filtering trade observations and opening a policy editor', async () => {
-    installFetchMock()
+  it('accepts a ranked route suggestion into the companion workflow', async () => {
+    const fetchMock = installFetchMock()
     renderApp(<App />, '/trade')
-    expect(await screen.findByRole('heading', { name: 'Balance stock across the empire.' })).toBeInTheDocument()
-    const search = screen.getByPlaceholderText('Search goods or islands')
-    await userEvent.type(search, 'Naissus')
-    expect(screen.getAllByText('Naissus').length).toBeGreaterThan(0)
-    expect(screen.queryByRole('link', { name: 'Juliana' })).not.toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: /Edit Timber policy for Naissus/ }))
-    expect(screen.getByRole('dialog', { name: /Timber in Naissus/ })).toBeInTheDocument()
-    expect(screen.getByText(/do not change the game/i)).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Turn shortages into route plans.' })).toBeInTheDocument()
+    expect(screen.getByText(/route feasibility unknown/i)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: /Accept plan/i }))
+    await waitFor(() => expect(fetchMock.mock.calls.some(([input, init]) => {
+      const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url, 'http://localhost')
+      const method = init?.method ?? (input instanceof Request ? input.method : 'GET')
+      return url.pathname === '/api/v1/trade-plans' && method === 'POST'
+    })).toBe(true))
   })
 
-  it('keeps the production page useful when recipe coverage is incomplete', async () => {
+  it('shows factory presence and pressure by city', async () => {
     installFetchMock({ '/api/v1/inventory/latest': inventory })
     renderApp(<App />, '/production')
-    expect(await screen.findByRole('heading', { name: 'Read the pressure, not a fictional rate.' })).toBeInTheDocument()
-    expect(screen.getByText('Recipe catalog awaiting verified data')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Manage each city by chain.' })).toBeInTheDocument()
+    expect(screen.getAllByText('Juliana').length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/installed/i).length).toBeGreaterThan(0)
     expect(screen.getAllByText(/Net stock change/).length).toBeGreaterThan(0)
-    expect(screen.getByText(/UI-selected statistics are deliberately excluded/i)).toBeInTheDocument()
   })
 
   it('can assign the current authority epoch to an existing campaign', async () => {

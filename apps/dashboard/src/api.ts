@@ -1,19 +1,23 @@
 import { useEffect } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import createClient from 'openapi-fetch'
 import type { paths } from './generated/openapi'
 import type {
   Area,
   Campaign,
+  AdvisorConversation,
   Finance,
+  FinanceAnalysis,
   HistoryPoint,
   InventoryResponse,
   ObservationMeta,
   OverviewResponse,
   Policy,
+  ManagementAction,
   ProductionChain,
   StatusResponse,
   TradeResponse,
+  TradePlan,
   WorkforceItem,
 } from './types'
 
@@ -45,7 +49,10 @@ export const api = {
     unwrap<{ campaign_id: string; display_name: string; play_session_id: string }>(client.PATCH('/api/v1/campaigns', {
       body: { campaign_id: campaignId, play_session_id: playSessionId },
     })),
+  selectCampaign: (campaignId: string) => unwrap<{ campaign_id: string }>(client.PUT('/api/v1/settings/active-campaign', { body: { campaign_id: campaignId } })),
   areas: () => unwrap<{ campaign_id: string | null; items: Area[] }>(client.GET('/api/v1/areas')),
+  setMapPosition: (areaPk: number, body: { region_guid?: string; x?: number; y?: number; clear?: boolean }) =>
+    unwrap<Area>(client.PUT('/api/v1/areas/{area_pk}/map-position', { params: { path: { area_pk: areaPk } }, body: { ...body, clear: body.clear ?? false } })),
   inventory: () => unwrap<InventoryResponse>(client.GET('/api/v1/inventory/latest')),
   history: (areaPk: number, productGuid: string) =>
     unwrap<{ items: HistoryPoint[] }>(client.GET('/api/v1/inventory/history', {
@@ -53,11 +60,24 @@ export const api = {
     })),
   overview: () => unwrap<OverviewResponse>(client.GET('/api/v1/dashboard/overview')),
   trade: () => unwrap<TradeResponse>(client.GET('/api/v1/trade/opportunities')),
+  tradePlans: () => unwrap<{ campaign_id: string | null; items: TradePlan[] }>(client.GET('/api/v1/trade-plans')),
+  createTradePlan: (route: TradeResponse['suggested_routes'][number], campaignId: string) => unwrap<TradePlan>(client.POST('/api/v1/trade-plans', { body: {
+    campaign_id: campaignId,
+    source_area_pk: route.source_area_pk,
+    destination_area_pk: route.destination_area_pk,
+    goods: route.goods.map((item) => ({ product_guid: item.product_guid, amount: item.advisory_amount })),
+    reason: route.reason,
+    evidence: route.evidence,
+  } })),
+  patchTradePlan: (tradePlanId: string, status: TradePlan['status']) => unwrap<TradePlan>(client.PATCH('/api/v1/trade-plans/{trade_plan_id}', { params: { path: { trade_plan_id: tradePlanId } }, body: { status } })),
+  actions: () => unwrap<{ campaign_id: string | null; items: ManagementAction[] }>(client.GET('/api/v1/actions')),
+  patchAction: (actionId: string, status: 'active' | 'accepted' | 'snoozed' | 'dismissed' | 'completed') => unwrap<ManagementAction>(client.PATCH('/api/v1/actions/{action_id}', { params: { path: { action_id: actionId } }, body: { status } })),
   chains: () =>
     unwrap<{ meta: ObservationMeta; catalog: InventoryResponse['catalog']; chains: ProductionChain[] }>(
       client.GET('/api/v1/production/chains'),
     ),
-  finance: () => unwrap<{ meta: ObservationMeta; finance: Finance | null }>(client.GET('/api/v1/finance')),
+  finance: () => unwrap<{ meta: ObservationMeta; finance: Finance | null; balance_analysis: FinanceAnalysis | null }>(client.GET('/api/v1/finance')),
+  financeHistory: () => unwrap<{ meta: ObservationMeta; items: Array<{ observed_at: string; treasury: number | null; reported_balance: number | null }> }>(client.GET('/api/v1/finance/history')),
   workforce: () =>
     unwrap<{ meta: ObservationMeta; scope: string; items: WorkforceItem[] }>(client.GET('/api/v1/workforce')),
   policies: () => unwrap<{ campaign_id: string | null; items: Policy[] }>(client.GET('/api/v1/policies')),
@@ -65,6 +85,8 @@ export const api = {
     unwrap<Policy>(client.PUT('/api/v1/policies', {
       body: policy,
     })),
+  askAdvisor: (question: string, conversationId?: string) => unwrap<AdvisorConversation>(client.POST('/api/v1/advisor/messages', { body: { question, conversation_id: conversationId } })),
+  deleteConversation: (conversationId: string) => unwrap<void>(client.DELETE('/api/v1/advisor/conversations/{conversation_id}', { params: { path: { conversation_id: conversationId } } })),
 }
 
 export const queryKeys = {
@@ -74,8 +96,11 @@ export const queryKeys = {
   inventory: ['inventory'] as const,
   overview: ['overview'] as const,
   trade: ['trade'] as const,
+  tradePlans: ['trade-plans'] as const,
+  actions: ['actions'] as const,
   chains: ['chains'] as const,
   finance: ['finance'] as const,
+  financeHistory: ['finance-history'] as const,
   workforce: ['workforce'] as const,
   policies: ['policies'] as const,
   history: (areaPk: number, productGuid: string) => ['history', areaPk, productGuid] as const,
@@ -91,10 +116,13 @@ export const useInventory = () =>
 export const useOverview = () =>
   useQuery({ queryKey: queryKeys.overview, queryFn: api.overview, ...queryOptions })
 export const useTrade = () => useQuery({ queryKey: queryKeys.trade, queryFn: api.trade, ...queryOptions })
+export const useTradePlans = () => useQuery({ queryKey: queryKeys.tradePlans, queryFn: api.tradePlans, ...queryOptions })
+export const useActions = () => useQuery({ queryKey: queryKeys.actions, queryFn: api.actions, ...queryOptions })
 export const useChains = () =>
   useQuery({ queryKey: queryKeys.chains, queryFn: api.chains, ...queryOptions })
 export const useFinance = () =>
   useQuery({ queryKey: queryKeys.finance, queryFn: api.finance, ...queryOptions })
+export const useFinanceHistory = () => useQuery({ queryKey: queryKeys.financeHistory, queryFn: api.financeHistory, ...queryOptions })
 export const useWorkforce = () =>
   useQuery({ queryKey: queryKeys.workforce, queryFn: api.workforce, ...queryOptions })
 export const usePolicies = () => useQuery({ queryKey: queryKeys.policies, queryFn: api.policies })
@@ -104,6 +132,17 @@ export const useHistory = (areaPk: number, productGuid: string) =>
     queryFn: () => api.history(areaPk, productGuid),
     enabled: Boolean(areaPk && productGuid),
   })
+
+export function useCompanionMutations() {
+  const queries = useQueryClient()
+  const refresh = () => queries.invalidateQueries()
+  return {
+    mapPosition: useMutation({ mutationFn: ({ areaPk, ...body }: { areaPk: number; region_guid?: string; x?: number; y?: number; clear?: boolean }) => api.setMapPosition(areaPk, body), onSuccess: refresh }),
+    createTradePlan: useMutation({ mutationFn: ({ route, campaignId }: { route: TradeResponse['suggested_routes'][number]; campaignId: string }) => api.createTradePlan(route, campaignId), onSuccess: refresh }),
+    patchTradePlan: useMutation({ mutationFn: ({ id, status }: { id: string; status: TradePlan['status'] }) => api.patchTradePlan(id, status), onSuccess: refresh }),
+    patchAction: useMutation({ mutationFn: ({ id, status }: { id: string; status: 'active' | 'accepted' | 'snoozed' | 'dismissed' | 'completed' }) => api.patchAction(id, status), onSuccess: refresh }),
+  }
+}
 
 export function useLiveTelemetry(): void {
   const queryClient = useQueryClient()

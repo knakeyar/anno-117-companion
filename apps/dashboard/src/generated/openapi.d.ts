@@ -4,6 +4,75 @@
  */
 
 export interface paths {
+    "/api/v1/actions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Actions */
+        get: operations["actions_api_v1_actions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/actions/{action_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Patch Action */
+        patch: operations["patch_action_api_v1_actions__action_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/advisor/conversations/{conversation_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Advisor Conversation */
+        get: operations["advisor_conversation_api_v1_advisor_conversations__conversation_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Advisor Conversation */
+        delete: operations["delete_advisor_conversation_api_v1_advisor_conversations__conversation_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/advisor/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Advisor Message */
+        post: operations["advisor_message_api_v1_advisor_messages_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/areas": {
         parameters: {
             query?: never;
@@ -14,6 +83,23 @@ export interface paths {
         /** Areas */
         get: operations["areas_api_v1_areas_get"];
         put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/areas/{area_pk}/map-position": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Put Map Position */
+        put: operations["put_map_position_api_v1_areas__area_pk__map_position_put"];
         post?: never;
         delete?: never;
         options?: never;
@@ -99,6 +185,23 @@ export interface paths {
         };
         /** Finance */
         get: operations["finance_api_v1_finance_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/finance/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Finance Timeline */
+        get: operations["finance_timeline_api_v1_finance_history_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -193,6 +296,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/settings/active-campaign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Select Campaign */
+        put: operations["select_campaign_api_v1_settings_active_campaign_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/status": {
         parameters: {
             query?: never;
@@ -208,6 +328,41 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/trade-plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Trade Plans */
+        get: operations["trade_plans_api_v1_trade_plans_get"];
+        put?: never;
+        /** Create Trade Plan */
+        post: operations["create_trade_plan_api_v1_trade_plans_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/trade-plans/{trade_plan_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Patch Trade Plan */
+        patch: operations["patch_trade_plan_api_v1_trade_plans__trade_plan_id__patch"];
         trace?: never;
     };
     "/api/v1/trade/opportunities": {
@@ -265,6 +420,159 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** ActionPatch */
+        ActionPatch: {
+            /** Snooze Minutes */
+            snooze_minutes?: number | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "active" | "accepted" | "snoozed" | "dismissed" | "completed";
+        };
+        /** ActionView */
+        ActionView: {
+            /** Action Id */
+            action_id: string;
+            /** Campaign Id */
+            campaign_id: string;
+            /** Deep Link */
+            deep_link: string | null;
+            /** Evidence */
+            evidence: {
+                [key: string]: unknown;
+            };
+            /** First Seen At */
+            first_seen_at: string;
+            /** Kind */
+            kind: string;
+            /** Last Seen At */
+            last_seen_at: string;
+            /** Resolved At */
+            resolved_at: string | null;
+            /** Severity */
+            severity: string;
+            /** Snoozed Until */
+            snoozed_until: string | null;
+            /** Status */
+            status: string;
+            /** Summary */
+            summary: string;
+            /** Title */
+            title: string;
+        };
+        /** ActionsResponse */
+        ActionsResponse: {
+            /** Campaign Id */
+            campaign_id: string | null;
+            /** Items */
+            items: components["schemas"]["ActionView"][];
+        };
+        /** ActiveCampaignView */
+        ActiveCampaignView: {
+            /** Campaign Id */
+            campaign_id: string;
+        };
+        /** ActiveCampaignWrite */
+        ActiveCampaignWrite: {
+            /** Campaign Id */
+            campaign_id: string;
+        };
+        /** AdvisorConversationView */
+        AdvisorConversationView: {
+            /** Available */
+            available?: boolean | null;
+            /** Campaign Id */
+            campaign_id: string;
+            /** Conversation Id */
+            conversation_id: string;
+            /** Created At */
+            created_at: string;
+            /** Error */
+            error?: string | null;
+            /** Messages */
+            messages: components["schemas"]["AdvisorMessageView"][];
+            /** Title */
+            title: string | null;
+            /** Updated At */
+            updated_at: string;
+        };
+        /** AdvisorMessageView */
+        AdvisorMessageView: {
+            /** Action Ids */
+            action_ids: string[];
+            /** Content */
+            content: string;
+            /** Created At */
+            created_at: string;
+            /** Message Id */
+            message_id: number;
+            /** Role */
+            role: string;
+        };
+        /** AdvisorMessageWrite */
+        AdvisorMessageWrite: {
+            /** Campaign Id */
+            campaign_id?: string | null;
+            /** Conversation Id */
+            conversation_id?: string | null;
+            /** Question */
+            question: string;
+        };
+        /** AreaView */
+        AreaView: {
+            /** Area Id */
+            area_id: string;
+            /** Area Pk */
+            area_pk: number;
+            /** First Seen At */
+            first_seen_at: string;
+            /** Game Session Guid */
+            game_session_guid: string | null;
+            /** Last Seen At */
+            last_seen_at: string;
+            /** Latest Observation */
+            latest_observation: {
+                [key: string]: unknown;
+            };
+            /** Location Error */
+            location_error: string | null;
+            /** Location Status */
+            location_status: string;
+            /** Manual Placement */
+            manual_placement: boolean;
+            /** Name */
+            name: string;
+            /** Persistent */
+            persistent: boolean;
+            /** Position */
+            position: {
+                [key: string]: number;
+            } | null;
+            /** Position Source */
+            position_source: string | null;
+            /** Region Evidence */
+            region_evidence: string | null;
+            /** Region Guid */
+            region_guid: string | null;
+            /** Telemetry Active */
+            telemetry_active: boolean;
+        };
+        /** AreasResponse */
+        AreasResponse: {
+            /** Campaign Id */
+            campaign_id: string | null;
+            /** Catalog */
+            catalog: {
+                [key: string]: unknown;
+            };
+            /** Items */
+            items: components["schemas"]["AreaView"][];
+            /** Meta */
+            meta: {
+                [key: string]: unknown;
+            };
+        };
         /** CampaignPatch */
         CampaignPatch: {
             /** Display Name */
@@ -279,10 +587,107 @@ export interface components {
             /** Play Session Id */
             play_session_id?: string | null;
         };
+        /** DashboardOverviewResponse */
+        DashboardOverviewResponse: {
+            /** Actions */
+            actions: components["schemas"]["ActionView"][];
+            /** Balance Analysis */
+            balance_analysis: {
+                [key: string]: unknown;
+            } | null;
+            /** Catalog */
+            catalog: {
+                [key: string]: unknown;
+            };
+            /** Counts */
+            counts: {
+                [key: string]: number;
+            };
+            /** Finance */
+            finance: {
+                [key: string]: unknown;
+            } | null;
+            /** Language */
+            language: {
+                [key: string]: string;
+            };
+            /** Meta */
+            meta: {
+                [key: string]: unknown;
+            };
+            /** Route Issues */
+            route_issues: {
+                [key: string]: unknown;
+            }[];
+            /** Signals */
+            signals: {
+                [key: string]: unknown;
+            }[];
+            /** Suggested Routes */
+            suggested_routes: {
+                [key: string]: unknown;
+            }[];
+            /** Transfer Candidates */
+            transfer_candidates: {
+                [key: string]: unknown;
+            }[];
+            /** Workforce Shortages */
+            workforce_shortages: {
+                [key: string]: unknown;
+            }[];
+        };
+        /** FinanceHistoryResponse */
+        FinanceHistoryResponse: {
+            /** Catalog */
+            catalog: {
+                [key: string]: unknown;
+            };
+            /** Items */
+            items: {
+                [key: string]: unknown;
+            }[];
+            /** Meta */
+            meta: {
+                [key: string]: unknown;
+            };
+        };
+        /** FinanceResponse */
+        FinanceResponse: {
+            /** Balance Analysis */
+            balance_analysis: {
+                [key: string]: unknown;
+            } | null;
+            /** Catalog */
+            catalog: {
+                [key: string]: unknown;
+            };
+            /** Finance */
+            finance: {
+                [key: string]: unknown;
+            } | null;
+            /** Meta */
+            meta: {
+                [key: string]: unknown;
+            };
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** MapPositionWrite */
+        MapPositionWrite: {
+            /**
+             * Clear
+             * @default false
+             */
+            clear: boolean;
+            /** Region Guid */
+            region_guid?: string | null;
+            /** X */
+            x?: number | null;
+            /** Y */
+            y?: number | null;
         };
         /** PolicyWrite */
         PolicyWrite: {
@@ -307,6 +712,112 @@ export interface components {
             /** Product Guid */
             product_guid: string;
         };
+        /** ProductionChainsResponse */
+        ProductionChainsResponse: {
+            /** Catalog */
+            catalog: {
+                [key: string]: unknown;
+            };
+            /** Chains */
+            chains: {
+                [key: string]: unknown;
+            }[];
+            /** Meta */
+            meta: {
+                [key: string]: unknown;
+            };
+        };
+        /** TradeOpportunitiesResponse */
+        TradeOpportunitiesResponse: {
+            /** Catalog */
+            catalog: {
+                [key: string]: unknown;
+            };
+            /** Items */
+            items: {
+                [key: string]: unknown;
+            }[];
+            /** Meta */
+            meta: {
+                [key: string]: unknown;
+            };
+            /** Notice */
+            notice: string;
+            /** Suggested Routes */
+            suggested_routes: {
+                [key: string]: unknown;
+            }[];
+        };
+        /** TradePlanCreate */
+        TradePlanCreate: {
+            /** Campaign Id */
+            campaign_id?: string | null;
+            /** Destination Area Pk */
+            destination_area_pk: number;
+            /** Evidence */
+            evidence?: {
+                [key: string]: unknown;
+            };
+            /** Goods */
+            goods: components["schemas"]["TradePlanGoodWrite"][];
+            /** Reason */
+            reason?: string | null;
+            /** Source Area Pk */
+            source_area_pk: number;
+        };
+        /** TradePlanGoodWrite */
+        TradePlanGoodWrite: {
+            /** Amount */
+            amount: number;
+            /** Product Guid */
+            product_guid: string;
+        };
+        /** TradePlanPatch */
+        TradePlanPatch: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "planned" | "implemented_unverified" | "completed" | "dismissed";
+        };
+        /** TradePlanView */
+        TradePlanView: {
+            /** Campaign Id */
+            campaign_id: string;
+            /** Created At */
+            created_at: string;
+            /** Destination Area Name */
+            destination_area_name: string;
+            /** Destination Area Pk */
+            destination_area_pk: number;
+            /** Evidence */
+            evidence: {
+                [key: string]: unknown;
+            };
+            /** Goods */
+            goods: {
+                [key: string]: unknown;
+            }[];
+            /** Reason */
+            reason: string | null;
+            /** Source Area Name */
+            source_area_name: string;
+            /** Source Area Pk */
+            source_area_pk: number;
+            /** Status */
+            status: string;
+            /** Trade Plan Id */
+            trade_plan_id: string;
+            /** Updated At */
+            updated_at: string;
+        };
+        /** TradePlansResponse */
+        TradePlansResponse: {
+            /** Campaign Id */
+            campaign_id: string | null;
+            /** Items */
+            items: components["schemas"]["TradePlanView"][];
+        };
         /** ValidationError */
         ValidationError: {
             /** Context */
@@ -329,6 +840,166 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    actions_api_v1_actions_get: {
+        parameters: {
+            query?: {
+                campaign_id?: string | null;
+                include_resolved?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patch_action_api_v1_actions__action_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                action_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ActionPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    advisor_conversation_api_v1_advisor_conversations__conversation_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conversation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdvisorConversationView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_advisor_conversation_api_v1_advisor_conversations__conversation_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conversation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    advisor_message_api_v1_advisor_messages_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdvisorMessageWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdvisorConversationView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     areas_api_v1_areas_get: {
         parameters: {
             query?: {
@@ -346,9 +1017,42 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["AreasResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_map_position_api_v1_areas__area_pk__map_position_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                area_pk: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MapPositionWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AreaView"];
                 };
             };
             /** @description Validation Error */
@@ -473,9 +1177,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["DashboardOverviewResponse"];
                 };
             };
             /** @description Validation Error */
@@ -526,9 +1228,39 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["FinanceResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    finance_timeline_api_v1_finance_history_get: {
+        parameters: {
+            query?: {
+                campaign_id?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FinanceHistoryResponse"];
                 };
             };
             /** @description Validation Error */
@@ -695,9 +1427,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["ProductionChainsResponse"];
                 };
             };
             /** @description Validation Error */
@@ -733,6 +1463,39 @@ export interface operations {
             };
         };
     };
+    select_campaign_api_v1_settings_active_campaign_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ActiveCampaignWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActiveCampaignView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     status_api_v1_status_get: {
         parameters: {
             query?: never;
@@ -755,6 +1518,105 @@ export interface operations {
             };
         };
     };
+    trade_plans_api_v1_trade_plans_get: {
+        parameters: {
+            query?: {
+                campaign_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TradePlansResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_trade_plan_api_v1_trade_plans_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TradePlanCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TradePlanView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patch_trade_plan_api_v1_trade_plans__trade_plan_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                trade_plan_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TradePlanPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TradePlanView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     opportunities_api_v1_trade_opportunities_get: {
         parameters: {
             query?: {
@@ -772,9 +1634,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["TradeOpportunitiesResponse"];
                 };
             };
             /** @description Validation Error */

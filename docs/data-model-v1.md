@@ -1,4 +1,4 @@
-# Anno Companion v1 data model
+# Anno Companion v1.1 data model
 
 The SQLite database is an observation store, not a reconstruction of hidden game state. String identifiers prevent cross-language precision loss, quantities are `REAL`, timestamps are UTC receipt times, and every time-series derivative stays inside one backend-created play-session authority epoch.
 
@@ -14,6 +14,8 @@ The SQLite database is an observation store, not a reconstruction of hidden game
 | `play_session` | One mod load and authoritative timeline epoch. |
 | `area` | Campaign-scoped area identity; `(campaign_id, area_id_raw)` is unique. |
 | `area_product_policy` | Mutable companion-only targets, priority, and transfer exclusion. |
+| `building_maintenance_item` | Versioned base maintenance/workforce costs from the pinned catalog. |
+| `companion_setting` | Persistent selected-campaign context. |
 
 An area receives a region/session label only when it is also the valid current camera area in that snapshot. The global controlled-area enumeration is not incorrectly stamped with the camera’s region.
 
@@ -33,7 +35,9 @@ Only a complete production snapshot can become current. Legacy focused-probe rec
 | Table | Scope and notes |
 |---|---|
 | `area_snapshot` | Per-area descriptive, population-summary, area-balance, and land-tax facts. |
-| `area_product_observation` | Per-area/product stock, availability, product capacity, reservation, raw engine diagnostics, passive minimum, and raw offer booleans. |
+| `area_product_observation` / `area_product_current` | Sparse history plus materialized current per-area/product state. |
+| `area_building_observation` / `area_building_current` | Sparse building-count history and current presence; successful zero is not installed, failed reads are unknown. |
+| `area_location` | Observed Kontor coordinates/session plus companion-only manual schematic override. |
 | `area_population_observation` | Per-area population-tier counts; fractional values are retained. |
 | `participant_finance_observation` | One participant treasury/balance record per snapshot. |
 | `finance_category_observation` | Localized ordinal categories; zero GUIDs are retained as raw evidence, not identity. |
@@ -41,6 +45,16 @@ Only a complete production snapshot can become current. Legacy focused-probe rec
 | `trade_route_issue_observation` | Ephemeral route-name label and coarse issue code; no durable route entity. |
 
 UI-selected production statistics/history, ship cargo, route topology, periodic factory records, and the invalid `buffed_delta` candidate have no normalized v1 tables.
+
+Materialized state changes only after a complete baseline, delta, or reconciliation. A failed read updates freshness/error evidence without replacing the previous value. A telemetry unload ends the active play session but never clears selected campaign state.
+
+## Persistent workflows
+
+| Table | Role |
+|---|---|
+| `management_action` | Stable deterministic action identity and active/accepted/snoozed/dismissed/completed/resolved workflow. |
+| `trade_plan` / `trade_plan_item` | Companion-only route intent; no write is made to Anno. |
+| `advisor_conversation` / `advisor_message` | Campaign-scoped local conversation history and validated action references. |
 
 ## Deterministic management layer
 
@@ -52,5 +66,8 @@ The API calculates rather than persists:
 - low, near-full, falling, and estimated-stockout-within-30-game-minutes pressure;
 - source/destination transfer candidates bounded by both islands’ targets;
 - static-recipe input pressure and output congestion.
+- reported-balance versus treasury-trend analysis and category evidence;
+- inferred base maintenance from observed factory counts, explicitly excluding buffs;
+- grouped, bounded source/destination route proposals with unknown feasibility.
 
 These outputs always carry snapshot, play-session, observation time, scope, freshness, and catalog coverage. They use “net stock change” and “inferred pressure”; they are not presented as measured factory production or consumption.

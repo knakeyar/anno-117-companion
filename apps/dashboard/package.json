@@ -1,7 +1,7 @@
 {
   "name": "anno-companion-dashboard",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "module",
   "scripts": {
     "generate:api": "../../.venv/bin/python ../../tools/export_openapi.py && openapi-typescript openapi.json -o src/generated/openapi.d.ts",

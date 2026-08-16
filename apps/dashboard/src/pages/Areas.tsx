@@ -4,11 +4,12 @@ import * as echarts from 'echarts/core'
 import { LineChart } from 'echarts/charts'
 import { GridComponent, TooltipComponent } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
-import { ArrowRight, Boxes, CircleDollarSign, MapPinned, Search, UsersRound, Warehouse } from 'lucide-react'
-import { Link, useParams } from 'react-router-dom'
-import { useAreas, useFinance, useHistory, useInventory, useWorkforce } from '../api'
+import { ArrowRight, Boxes, CircleDollarSign, MapPinned, Pencil, UsersRound, Warehouse } from 'lucide-react'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { useAreas, useCompanionMutations, useFinance, useHistory, useInventory, useWorkforce } from '../api'
 import { EmptyState, ErrorState, FillBar, FreshnessBanner, LoadingState, MetricCard, PageHeader, SectionHeader } from '../components/Common'
 import { PolicyEditor } from '../components/PolicyEditor'
+import { areaRegion, RegionMap } from '../components/RegionMap'
 import type { InventoryItem } from '../types'
 import { formatMoney, formatNumber, formatRate } from '../utils'
 
@@ -17,14 +18,20 @@ echarts.use([LineChart, GridComponent, TooltipComponent, CanvasRenderer])
 export function AreasPage() {
   const areas = useAreas()
   const inventory = useInventory()
+  const mutations = useCompanionMutations()
+  const [editingMap, setEditingMap] = useState(false)
   if (areas.isLoading || inventory.isLoading) return <LoadingState label="Mapping controlled islands…" />
   const error = areas.error || inventory.error
   if (error) return <ErrorState error={error} retry={() => { void areas.refetch(); void inventory.refetch() }} />
   if (!areas.data || !inventory.data) return null
   return (
     <div className="page">
-      <PageHeader eyebrow="Controlled areas" title="Every island, one operating picture." description="Area identity is campaign-scoped; region labels appear only after current-camera correlation proves them." />
+      <PageHeader eyebrow="Controlled areas" title="Your cities stay on the map." description="Latium and Albion remain populated from persisted campaign identity even when Anno is inactive." actions={<button className={`button ${editingMap ? 'primary' : 'ghost'}`} onClick={() => setEditingMap((value) => !value)}><Pencil size={14} /> {editingMap ? 'Finish placement' : 'Edit placement'}</button>} />
       <FreshnessBanner meta={inventory.data.meta} />
+      {areas.data.items.length ? <div className="regional-map-grid">
+        {(['latium', 'albion'] as const).map((region) => <RegionMap key={region} region={region} areas={areas.data!.items.filter((item) => areaRegion(item) === region || (editingMap && areaRegion(item) === null))} signals={inventory.data!.signals} editable={editingMap} onPosition={(areaPk, regionGuid, x, y) => mutations.mapPosition.mutate({ areaPk, region_guid: regionGuid, x, y })} />)}
+      </div> : null}
+      {areas.data.items.some((item) => areaRegion(item) === null) && !editingMap && <div className="notice warning"><MapPinned size={18} /><div><strong>Some cities are unplaced</strong><span>Use Edit placement to assign cities whose runtime coordinate or region binding was not observed.</span></div></div>}
       {areas.data.items.length ? <div className="area-card-grid">
         {areas.data.items.map((area) => {
           const items = inventory.data.items.filter((item) => item.area_pk === area.area_pk)
@@ -42,6 +49,7 @@ export function AreasPage() {
 
 export function AreaDetailPage() {
   const { areaPk } = useParams()
+  const [searchParams] = useSearchParams()
   const areaId = Number(areaPk)
   const areas = useAreas()
   const inventory = useInventory()
@@ -49,7 +57,7 @@ export function AreaDetailPage() {
   const finance = useFinance()
   const area = areas.data?.items.find((item) => item.area_pk === areaId)
   const areaItems = useMemo(() => inventory.data?.items.filter((item) => item.area_pk === areaId) ?? [], [inventory.data?.items, areaId])
-  const [selectedProduct, setSelectedProduct] = useState('')
+  const [selectedProduct, setSelectedProduct] = useState(() => searchParams.get('product') ?? '')
   const [editing, setEditing] = useState<InventoryItem | null>(null)
   const effectiveProduct = selectedProduct || areaItems[0]?.product_guid || ''
   const history = useHistory(areaId, effectiveProduct)

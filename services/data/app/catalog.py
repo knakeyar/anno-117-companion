@@ -8,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .models import (
+    BuildingMaintenanceItem,
     BuildingType,
     Product,
     ProductionRecipe,
@@ -40,6 +41,9 @@ def load_catalog(session: Session, path: Path) -> StaticRelease:
         game_version=data.get("game_version"),
         source_hash=source_hash,
         coverage_note=data.get("coverage_note"),
+        source_url=data.get("source_url"),
+        source_revision=data.get("source_revision"),
+        attribution=data.get("attribution"),
     )
     session.add(release)
     session.flush()
@@ -58,6 +62,8 @@ def load_catalog(session: Session, path: Path) -> StaticRelease:
                 category=item.get("category"),
                 icon=item.get("icon"),
                 telemetry_enabled=bool(item.get("telemetry_enabled", True)),
+                associated_regions_json=json.dumps(item.get("associated_regions", [])),
+                dlc_unlocks_json=json.dumps(item.get("dlc_unlocks", [])),
             )
         )
 
@@ -74,6 +80,23 @@ def load_catalog(session: Session, path: Path) -> StaticRelease:
                 name=str(item["name"]),
                 icon=item.get("icon"),
                 workforce_guid=(str(item["workforce_guid"]) if item.get("workforce_guid") else None),
+                associated_regions_json=json.dumps(item.get("associated_regions", [])),
+                dlc_unlocks_json=json.dumps(item.get("dlc_unlocks", [])),
+            )
+        )
+    session.flush()
+    for ordinal, item in enumerate(data.get("maintenance_items", []), start=1):
+        building_guid = str(item["building_guid"])
+        if building_guid not in building_guids:
+            raise CatalogError(f"maintenance references unknown building {building_guid}")
+        session.add(
+            BuildingMaintenanceItem(
+                release_id=release_id,
+                building_guid=building_guid,
+                ordinal=ordinal,
+                resource_guid=str(item["product_guid"]),
+                amount=float(item["amount"]),
+                kind=str(item["kind"]),
             )
         )
 
@@ -125,7 +148,9 @@ def catalog_summary(session: Session, release_id: str | None = None) -> dict:
         release = session.get(StaticRelease, release_id)
     if release is None:
         return {"release_id": None, "products": 0, "recipes": 0, "coverage": "missing"}
-    products = len(session.scalars(select(Product).where(Product.release_id == release.release_id)).all())
+    product_rows = session.scalars(select(Product).where(Product.release_id == release.release_id)).all()
+    products = len(product_rows)
+    telemetry_products = sum(1 for item in product_rows if item.telemetry_enabled)
     recipes = len(
         session.scalars(
             select(ProductionRecipe).where(ProductionRecipe.release_id == release.release_id)
@@ -136,7 +161,12 @@ def catalog_summary(session: Session, release_id: str | None = None) -> dict:
         "label": release.label,
         "source_hash": release.source_hash,
         "products": products,
+        "telemetry_products": telemetry_products,
+        "factories": recipes,
         "recipes": recipes,
-        "coverage": "starter" if recipes == 0 else "partial",
+        "coverage": "starter" if recipes == 0 else "complete" if products == 145 and telemetry_products == 113 and recipes == 144 else "partial",
         "coverage_note": release.coverage_note,
+        "source_url": release.source_url,
+        "source_revision": release.source_revision,
+        "attribution": release.attribution,
     }

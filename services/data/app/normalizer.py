@@ -11,7 +11,11 @@ from sqlalchemy.orm import Session
 
 from .models import (
     Area,
+    AreaBuildingCurrent,
+    AreaBuildingObservation,
+    AreaLocation,
     AreaPopulationObservation,
+    AreaProductCurrent,
     AreaProductObservation,
     AreaSnapshot,
     AreaWorkforceObservation,
@@ -184,6 +188,132 @@ def _ensure_snapshot(
         session.add(snapshot)
         session.flush()
     return snapshot
+
+
+def _materialize_current_state(session: Session, play: PlaySession, snapshot: SnapshotBatch) -> None:
+    """Advance campaign current state only for a completed atomic batch."""
+    if not snapshot.is_complete or play.campaign_id is None:
+        return
+    observed_at = snapshot.completed_at or snapshot.received_at
+    products = session.scalars(
+        select(AreaProductObservation).where(AreaProductObservation.snapshot_id == snapshot.snapshot_id)
+    ).all()
+    for item in products:
+        current = session.get(AreaProductCurrent, (item.area_pk, item.product_guid))
+        if current is None:
+            current = AreaProductCurrent(
+                area_pk=item.area_pk,
+                product_guid=item.product_guid,
+                campaign_id=play.campaign_id,
+                play_session_id=play.play_session_id,
+                snapshot_id=snapshot.snapshot_id,
+                observed_at=observed_at,
+            )
+            session.add(current)
+        current.campaign_id = play.campaign_id
+        current.play_session_id = play.play_session_id
+        current.snapshot_id = snapshot.snapshot_id
+        current.stock = item.stock
+        current.available_stock = item.available_stock
+        current.storage_capacity = item.storage_capacity
+        current.reserved_amount = item.reserved_amount
+        current.free_space_raw = item.free_space_raw
+        current.engine_trend_raw = item.engine_trend_raw
+        current.passive_trade_minimum = item.passive_trade_minimum
+        current.offer_is_no_offer = item.offer_is_no_offer
+        current.offer_is_buy_only = item.offer_is_buy_only
+        current.offer_is_sell_only = item.offer_is_sell_only
+        current.offer_is_buy_or_sell = item.offer_is_buy_or_sell
+        current.offer_is_preferred_good = item.offer_is_preferred_good
+        current.observed_at = observed_at
+        current.last_attempt_snapshot_id = snapshot.snapshot_id
+        current.section_status = "success"
+
+    buildings = session.scalars(
+        select(AreaBuildingObservation).where(AreaBuildingObservation.snapshot_id == snapshot.snapshot_id)
+    ).all()
+    emitted = {(item.area_pk, item.building_guid): item for item in buildings}
+    area_rows = session.scalars(
+        select(AreaSnapshot).where(AreaSnapshot.snapshot_id == snapshot.snapshot_id)
+    ).all()
+    release_id = play.static_release_id
+    from .models import BuildingType  # local import keeps the model list readable
+    catalog_buildings = session.scalars(
+        select(BuildingType).where(BuildingType.release_id == release_id)
+    ).all()
+    for area_row in area_rows:
+        section = session.scalar(
+            select(SnapshotSectionStatus).where(
+                SnapshotSectionStatus.snapshot_id == snapshot.snapshot_id,
+                SnapshotSectionStatus.section_name == "buildings",
+                SnapshotSectionStatus.area_id_raw == session.get(Area, area_row.area_pk).area_id_raw,
+            )
+        )
+        if section is None or section.status != "success":
+            continue
+        targets = catalog_buildings if snapshot.section_mode in {"baseline", "reconciliation", "full"} else []
+        keys = {(area_row.area_pk, item.building_guid) for item in targets} | {
+            key for key in emitted if key[0] == area_row.area_pk
+        }
+        for key in keys:
+            change = emitted.get(key)
+            count = change.building_count if change else 0
+            current = session.get(AreaBuildingCurrent, key)
+            if current is None:
+                current = AreaBuildingCurrent(
+                    area_pk=key[0],
+                    building_guid=key[1],
+                    campaign_id=play.campaign_id,
+                    play_session_id=play.play_session_id,
+                    snapshot_id=snapshot.snapshot_id,
+                )
+                session.add(current)
+            current.campaign_id = play.campaign_id
+            current.play_session_id = play.play_session_id
+            current.snapshot_id = snapshot.snapshot_id
+            current.building_count = count
+            current.presence_status = "installed" if count > 0 else "not_installed"
+            current.observed_at = observed_at
+            current.last_attempt_snapshot_id = snapshot.snapshot_id
+
+
+def refresh_materialized_state(session: Session, campaign_id: str | None = None) -> None:
+    query = (
+        select(SnapshotBatch)
+        .join(PlaySession, PlaySession.play_session_id == SnapshotBatch.play_session_id)
+        .where(SnapshotBatch.is_complete.is_(True))
+        .order_by(SnapshotBatch.completed_at, SnapshotBatch.received_at, SnapshotBatch.snapshot_id)
+    )
+    if campaign_id is not None:
+        query = query.where(PlaySession.campaign_id == campaign_id)
+    for snapshot in session.scalars(query).all():
+        play = session.get(PlaySession, snapshot.play_session_id)
+        if play is not None:
+            _materialize_current_state(session, play, snapshot)
+            session.flush()
+    session.flush()
+
+
+def _normalise_location(session: Session, area: Area, data: dict, observed_at: datetime) -> None:
+    location_data = data.get("location") or {}
+    location = session.get(AreaLocation, area.area_pk)
+    if location is None:
+        location = AreaLocation(area_pk=area.area_pk)
+        session.add(location)
+    location.kontor_id_raw = _text(location_data.get("kontor_id"))
+    location.observation_status = _text(location_data.get("status")) or "not_observed"
+    location.observation_error = _text(location_data.get("error"))
+    if location.observation_status == "success":
+        location.observed_x = _float(location_data.get("x"))
+        location.observed_y = _float(location_data.get("y"))
+        location.observed_session_guid = _text(location_data.get("session_guid"))
+        location.observed_region_guid = _text(location_data.get("region_guid"))
+        location.observed_at = observed_at
+        if location.observed_region_guid:
+            area.confirmed_region_guid = location.observed_region_guid
+        if location.observed_session_guid:
+            area.confirmed_game_session_guid = location.observed_session_guid
+        area.region_evidence = "kontor_game_object"
 
 
 def _snapshot_for_event(session: Session, raw: TelemetryRaw, envelope: dict) -> tuple[PlaySession, SnapshotBatch]:
@@ -457,6 +587,8 @@ def _production_event(session: Session, raw: TelemetryRaw, envelope: dict) -> No
         snapshot.participant_guid = _text(context.get("participant_guid"))
         snapshot.area_enumeration_scope = _text(data.get("area_enumeration_scope")) or "unknown"
         snapshot.expected_area_count = _int(data.get("area_count")) or 0
+        snapshot.section_mode = _text(data.get("section_mode")) or "full"
+        snapshot.catalog_hash = _text(envelope.get("catalog_hash"))
         if play.initial_play_time is None:
             play.initial_play_time = snapshot.play_time
             play.initial_corporation_time = snapshot.corporation_time
@@ -489,30 +621,111 @@ def _production_event(session: Session, raw: TelemetryRaw, envelope: dict) -> No
             "success" if envelope.get("ok", True) else "failed",
             errors=data.get("section_errors"),
         )
-    elif event_type == "area_snapshot":
+    elif event_type in {"area_snapshot", "area_core"}:
         if not data.get("area_id") and not data.get("ID"):
             _section_status(session, snapshot, "area", "failed", errors=envelope.get("error"))
             return NormalizationResult()
         area, _ = _upsert_area_snapshot(session, snapshot, campaign, data)
-        _normalise_products(session, snapshot, area, data.get("products") or [])
+        if event_type == "area_snapshot":
+            _normalise_products(session, snapshot, area, data.get("products") or [])
         _normalise_population(session, snapshot, area, data.get("population") or {})
         if data.get("workforce"):
             _normalise_workforce(session, snapshot, area, data["workforce"])
+        _normalise_location(session, area, data, snapshot.received_at)
         _section_status(
             session,
             snapshot,
-            "area",
+            "area" if event_type == "area_snapshot" else "area_core",
             "success" if envelope.get("ok", True) else "failed",
             area_id=area.area_id_raw,
             errors=data.get("section_errors") or data.get("workforce_errors"),
         )
+    elif event_type == "area_inventory_chunk":
+        area_id = _text(data.get("area_id"))
+        area = session.scalar(select(Area).where(Area.campaign_id == campaign.campaign_id, Area.area_id_raw == area_id))
+        if area is None or session.get(AreaSnapshot, (snapshot.snapshot_id, area.area_pk)) is None:
+            _section_status(session, snapshot, f"inventory_chunk:{_int(data.get('chunk_index')) or 0}", "failed", area_id=area_id, errors="area core missing")
+            return NormalizationResult()
+        _normalise_products(session, snapshot, area, data.get("products") or [])
+        _section_status(
+            session, snapshot, f"inventory_chunk:{_int(data.get('chunk_index')) or 0}",
+            "success" if envelope.get("ok", True) else "failed", area_id=area_id,
+            reported_count=_int(data.get("attempted_count")), captured_count=len(data.get("products") or []),
+            errors=data.get("errors"),
+        )
+    elif event_type == "area_building_chunk":
+        area_id = _text(data.get("area_id"))
+        area = session.scalar(select(Area).where(Area.campaign_id == campaign.campaign_id, Area.area_id_raw == area_id))
+        if area is None or session.get(AreaSnapshot, (snapshot.snapshot_id, area.area_pk)) is None:
+            _section_status(session, snapshot, f"building_chunk:{_int(data.get('chunk_index')) or 0}", "failed", area_id=area_id, errors="area core missing")
+            return NormalizationResult()
+        for item in data.get("buildings") or []:
+            guid = _text(item.get("building_guid"))
+            count = _int(item.get("count"))
+            if guid is None or count is None:
+                continue
+            if session.get(AreaBuildingObservation, (snapshot.snapshot_id, area.area_pk, guid)) is None:
+                session.add(AreaBuildingObservation(snapshot_id=snapshot.snapshot_id, area_pk=area.area_pk, building_guid=guid, building_count=count))
+        _section_status(
+            session, snapshot, f"building_chunk:{_int(data.get('chunk_index')) or 0}",
+            "success" if envelope.get("ok", True) else "failed", area_id=area_id,
+            reported_count=_int(data.get("attempted_count")), captured_count=len(data.get("buildings") or []),
+            errors=data.get("errors"),
+        )
+    elif event_type == "area_completed":
+        area_id = _text(data.get("area_id"))
+        for section_name in ("inventory", "buildings"):
+            section = data.get(section_name) or {}
+            declared_status = _text(section.get("status")) or "not_observed"
+            expected_chunks = _int(section.get("chunk_count"))
+            chunk_prefix = "inventory_chunk:" if section_name == "inventory" else "building_chunk:"
+            observed_chunks = session.scalar(
+                select(func.count()).select_from(SnapshotSectionStatus).where(
+                    SnapshotSectionStatus.snapshot_id == snapshot.snapshot_id,
+                    SnapshotSectionStatus.area_id_raw == area_id,
+                    SnapshotSectionStatus.section_name.like(f"{chunk_prefix}%"),
+                )
+            ) or 0
+            failed_chunks = session.scalar(
+                select(func.count()).select_from(SnapshotSectionStatus).where(
+                    SnapshotSectionStatus.snapshot_id == snapshot.snapshot_id,
+                    SnapshotSectionStatus.area_id_raw == area_id,
+                    SnapshotSectionStatus.section_name.like(f"{chunk_prefix}%"),
+                    SnapshotSectionStatus.status == "failed",
+                )
+            ) or 0
+            chunk_error = None
+            if expected_chunks is not None and observed_chunks != expected_chunks:
+                declared_status = "failed"
+                chunk_error = {
+                    "error": "missing or duplicate snapshot chunks",
+                    "expected_chunks": expected_chunks,
+                    "observed_chunks": observed_chunks,
+                }
+            elif failed_chunks:
+                declared_status = "failed"
+                chunk_error = {"error": "one or more chunks failed", "failed_chunks": failed_chunks}
+            _section_status(
+                session, snapshot, section_name,
+                declared_status, area_id=area_id,
+                reported_count=_int(section.get("attempted_count")),
+                captured_count=_int(section.get("captured_count")),
+                truncated=_bool(section.get("truncated")), errors=chunk_error or section.get("errors"),
+            )
     elif event_type == "snapshot_completed":
+        session.flush()
         actual = session.scalar(
             select(func.count()).select_from(AreaSnapshot).where(AreaSnapshot.snapshot_id == snapshot.snapshot_id)
         ) or 0
         snapshot.emitted_area_count = actual
         declared_complete = bool(data.get("complete")) and envelope.get("ok", True) is not False
-        snapshot.is_complete = declared_complete and actual == snapshot.expected_area_count
+        failed_sections = session.scalar(
+            select(func.count()).select_from(SnapshotSectionStatus).where(
+                SnapshotSectionStatus.snapshot_id == snapshot.snapshot_id,
+                SnapshotSectionStatus.status == "failed",
+            )
+        ) or 0
+        snapshot.is_complete = declared_complete and actual == snapshot.expected_area_count and failed_sections == 0
         snapshot.completed_at = raw.received_at
         snapshot.normalization_status = "complete" if snapshot.is_complete else "partial"
         _section_status(
@@ -525,6 +738,8 @@ def _production_event(session: Session, raw: TelemetryRaw, envelope: dict) -> No
             truncated=actual < snapshot.expected_area_count,
             errors=None if snapshot.is_complete else data,
         )
+        if snapshot.is_complete:
+            _materialize_current_state(session, play, snapshot)
         return NormalizationResult(snapshot.snapshot_id if snapshot.is_complete else None)
     return NormalizationResult()
 

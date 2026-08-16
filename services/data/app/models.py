@@ -31,6 +31,9 @@ class StaticRelease(Base):
     game_version: Mapped[str | None] = mapped_column(String)
     source_hash: Mapped[str] = mapped_column(String, nullable=False)
     coverage_note: Mapped[str | None] = mapped_column(Text)
+    source_url: Mapped[str | None] = mapped_column(Text)
+    source_revision: Mapped[str | None] = mapped_column(String)
+    attribution: Mapped[str | None] = mapped_column(Text)
     imported_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
 
 
@@ -43,6 +46,8 @@ class Product(Base):
     category: Mapped[str | None] = mapped_column(String)
     icon: Mapped[str | None] = mapped_column(String)
     telemetry_enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    associated_regions_json: Mapped[str | None] = mapped_column(Text)
+    dlc_unlocks_json: Mapped[str | None] = mapped_column(Text)
 
 
 class BuildingType(Base):
@@ -53,6 +58,26 @@ class BuildingType(Base):
     name: Mapped[str] = mapped_column(String, nullable=False)
     icon: Mapped[str | None] = mapped_column(String)
     workforce_guid: Mapped[str | None] = mapped_column(String)
+    associated_regions_json: Mapped[str | None] = mapped_column(Text)
+    dlc_unlocks_json: Mapped[str | None] = mapped_column(Text)
+
+
+class BuildingMaintenanceItem(Base):
+    __tablename__ = "building_maintenance_item"
+
+    release_id: Mapped[str] = mapped_column(String, primary_key=True)
+    building_guid: Mapped[str] = mapped_column(String, primary_key=True)
+    ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    resource_guid: Mapped[str] = mapped_column(String, nullable=False)
+    amount: Mapped[float] = mapped_column(Float, nullable=False)
+    kind: Mapped[str] = mapped_column(String, nullable=False)
+
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["release_id", "building_guid"],
+            ["building_type.release_id", "building_type.building_guid"],
+        ),
+    )
 
 
 class ProductionRecipe(Base):
@@ -219,6 +244,8 @@ class SnapshotBatch(Base):
     emitted_area_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     is_complete: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     normalization_status: Mapped[str] = mapped_column(String, default="assembling", nullable=False)
+    section_mode: Mapped[str] = mapped_column(String, default="full", nullable=False)
+    catalog_hash: Mapped[str | None] = mapped_column(String)
 
     __table_args__ = (
         UniqueConstraint("play_session_id", "snapshot_sequence", name="uq_snapshot_session_sequence"),
@@ -373,3 +400,146 @@ class TradeRouteIssueObservation(Base):
     severity: Mapped[str] = mapped_column(String, nullable=False)
     active_error_count: Mapped[int | None] = mapped_column(Integer)
     raw_flags_json: Mapped[str | None] = mapped_column(Text)
+
+
+class AreaLocation(Base):
+    __tablename__ = "area_location"
+
+    area_pk: Mapped[int] = mapped_column(ForeignKey("area.area_pk"), primary_key=True)
+    observed_x: Mapped[float | None] = mapped_column(Float)
+    observed_y: Mapped[float | None] = mapped_column(Float)
+    observed_session_guid: Mapped[str | None] = mapped_column(String)
+    observed_region_guid: Mapped[str | None] = mapped_column(String)
+    kontor_id_raw: Mapped[str | None] = mapped_column(String)
+    observation_status: Mapped[str] = mapped_column(String, default="not_observed", nullable=False)
+    observation_error: Mapped[str | None] = mapped_column(Text)
+    observed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    manual_region_guid: Mapped[str | None] = mapped_column(String)
+    manual_x: Mapped[float | None] = mapped_column(Float)
+    manual_y: Mapped[float | None] = mapped_column(Float)
+    manual_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class AreaProductCurrent(Base):
+    __tablename__ = "area_product_current"
+
+    area_pk: Mapped[int] = mapped_column(ForeignKey("area.area_pk"), primary_key=True)
+    product_guid: Mapped[str] = mapped_column(String, primary_key=True)
+    campaign_id: Mapped[str] = mapped_column(ForeignKey("campaign.campaign_id"), nullable=False)
+    play_session_id: Mapped[str] = mapped_column(ForeignKey("play_session.play_session_id"), nullable=False)
+    snapshot_id: Mapped[int] = mapped_column(ForeignKey("snapshot_batch.snapshot_id"), nullable=False)
+    stock: Mapped[float | None] = mapped_column(Float)
+    available_stock: Mapped[float | None] = mapped_column(Float)
+    storage_capacity: Mapped[float | None] = mapped_column(Float)
+    reserved_amount: Mapped[float | None] = mapped_column(Float)
+    free_space_raw: Mapped[float | None] = mapped_column(Float)
+    engine_trend_raw: Mapped[float | None] = mapped_column(Float)
+    passive_trade_minimum: Mapped[float | None] = mapped_column(Float)
+    offer_is_no_offer: Mapped[bool | None] = mapped_column(Boolean)
+    offer_is_buy_only: Mapped[bool | None] = mapped_column(Boolean)
+    offer_is_sell_only: Mapped[bool | None] = mapped_column(Boolean)
+    offer_is_buy_or_sell: Mapped[bool | None] = mapped_column(Boolean)
+    offer_is_preferred_good: Mapped[bool | None] = mapped_column(Boolean)
+    observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    last_attempt_snapshot_id: Mapped[int | None] = mapped_column(Integer)
+    section_status: Mapped[str] = mapped_column(String, default="success", nullable=False)
+
+    __table_args__ = (Index("ix_product_current_campaign", "campaign_id", "area_pk"),)
+
+
+class AreaBuildingObservation(Base):
+    __tablename__ = "area_building_observation"
+
+    snapshot_id: Mapped[int] = mapped_column(ForeignKey("snapshot_batch.snapshot_id"), primary_key=True)
+    area_pk: Mapped[int] = mapped_column(ForeignKey("area.area_pk"), primary_key=True)
+    building_guid: Mapped[str] = mapped_column(String, primary_key=True)
+    building_count: Mapped[int] = mapped_column(Integer, nullable=False)
+
+
+class AreaBuildingCurrent(Base):
+    __tablename__ = "area_building_current"
+
+    area_pk: Mapped[int] = mapped_column(ForeignKey("area.area_pk"), primary_key=True)
+    building_guid: Mapped[str] = mapped_column(String, primary_key=True)
+    campaign_id: Mapped[str] = mapped_column(ForeignKey("campaign.campaign_id"), nullable=False)
+    play_session_id: Mapped[str] = mapped_column(ForeignKey("play_session.play_session_id"), nullable=False)
+    snapshot_id: Mapped[int] = mapped_column(ForeignKey("snapshot_batch.snapshot_id"), nullable=False)
+    building_count: Mapped[int | None] = mapped_column(Integer)
+    presence_status: Mapped[str] = mapped_column(String, default="unknown", nullable=False)
+    observed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_attempt_snapshot_id: Mapped[int | None] = mapped_column(Integer)
+
+    __table_args__ = (Index("ix_building_current_campaign", "campaign_id", "area_pk"),)
+
+
+class CompanionSetting(Base):
+    __tablename__ = "companion_setting"
+
+    setting_key: Mapped[str] = mapped_column(String, primary_key=True)
+    value_text: Mapped[str | None] = mapped_column(Text)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+
+class ManagementAction(Base):
+    __tablename__ = "management_action"
+
+    action_id: Mapped[str] = mapped_column(String, primary_key=True)
+    campaign_id: Mapped[str] = mapped_column(ForeignKey("campaign.campaign_id"), nullable=False)
+    kind: Mapped[str] = mapped_column(String, nullable=False)
+    severity: Mapped[str] = mapped_column(String, nullable=False)
+    title: Mapped[str] = mapped_column(String, nullable=False)
+    summary: Mapped[str] = mapped_column(Text, nullable=False)
+    evidence_json: Mapped[str] = mapped_column(Text, nullable=False)
+    deep_link: Mapped[str | None] = mapped_column(String)
+    status: Mapped[str] = mapped_column(String, default="active", nullable=False)
+    snoozed_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    first_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+    last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    __table_args__ = (Index("ix_action_campaign_status", "campaign_id", "status"),)
+
+
+class TradePlan(Base):
+    __tablename__ = "trade_plan"
+
+    trade_plan_id: Mapped[str] = mapped_column(String, primary_key=True)
+    campaign_id: Mapped[str] = mapped_column(ForeignKey("campaign.campaign_id"), nullable=False)
+    source_area_pk: Mapped[int] = mapped_column(ForeignKey("area.area_pk"), nullable=False)
+    destination_area_pk: Mapped[int] = mapped_column(ForeignKey("area.area_pk"), nullable=False)
+    status: Mapped[str] = mapped_column(String, default="planned", nullable=False)
+    reason: Mapped[str | None] = mapped_column(Text)
+    evidence_json: Mapped[str] = mapped_column(Text, default="{}", nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+
+class TradePlanItem(Base):
+    __tablename__ = "trade_plan_item"
+
+    trade_plan_id: Mapped[str] = mapped_column(ForeignKey("trade_plan.trade_plan_id"), primary_key=True)
+    product_guid: Mapped[str] = mapped_column(String, primary_key=True)
+    amount: Mapped[float] = mapped_column(Float, nullable=False)
+
+
+class AdvisorConversation(Base):
+    __tablename__ = "advisor_conversation"
+
+    conversation_id: Mapped[str] = mapped_column(String, primary_key=True)
+    campaign_id: Mapped[str] = mapped_column(ForeignKey("campaign.campaign_id"), nullable=False)
+    title: Mapped[str | None] = mapped_column(String)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+
+class AdvisorMessage(Base):
+    __tablename__ = "advisor_message"
+
+    message_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    conversation_id: Mapped[str] = mapped_column(ForeignKey("advisor_conversation.conversation_id", ondelete="CASCADE"), nullable=False)
+    role: Mapped[str] = mapped_column(String, nullable=False)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    action_ids_json: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+    __table_args__ = (Index("ix_advisor_message_conversation", "conversation_id", "message_id"),)

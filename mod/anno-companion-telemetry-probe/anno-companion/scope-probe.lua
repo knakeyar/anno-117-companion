@@ -1,7 +1,7 @@
 local Probe = {}
 local json = require("json")
 
-local VERSION = "0.2.1"
+local VERSION = "0.3.0"
 local EVENT_GROUP = "anno-companion-telemetry-probe"
 
 local CONFIG = {
@@ -12,6 +12,7 @@ local CONFIG = {
     event_min_spacing_ms = 8000,
     max_samples_per_load = 24,
     product_guids = { 2174, 2176, 2178 },
+    building_guids = { 2955, 2962, 2963 },
     history_indices = { 0, 1, 2, 3 },
     limits = {
         controlled_areas = 64,
@@ -664,6 +665,62 @@ local function current_play_time()
     return nil
 end
 
+local function build_runtime_capabilities()
+    local result = { areas = {}, building_guids = CONFIG.building_guids }
+    local controlled_ok, controlled, controlled_error = safe_get(Participants, "ControlledAreaList")
+    if not controlled_ok or controlled == nil then
+        return false, { section_errors = { controlled_areas = tostring(controlled_error) } }
+    end
+    local collection, collection_error = read_collection(controlled, CONFIG.limits.controlled_areas)
+    if collection == nil then return false, { section_errors = { controlled_areas = collection_error } } end
+    for _, area in ipairs(collection.items) do
+        local item = capture_fields(area, { "ID", "CityName", "KontorID" })
+        item.position = { status = "not_observed" }
+        item.building_counts = { status = "not_observed", items = {} }
+        local id_ok, raw_id = safe_get(area, "ID")
+        local kontor_ok, kontor_id = safe_get(area, "KontorID")
+        if kontor_ok and kontor_id ~= nil then
+            local object_ok, object = pcall(function() return GetGameObject.GetGameObject(kontor_id) end)
+            if object_ok and object ~= nil then
+                local position_ok, position = safe_get(object, "Position2D")
+                local session_ok, session_guid = safe_get(object, "SessionGuid")
+                if position_ok and position ~= nil then
+                    local x_ok, x = safe_get(position, "x")
+                    local y_ok, y = safe_get(position, "y")
+                    if x_ok and y_ok then
+                        item.position = { status = "success", x = safe_value(x), y = safe_value(y), session_guid = session_ok and safe_value(session_guid) or nil }
+                    end
+                end
+            end
+        end
+        if id_ok and raw_id ~= nil then
+            local manager_ok, manager = pcall(function() return GetAreaManagerByID(raw_id) end)
+            local lists = nil
+            if manager_ok and manager ~= nil then
+                local objects_ok, objects = safe_get(manager, "AreaObjects")
+                if objects_ok and objects ~= nil then
+                    local lists_ok, value = safe_get(objects, "ObjectLists")
+                    if lists_ok then lists = value end
+                end
+            end
+            if lists ~= nil then
+                item.building_counts.status = "success"
+                for _, guid in ipairs(CONFIG.building_guids) do
+                    local count_ok, count = pcall(function() return lists:GetBuildingsWithGameLogicCount(guid) end)
+                    item.building_counts.items[#item.building_counts.items + 1] = {
+                        building_guid = tostring(guid), status = count_ok and "success" or "failed",
+                        count = count_ok and safe_value(count) or nil, error = count_ok and nil or tostring(count),
+                    }
+                end
+            end
+        end
+        result.areas[#result.areas + 1] = item
+    end
+    result.region_guid = safe_value(capture_fields(GameSession, { "RegionGUID" }).RegionGUID)
+    result.session_guid = safe_value(capture_fields(GameSession, { "SessionGUID" }).SessionGUID)
+    return true, result
+end
+
 function Probe:Complete(reason)
     if state.completed then
         return
@@ -738,6 +795,13 @@ function Probe:Sample(trigger)
         emit("scope_history", false, nil, history_error, trigger)
     end
 
+    local runtime_call_ok, runtime_ok, runtime = pcall(build_runtime_capabilities)
+    if runtime_call_ok then
+        emit("scope_runtime_capabilities", runtime_ok, runtime, nil, trigger)
+    else
+        emit("scope_runtime_capabilities", false, nil, runtime_ok, trigger)
+    end
+
     state.last_sample_play_time = current_play_time()
     emit("scope_sample_finished", true, {
         context_ok = context_call_ok and context_ok,
@@ -745,6 +809,7 @@ function Probe:Sample(trigger)
         statistics_ok = statistics_call_ok and statistics_ok,
         workforce_ok = workforce_call_ok and workforce_ok,
         history_ok = history_call_ok and history_ok,
+        runtime_capabilities_ok = runtime_call_ok and runtime_ok,
     }, nil, trigger)
     state.sampling = false
 

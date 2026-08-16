@@ -3,11 +3,12 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import uuid
 from collections.abc import AsyncIterator, Iterator
 from contextlib import asynccontextmanager
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Any, Literal
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
@@ -17,33 +18,48 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from .analytics import (
     current_play_session,
+    deterministic_action_specs,
+    finance_analysis,
+    finance_history,
     finance_latest,
     inventory_history,
     inventory_latest,
     latest_complete_snapshot,
     production_chains,
+    resolve_campaign_id,
     route_issues_latest,
     snapshot_meta,
+    suggested_routes,
     trade_opportunities,
     workforce_latest,
 )
+from .actions import action_dict, sync_actions
+from .advisor import ask_advisor, conversation_dict
 from .catalog import catalog_summary, load_catalog
 from .config import Settings, settings as default_settings
 from .db import Base, SessionLocal, engine
 from .ingestion import TelemetryTailer
+from .normalizer import refresh_materialized_state
 from .models import (
     Area,
+    AreaLocation,
     AreaPopulationObservation,
     AreaProductObservation,
     AreaProductPolicy,
     AreaSnapshot,
     AreaWorkforceObservation,
     Campaign,
+    CompanionSetting,
     IngestionCursor,
+    ManagementAction,
     PlaySession,
     Product,
     SnapshotBatch,
     TelemetryRaw,
+    TradePlan,
+    TradePlanItem,
+    AdvisorConversation,
+    AdvisorMessage,
     utcnow,
 )
 
@@ -122,6 +138,184 @@ class PolicyWrite(BaseModel):
         return self
 
 
+class MapPositionWrite(BaseModel):
+    region_guid: str | None = None
+    x: float | None = Field(default=None, ge=0, le=1)
+    y: float | None = Field(default=None, ge=0, le=1)
+    clear: bool = False
+
+    @model_validator(mode="after")
+    def complete_position(self) -> "MapPositionWrite":
+        if not self.clear and (self.region_guid is None or self.x is None or self.y is None):
+            raise ValueError("region_guid, x, and y are required unless clear is true")
+        return self
+
+
+class ActiveCampaignWrite(BaseModel):
+    campaign_id: str
+
+
+class ActionPatch(BaseModel):
+    status: Literal["active", "accepted", "snoozed", "dismissed", "completed"]
+    snooze_minutes: int | None = Field(default=None, ge=1, le=10080)
+
+
+class TradePlanGoodWrite(BaseModel):
+    product_guid: str
+    amount: float = Field(gt=0)
+
+
+class TradePlanCreate(BaseModel):
+    campaign_id: str | None = None
+    source_area_pk: int
+    destination_area_pk: int
+    goods: list[TradePlanGoodWrite] = Field(min_length=1, max_length=16)
+    reason: str | None = Field(default=None, max_length=1000)
+    evidence: dict[str, Any] = Field(default_factory=dict)
+
+
+class TradePlanPatch(BaseModel):
+    status: Literal["planned", "implemented_unverified", "completed", "dismissed"]
+
+
+class AdvisorMessageWrite(BaseModel):
+    question: str = Field(min_length=1, max_length=2000)
+    campaign_id: str | None = None
+    conversation_id: str | None = None
+
+
+class ActionView(BaseModel):
+    action_id: str
+    campaign_id: str
+    kind: str
+    severity: str
+    title: str
+    summary: str
+    evidence: dict[str, Any]
+    deep_link: str | None
+    status: str
+    snoozed_until: str | None
+    first_seen_at: str
+    last_seen_at: str
+    resolved_at: str | None
+
+
+class ActionsResponse(BaseModel):
+    campaign_id: str | None
+    items: list[ActionView]
+
+
+class TradePlanView(BaseModel):
+    trade_plan_id: str
+    campaign_id: str
+    source_area_pk: int
+    source_area_name: str
+    destination_area_pk: int
+    destination_area_name: str
+    status: str
+    reason: str | None
+    evidence: dict[str, Any]
+    goods: list[dict[str, Any]]
+    created_at: str
+    updated_at: str
+
+
+class TradePlansResponse(BaseModel):
+    campaign_id: str | None
+    items: list[TradePlanView]
+
+
+class AreaView(BaseModel):
+    area_pk: int
+    area_id: str
+    name: str
+    region_guid: str | None
+    game_session_guid: str | None
+    region_evidence: str | None
+    first_seen_at: str
+    last_seen_at: str
+    persistent: bool
+    telemetry_active: bool
+    position: dict[str, float] | None
+    position_source: str | None
+    location_status: str
+    location_error: str | None
+    manual_placement: bool
+    latest_observation: dict[str, Any]
+
+
+class AreasResponse(BaseModel):
+    meta: dict[str, Any]
+    catalog: dict[str, Any]
+    campaign_id: str | None
+    items: list[AreaView]
+
+
+class FinanceResponse(BaseModel):
+    meta: dict[str, Any]
+    catalog: dict[str, Any]
+    finance: dict[str, Any] | None
+    balance_analysis: dict[str, Any] | None
+
+
+class FinanceHistoryResponse(BaseModel):
+    meta: dict[str, Any]
+    catalog: dict[str, Any]
+    items: list[dict[str, Any]]
+
+
+class TradeOpportunitiesResponse(BaseModel):
+    meta: dict[str, Any]
+    catalog: dict[str, Any]
+    items: list[dict[str, Any]]
+    suggested_routes: list[dict[str, Any]]
+    notice: str
+
+
+class ProductionChainsResponse(BaseModel):
+    meta: dict[str, Any]
+    catalog: dict[str, Any]
+    chains: list[dict[str, Any]]
+
+
+class DashboardOverviewResponse(BaseModel):
+    meta: dict[str, Any]
+    catalog: dict[str, Any]
+    finance: dict[str, Any] | None
+    balance_analysis: dict[str, Any] | None
+    actions: list[ActionView]
+    suggested_routes: list[dict[str, Any]]
+    signals: list[dict[str, Any]]
+    transfer_candidates: list[dict[str, Any]]
+    route_issues: list[dict[str, Any]]
+    workforce_shortages: list[dict[str, Any]]
+    counts: dict[str, int]
+    language: dict[str, str]
+
+
+class ActiveCampaignView(BaseModel):
+    campaign_id: str
+
+
+class AdvisorMessageView(BaseModel):
+    message_id: int
+    role: str
+    content: str
+    action_ids: list[str]
+    created_at: str
+
+
+class AdvisorConversationView(BaseModel):
+    conversation_id: str
+    campaign_id: str
+    title: str | None
+    created_at: str
+    updated_at: str
+    messages: list[AdvisorMessageView]
+    available: bool | None = None
+    error: str | None = None
+
+
 def create_app(
     app_settings: Settings = default_settings,
     session_factory: sessionmaker[Session] = SessionLocal,
@@ -134,6 +328,8 @@ def create_app(
             Base.metadata.create_all(engine)
         with session_factory() as session:
             load_catalog(session, app_settings.catalog_path)
+            refresh_materialized_state(session)
+            session.commit()
         tailer = None
         tailer_task = None
         if app_settings.enable_tailer:
@@ -156,7 +352,7 @@ def create_app(
 
     app = FastAPI(
         title="Anno Companion Data API",
-        version="1.0.0",
+        version="1.1.0",
         description="Observed Anno 117 economy telemetry and deterministic management analytics.",
         lifespan=lifespan,
     )
@@ -205,10 +401,17 @@ def create_app(
                 ],
             },
             "play_session": _play_session_dict(play),
+            "selected_campaign_id": resolve_campaign_id(database),
             "latest_snapshot": snapshot_meta(
                 snapshot, stale_after_seconds=app_settings.stale_after_seconds
             ),
             "catalog": catalog_summary(database, play.static_release_id if play else None),
+            "advisor": {
+                "configured": bool(app_settings.openai_api_key),
+                "model": app_settings.openai_model,
+                "reasoning_effort": app_settings.openai_reasoning_effort,
+                "on_demand_only": True,
+            },
         }
 
     @app.get("/api/v1/campaigns", tags=["identity"])
@@ -261,10 +464,10 @@ def create_app(
             "play_session_id": reassigned_session,
         }
 
-    @app.get("/api/v1/areas", tags=["economy"])
+    @app.get("/api/v1/areas", tags=["economy"], response_model=AreasResponse)
     def areas(database: Database, campaign_id: str | None = None) -> dict:
-        play = current_play_session(database, campaign_id)
-        effective_campaign = campaign_id or (play.campaign_id if play else None)
+        effective_campaign = resolve_campaign_id(database, campaign_id)
+        play = current_play_session(database, effective_campaign)
         snapshot = latest_complete_snapshot(database, effective_campaign)
         meta = snapshot_meta(snapshot, stale_after_seconds=app_settings.stale_after_seconds)
         coverage = _catalog_for_snapshot(database, snapshot)
@@ -280,19 +483,32 @@ def create_app(
             "catalog": coverage,
             "campaign_id": effective_campaign,
             "items": [
-                {
-                    "area_pk": row.area_pk,
-                    "area_id": row.area_id_raw,
-                    "name": row.latest_name or row.area_id_raw,
-                    "region_guid": row.confirmed_region_guid,
-                    "game_session_guid": row.confirmed_game_session_guid,
-                    "region_evidence": row.region_evidence,
-                    "first_seen_at": row.first_seen_at.isoformat(),
-                    "last_seen_at": row.last_seen_at.isoformat(),
-                }
+                _area_dict(database, row, telemetry_active=play is not None)
                 for row in rows
             ],
         }
+
+    @app.put("/api/v1/areas/{area_pk}/map-position", tags=["economy"], response_model=AreaView)
+    def put_map_position(area_pk: int, position: MapPositionWrite, database: Database) -> dict:
+        area = database.get(Area, area_pk)
+        if area is None:
+            raise HTTPException(status_code=404, detail="area not found")
+        location = database.get(AreaLocation, area_pk)
+        if location is None:
+            location = AreaLocation(area_pk=area_pk)
+            database.add(location)
+        if position.clear:
+            location.manual_region_guid = None
+            location.manual_x = None
+            location.manual_y = None
+            location.manual_updated_at = None
+        else:
+            location.manual_region_guid = position.region_guid
+            location.manual_x = position.x
+            location.manual_y = position.y
+            location.manual_updated_at = utcnow()
+        database.commit()
+        return _area_dict(database, area, telemetry_active=current_play_session(database, area.campaign_id) is not None)
 
     @app.get("/api/v1/products", tags=["catalog"])
     def products(database: Database) -> dict:
@@ -350,35 +566,68 @@ def create_app(
             "items": points,
         }
 
-    @app.get("/api/v1/trade/opportunities", tags=["management"])
+    @app.get("/api/v1/trade/opportunities", tags=["management"], response_model=TradeOpportunitiesResponse)
     def opportunities(database: Database, campaign_id: str | None = None) -> dict:
         inventory = _inventory(database, campaign_id, app_settings)
+        effective = resolve_campaign_id(database, campaign_id)
+        routes = suggested_routes(database, inventory)
+        existing_pairs = {
+            (item.source_area_pk, item.destination_area_pk)
+            for item in database.scalars(
+                select(TradePlan).where(
+                    TradePlan.campaign_id == effective,
+                    TradePlan.status.in_(["planned", "implemented_unverified"]),
+                )
+            ).all()
+        } if effective else set()
+        snapshot = latest_complete_snapshot(database, effective)
+        _sync_management(
+            database,
+            effective,
+            inventory,
+            finance_analysis(database, snapshot),
+            routes,
+            workforce_latest(database, snapshot),
+            route_issues_latest(database, snapshot),
+        )
+        database.commit()
         return {
             "meta": inventory["meta"],
             "catalog": inventory["catalog"],
             "items": trade_opportunities(inventory),
+            "suggested_routes": [item for item in routes if (item["source_area_pk"], item["destination_area_pk"]) not in existing_pairs][:8],
             "notice": "Advisory transfer candidates; route feasibility is unknown.",
         }
 
-    @app.get("/api/v1/production/chains", tags=["management"])
+    @app.get("/api/v1/production/chains", tags=["management"], response_model=ProductionChainsResponse)
     def chains(database: Database, campaign_id: str | None = None) -> dict:
         inventory = _inventory(database, campaign_id, app_settings)
         result = production_chains(database, inventory)
         result["meta"] = inventory["meta"]
         return result
 
-    @app.get("/api/v1/finance", tags=["economy"])
+    @app.get("/api/v1/finance", tags=["economy"], response_model=FinanceResponse)
     def finance(database: Database, campaign_id: str | None = None) -> dict:
-        snapshot = latest_complete_snapshot(database, campaign_id)
+        snapshot = latest_complete_snapshot(database, resolve_campaign_id(database, campaign_id))
         return {
             "meta": snapshot_meta(snapshot, stale_after_seconds=app_settings.stale_after_seconds),
             "catalog": _catalog_for_snapshot(database, snapshot),
             "finance": finance_latest(database, snapshot),
+            "balance_analysis": finance_analysis(database, snapshot),
+        }
+
+    @app.get("/api/v1/finance/history", tags=["economy"], response_model=FinanceHistoryResponse)
+    def finance_timeline(database: Database, campaign_id: str | None = None, limit: int = Query(default=120, ge=2, le=1000)) -> dict:
+        snapshot = latest_complete_snapshot(database, resolve_campaign_id(database, campaign_id))
+        return {
+            "meta": snapshot_meta(snapshot, stale_after_seconds=app_settings.stale_after_seconds),
+            "catalog": _catalog_for_snapshot(database, snapshot),
+            "items": finance_history(database, snapshot, limit),
         }
 
     @app.get("/api/v1/workforce", tags=["economy"])
     def workforce(database: Database, campaign_id: str | None = None) -> dict:
-        snapshot = latest_complete_snapshot(database, campaign_id)
+        snapshot = latest_complete_snapshot(database, resolve_campaign_id(database, campaign_id))
         return {
             "meta": snapshot_meta(snapshot, stale_after_seconds=app_settings.stale_after_seconds),
             "catalog": _catalog_for_snapshot(database, snapshot),
@@ -388,8 +637,7 @@ def create_app(
 
     @app.get("/api/v1/policies", tags=["management"])
     def policies(database: Database, campaign_id: str | None = None) -> dict:
-        play = current_play_session(database, campaign_id)
-        effective = campaign_id or (play.campaign_id if play else None)
+        effective = resolve_campaign_id(database, campaign_id)
         if effective is None:
             return {"campaign_id": None, "items": []}
         rows = database.scalars(
@@ -421,22 +669,31 @@ def create_app(
         database.commit()
         return _policy_dict(stored)
 
-    @app.get("/api/v1/dashboard/overview", tags=["dashboard"])
+    @app.get("/api/v1/dashboard/overview", tags=["dashboard"], response_model=DashboardOverviewResponse)
     def overview(database: Database, campaign_id: str | None = None) -> dict:
         inventory = _inventory(database, campaign_id, app_settings)
-        snapshot = latest_complete_snapshot(database, campaign_id)
+        effective = resolve_campaign_id(database, campaign_id)
+        snapshot = latest_complete_snapshot(database, effective)
         workforce_items = workforce_latest(database, snapshot)
         workforce_shortages = [
             item for item in workforce_items
             if item["delta_without_buffs"] is not None and item["delta_without_buffs"] < 0
         ]
+        balance = finance_analysis(database, snapshot)
+        routes = suggested_routes(database, inventory)
+        route_issues = route_issues_latest(database, snapshot)
+        action_rows = _sync_management(database, effective, inventory, balance, routes, workforce_items, route_issues)
+        database.commit()
         return {
             "meta": inventory["meta"],
             "catalog": inventory["catalog"],
             "finance": finance_latest(database, snapshot),
+            "balance_analysis": balance,
+            "actions": [action_dict(item) for item in action_rows if item.status in {"active", "accepted"}][:12],
+            "suggested_routes": routes[:5],
             "signals": inventory["signals"][:30],
             "transfer_candidates": trade_opportunities(inventory)[:20],
-            "route_issues": route_issues_latest(database, snapshot),
+            "route_issues": route_issues,
             "workforce_shortages": workforce_shortages,
             "counts": {
                 "inventory_items": len(inventory["items"]),
@@ -448,6 +705,134 @@ def create_app(
                 "pressure_label": "Inferred pressure",
             },
         }
+
+    @app.put("/api/v1/settings/active-campaign", tags=["identity"], response_model=ActiveCampaignView)
+    def select_campaign(selection: ActiveCampaignWrite, database: Database) -> dict:
+        if database.get(Campaign, selection.campaign_id) is None:
+            raise HTTPException(status_code=404, detail="campaign not found")
+        stored = database.get(CompanionSetting, "active_campaign_id")
+        if stored is None:
+            stored = CompanionSetting(setting_key="active_campaign_id")
+            database.add(stored)
+        stored.value_text = selection.campaign_id
+        stored.updated_at = utcnow()
+        database.commit()
+        return {"campaign_id": selection.campaign_id}
+
+    @app.get("/api/v1/actions", tags=["management"], response_model=ActionsResponse)
+    def actions(database: Database, campaign_id: str | None = None, include_resolved: bool = False) -> dict:
+        effective = resolve_campaign_id(database, campaign_id)
+        if effective is None:
+            return {"campaign_id": None, "items": []}
+        inventory = _inventory(database, effective, app_settings)
+        snapshot = latest_complete_snapshot(database, effective)
+        workforce_items = workforce_latest(database, snapshot)
+        rows = _sync_management(
+            database, effective, inventory, finance_analysis(database, snapshot),
+            suggested_routes(database, inventory), workforce_items, route_issues_latest(database, snapshot),
+        )
+        database.commit()
+        allowed = rows if include_resolved else [item for item in rows if item.status not in {"resolved", "dismissed", "completed"}]
+        return {"campaign_id": effective, "items": [action_dict(item) for item in allowed]}
+
+    @app.patch("/api/v1/actions/{action_id}", tags=["management"], response_model=ActionView)
+    def patch_action(action_id: str, patch: ActionPatch, database: Database) -> dict:
+        action = database.get(ManagementAction, action_id)
+        if action is None:
+            raise HTTPException(status_code=404, detail="action not found")
+        action.status = patch.status
+        action.snoozed_until = utcnow() + timedelta(minutes=patch.snooze_minutes or 60) if patch.status == "snoozed" else None
+        action.resolved_at = utcnow() if patch.status in {"completed", "dismissed"} else None
+        database.commit()
+        return action_dict(action)
+
+    @app.get("/api/v1/trade-plans", tags=["management"], response_model=TradePlansResponse)
+    def trade_plans(database: Database, campaign_id: str | None = None) -> dict:
+        effective = resolve_campaign_id(database, campaign_id)
+        rows = database.scalars(
+            select(TradePlan).where(TradePlan.campaign_id == effective).order_by(TradePlan.updated_at.desc())
+        ).all() if effective else []
+        return {"campaign_id": effective, "items": [_trade_plan_dict(database, row) for row in rows]}
+
+    @app.post("/api/v1/trade-plans", tags=["management"], response_model=TradePlanView)
+    def create_trade_plan(write: TradePlanCreate, database: Database) -> dict:
+        effective = resolve_campaign_id(database, write.campaign_id)
+        source = database.get(Area, write.source_area_pk)
+        destination = database.get(Area, write.destination_area_pk)
+        if effective is None or source is None or destination is None or source.campaign_id != effective or destination.campaign_id != effective:
+            raise HTTPException(status_code=404, detail="source or destination area not found in campaign")
+        if source.area_pk == destination.area_pk:
+            raise HTTPException(status_code=422, detail="source and destination must differ")
+        plan = TradePlan(
+            trade_plan_id=str(uuid.uuid4()), campaign_id=effective,
+            source_area_pk=source.area_pk, destination_area_pk=destination.area_pk,
+            reason=write.reason, evidence_json=json.dumps(write.evidence, ensure_ascii=False, sort_keys=True),
+        )
+        database.add(plan)
+        database.flush()
+        database.add_all([
+            TradePlanItem(trade_plan_id=plan.trade_plan_id, product_guid=item.product_guid, amount=item.amount)
+            for item in write.goods
+        ])
+        database.commit()
+        return _trade_plan_dict(database, plan)
+
+    @app.patch("/api/v1/trade-plans/{trade_plan_id}", tags=["management"], response_model=TradePlanView)
+    def patch_trade_plan(trade_plan_id: str, patch: TradePlanPatch, database: Database) -> dict:
+        plan = database.get(TradePlan, trade_plan_id)
+        if plan is None:
+            raise HTTPException(status_code=404, detail="trade plan not found")
+        plan.status = patch.status
+        plan.updated_at = utcnow()
+        database.commit()
+        return _trade_plan_dict(database, plan)
+
+    @app.post("/api/v1/advisor/messages", tags=["advisor"], response_model=AdvisorConversationView)
+    def advisor_message(write: AdvisorMessageWrite, database: Database) -> dict:
+        effective = resolve_campaign_id(database, write.campaign_id)
+        if effective is None:
+            raise HTTPException(status_code=404, detail="no campaign selected")
+        inventory = _inventory(database, effective, app_settings)
+        snapshot = latest_complete_snapshot(database, effective)
+        action_rows = _sync_management(
+            database, effective, inventory, finance_analysis(database, snapshot), suggested_routes(database, inventory),
+            workforce_latest(database, snapshot), route_issues_latest(database, snapshot),
+        )
+        compact = {
+            "observation": inventory["meta"],
+            "catalog": inventory["catalog"],
+            "finance": finance_analysis(database, snapshot),
+            "actions": [
+                {"action_id": item.action_id, "kind": item.kind, "severity": item.severity, "title": item.title, "summary": item.summary}
+                for item in action_rows if item.status in {"active", "accepted"}
+            ][:20],
+            "inventory_signals": inventory["signals"][:20],
+        }
+        try:
+            return ask_advisor(
+                database, app_settings, campaign_id=effective, question=write.question,
+                compact_context=compact, conversation_id=write.conversation_id,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    @app.get("/api/v1/advisor/conversations/{conversation_id}", tags=["advisor"], response_model=AdvisorConversationView)
+    def advisor_conversation(conversation_id: str, database: Database) -> dict:
+        conversation = database.get(AdvisorConversation, conversation_id)
+        if conversation is None:
+            raise HTTPException(status_code=404, detail="conversation not found")
+        return conversation_dict(database, conversation)
+
+    @app.delete("/api/v1/advisor/conversations/{conversation_id}", tags=["advisor"], status_code=204)
+    def delete_advisor_conversation(conversation_id: str, database: Database) -> None:
+        conversation = database.get(AdvisorConversation, conversation_id)
+        if conversation is None:
+            raise HTTPException(status_code=404, detail="conversation not found")
+        messages = database.scalars(select(AdvisorMessage).where(AdvisorMessage.conversation_id == conversation_id)).all()
+        for message in messages:
+            database.delete(message)
+        database.delete(conversation)
+        database.commit()
 
     @app.get("/api/v1/events", tags=["system"])
     async def events(request: Request) -> StreamingResponse:
@@ -496,6 +881,102 @@ def _play_session_dict(play: PlaySession | None) -> dict | None:
 def _catalog_for_snapshot(database: Session, snapshot: SnapshotBatch | None) -> dict:
     play = database.get(PlaySession, snapshot.play_session_id) if snapshot is not None else None
     return catalog_summary(database, play.static_release_id if play else None)
+
+
+def _area_dict(database: Session, row: Area, *, telemetry_active: bool) -> dict:
+    location = database.get(AreaLocation, row.area_pk)
+    position = None
+    position_source = None
+    region_guid = row.confirmed_region_guid
+    if location is not None and location.manual_x is not None and location.manual_y is not None:
+        position = {"x": location.manual_x, "y": location.manual_y}
+        position_source = "manual"
+        region_guid = location.manual_region_guid or region_guid
+    elif location is not None and location.observed_x is not None and location.observed_y is not None:
+        position = {"x": location.observed_x, "y": location.observed_y}
+        position_source = "telemetry"
+        region_guid = location.observed_region_guid or region_guid
+    return {
+        "area_pk": row.area_pk,
+        "area_id": row.area_id_raw,
+        "name": row.latest_name or row.area_id_raw,
+        "region_guid": region_guid,
+        "game_session_guid": row.confirmed_game_session_guid,
+        "region_evidence": row.region_evidence,
+        "first_seen_at": row.first_seen_at.isoformat(),
+        "last_seen_at": row.last_seen_at.isoformat(),
+        "persistent": True,
+        "telemetry_active": telemetry_active,
+        "position": position,
+        "position_source": position_source,
+        "location_status": location.observation_status if location else "not_observed",
+        "location_error": location.observation_error if location else None,
+        "manual_placement": position_source == "manual",
+        "latest_observation": {"observed_at": row.last_seen_at.isoformat(), "is_historical": not telemetry_active},
+    }
+
+
+def _sync_management(
+    database: Session,
+    campaign_id: str | None,
+    inventory: dict,
+    balance: dict | None,
+    routes: list[dict],
+    workforce: list[dict],
+    route_issues: list[dict],
+) -> list[ManagementAction]:
+    if campaign_id is None:
+        return []
+    planned_pairs = {
+        (item.source_area_pk, item.destination_area_pk)
+        for item in database.scalars(
+            select(TradePlan).where(
+                TradePlan.campaign_id == campaign_id,
+                TradePlan.status.in_(["planned", "implemented_unverified"]),
+            )
+        ).all()
+    }
+    return sync_actions(
+        database,
+        campaign_id,
+        deterministic_action_specs(
+            inventory,
+            balance,
+            routes,
+            workforce,
+            route_issues,
+            planned_pairs,
+            production_chains(database, inventory)["chains"],
+        ),
+    )
+
+
+def _trade_plan_dict(database: Session, plan: TradePlan) -> dict:
+    source = database.get(Area, plan.source_area_pk)
+    destination = database.get(Area, plan.destination_area_pk)
+    products = {
+        item.product_guid: item.name
+        for item in database.scalars(
+            select(Product).where(Product.release_id == catalog_summary(database).get("release_id"))
+        ).all()
+    }
+    goods = database.scalars(
+        select(TradePlanItem).where(TradePlanItem.trade_plan_id == plan.trade_plan_id)
+    ).all()
+    return {
+        "trade_plan_id": plan.trade_plan_id,
+        "campaign_id": plan.campaign_id,
+        "source_area_pk": plan.source_area_pk,
+        "source_area_name": source.latest_name or source.area_id_raw if source else str(plan.source_area_pk),
+        "destination_area_pk": plan.destination_area_pk,
+        "destination_area_name": destination.latest_name or destination.area_id_raw if destination else str(plan.destination_area_pk),
+        "status": plan.status,
+        "reason": plan.reason,
+        "evidence": json.loads(plan.evidence_json),
+        "goods": [{"product_guid": item.product_guid, "product_name": products.get(item.product_guid), "amount": item.amount} for item in goods],
+        "created_at": plan.created_at.isoformat(),
+        "updated_at": plan.updated_at.isoformat(),
+    }
 
 
 def _reassign_play_session(database: Session, play: PlaySession, target: Campaign) -> None:
@@ -567,6 +1048,8 @@ def _reassign_play_session(database: Session, play: PlaySession, target: Campaig
                 database.delete(observed_area)
                 database.flush()
     play.campaign_id = target.campaign_id
+    database.flush()
+    refresh_materialized_state(database, target.campaign_id)
 
 
 def _clone_observation(item, **overrides):  # type: ignore[no-untyped-def]

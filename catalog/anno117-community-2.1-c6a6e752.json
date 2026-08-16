@@ -1,0 +1,7328 @@
+{
+  "release_id": "anno117-community-2.1-c6a6e752",
+  "label": "Anno 117 Community Calculator 2.1",
+  "game_version": "2.1",
+  "source_url": "https://github.com/anno-mods/anno-117-calculator/tree/c6a6e7525d16927f74d4f554dde5831b84fa287c",
+  "source_revision": "c6a6e7525d16927f74d4f554dde5831b84fa287c",
+  "source_license": "MIT (calculator code); game names and balancing remain Ubisoft property",
+  "attribution": "Derived from anno-mods/anno-117-calculator. No proprietary icon binaries are bundled.",
+  "coverage_note": "145 reference products; inventory telemetry enabled for 113 factory inputs/outputs; 144 factory recipes.",
+  "regions": [
+    {
+      "id": "Roman",
+      "guid": "3225",
+      "session_guid": "3245",
+      "name": "Latium"
+    },
+    {
+      "id": "Celtic",
+      "guid": "6626",
+      "session_guid": "6627",
+      "name": "Albion"
+    },
+    {
+      "id": "Meta",
+      "guid": "37136",
+      "session_guid": "37135",
+      "name": "Region Worldmap"
+    }
+  ],
+  "products": [
+    {
+      "guid": "6708",
+      "name": "Alder Council",
+      "category": "reference",
+      "telemetry_enabled": false,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2686",
+      "name": "Amphitheatre",
+      "category": "reference",
+      "telemetry_enabled": false,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "31700",
+      "name": "Amphorae",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "30724",
+      "name": "Aqueduct Cistern",
+      "category": "reference",
+      "telemetry_enabled": false,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "30733",
+      "name": "Aqueduct Cistern",
+      "category": "reference",
+      "telemetry_enabled": false,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "13810",
+      "name": "Armour",
+      "category": "construction_material",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "6709",
+      "name": "Bardic Hearth",
+      "category": "reference",
+      "telemetry_enabled": false,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2093",
+      "name": "Barley",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "55955",
+      "name": "Barrow",
+      "category": "reference",
+      "telemetry_enabled": false,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "16202",
+      "name": "Baths",
+      "category": "reference",
+      "telemetry_enabled": false,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2685",
+      "name": "Baths",
+      "category": "reference",
+      "telemetry_enabled": false,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "31702",
+      "name": "Beavers",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2154",
+      "name": "Beer",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2133",
+      "name": "Bird Tongues",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2155",
+      "name": "Bird Tongues in Aspic",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2137",
+      "name": "Bread",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2127",
+      "name": "Bronze",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2156",
+      "name": "Brooches",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "8558",
+      "name": "Caviar",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2126",
+      "name": "Celtic Green",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2163",
+      "name": "Chariots",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2128",
+      "name": "Chassis",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2153",
+      "name": "Cheese",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "31706",
+      "name": "Clan Shields",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2086",
+      "name": "Clay",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2161",
+      "name": "Cloaks",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2121",
+      "name": "Cloth",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2085",
+      "name": "Coal",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2097",
+      "name": "Cockles",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2178",
+      "name": "Concrete",
+      "category": "construction_material",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2099",
+      "name": "Copper Ore",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "8562",
+      "name": "Cushions",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "1010017",
+      "name": "Denarii",
+      "category": "reference",
+      "telemetry_enabled": false,
+      "associated_regions": [],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "93770",
+      "name": "Depot Permit",
+      "category": "reference",
+      "telemetry_enabled": false,
+      "associated_regions": [],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "55954",
+      "name": "Drinking Horns",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2094",
+      "name": "Dye Plants",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2108",
+      "name": "Eels",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "6710",
+      "name": "Fanum",
+      "category": "reference",
+      "telemetry_enabled": false,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2151",
+      "name": "Fine Glass",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2063",
+      "name": "Flax",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2119",
+      "name": "Flour",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2681",
+      "name": "Forum",
+      "category": "reference",
+      "telemetry_enabled": false,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "31707",
+      "name": "Fur Hats",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "31757",
+      "name": "Gambling House",
+      "category": "reference",
+      "telemetry_enabled": false,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "37133",
+      "name": "Gambling House",
+      "category": "reference",
+      "telemetry_enabled": false,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "108223",
+      "name": "Garrison Archers Available",
+      "category": "reference",
+      "telemetry_enabled": false,
+      "associated_regions": [],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "108222",
+      "name": "Garrison Auxilia Available",
+      "category": "reference",
+      "telemetry_enabled": false,
+      "associated_regions": [],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "108224",
+      "name": "Garrison Cavalry Available",
+      "category": "reference",
+      "telemetry_enabled": false,
+      "associated_regions": [],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2139",
+      "name": "Garum",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2117",
+      "name": "Glass",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "31698",
+      "name": "Gold",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "31697",
+      "name": "Gold Ore",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "16201",
+      "name": "Grammaticus",
+      "category": "reference",
+      "telemetry_enabled": false,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2680",
+      "name": "Grammaticus",
+      "category": "reference",
+      "telemetry_enabled": false,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "31709",
+      "name": "Granite",
+      "category": "construction_material",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2101",
+      "name": "Granite Block",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2070",
+      "name": "Grapes",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2162",
+      "name": "Handmirrors",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "31704",
+      "name": "Head Piece",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "31694",
+      "name": "Hemp",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "31701",
+      "name": "Herbs",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2076",
+      "name": "Honeycombs",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2075",
+      "name": "Horses",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2115",
+      "name": "Iron",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2080",
+      "name": "Iron Ore",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2132",
+      "name": "Lard",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "145221",
+      "name": "Latrunculi Sets",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [
+        "67902"
+      ],
+      "icon": null
+    },
+    {
+      "guid": "2071",
+      "name": "Lavender",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2110",
+      "name": "Leather",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2678",
+      "name": "Library",
+      "category": "reference",
+      "telemetry_enabled": false,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2078",
+      "name": "Limestone",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2147",
+      "name": "Loungers",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2089",
+      "name": "Mackerel",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2131",
+      "name": "Malt",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2179",
+      "name": "Marble",
+      "category": "construction_material",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2671",
+      "name": "Market",
+      "category": "reference",
+      "telemetry_enabled": false,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "6706",
+      "name": "Market",
+      "category": "reference",
+      "telemetry_enabled": false,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "8563",
+      "name": "Minerals",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2152",
+      "name": "Mosaics",
+      "category": "construction_material",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2102",
+      "name": "Mud",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "3158",
+      "name": "Murex Snails",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2146",
+      "name": "Necklaces",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2068",
+      "name": "Oats",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "145102",
+      "name": "Obsidian",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [
+        "67902"
+      ],
+      "icon": null
+    },
+    {
+      "guid": "2105",
+      "name": "Ochs",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "91372",
+      "name": "Officium Permit",
+      "category": "reference",
+      "telemetry_enabled": false,
+      "associated_regions": [],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2149",
+      "name": "Olive Oil",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2072",
+      "name": "Olives",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2123",
+      "name": "Ornate Wood",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2112",
+      "name": "Oysters",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2140",
+      "name": "Oysters with Caviar",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2124",
+      "name": "Pigments",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2074",
+      "name": "Pigs",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2142",
+      "name": "Pileus",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "8404",
+      "name": "Ponies",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2136",
+      "name": "Porridge",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "6707",
+      "name": "Recreation Ground",
+      "category": "reference",
+      "telemetry_enabled": false,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2159",
+      "name": "Reed Shoes",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2103",
+      "name": "Reeds",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "31695",
+      "name": "Resin",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "31768",
+      "name": "Roast Beef",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2171",
+      "name": "Rope",
+      "category": "construction_material",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "55956",
+      "name": "Sacred Grove",
+      "category": "reference",
+      "telemetry_enabled": false,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2172",
+      "name": "Sails",
+      "category": "construction_material",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2090",
+      "name": "Salt",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "31703",
+      "name": "Saltwash",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "7985",
+      "name": "Saltwort",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2679",
+      "name": "Sanctuary",
+      "category": "reference",
+      "telemetry_enabled": false,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2144",
+      "name": "Sandals",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "8561",
+      "name": "Sandarac Wood",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2088",
+      "name": "Sardines",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "8405",
+      "name": "Sausages",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "8420",
+      "name": "Seashells",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2073",
+      "name": "Sheep",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "93771",
+      "name": "Shrine Permit",
+      "category": "reference",
+      "telemetry_enabled": false,
+      "associated_regions": [],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2091",
+      "name": "Silica",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2129",
+      "name": "Silver",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2079",
+      "name": "Silver Ore",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2106",
+      "name": "Small Birds",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2143",
+      "name": "Soap",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2166",
+      "name": "Standing Lyres",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "145220",
+      "name": "Statuettes",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [
+        "67902"
+      ],
+      "icon": null
+    },
+    {
+      "guid": "2135",
+      "name": "String",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2087",
+      "name": "Sturgeon",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2677",
+      "name": "Tavern",
+      "category": "reference",
+      "telemetry_enabled": false,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "16200",
+      "name": "Temple",
+      "category": "reference",
+      "telemetry_enabled": false,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2684",
+      "name": "Temple",
+      "category": "reference",
+      "telemetry_enabled": false,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2683",
+      "name": "Theatre",
+      "category": "reference",
+      "telemetry_enabled": false,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "37132",
+      "name": "Theatre",
+      "category": "reference",
+      "telemetry_enabled": false,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2176",
+      "name": "Tiles",
+      "category": "construction_material",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2174",
+      "name": "Timber",
+      "category": "construction_material",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2100",
+      "name": "Tin Ore",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2145",
+      "name": "Togas",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2157",
+      "name": "Torcs",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2158",
+      "name": "Trousers",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2141",
+      "name": "Tunics",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2180",
+      "name": "Tyrian Purple",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2084",
+      "name": "Uncut Marble",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2169",
+      "name": "Wattle & Daub",
+      "category": "construction_material",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2173",
+      "name": "Weapons",
+      "category": "construction_material",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2069",
+      "name": "Wheat",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "31708",
+      "name": "Wigs",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2138",
+      "name": "Wine",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2077",
+      "name": "Wood",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman",
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2150",
+      "name": "Writing Tablets",
+      "category": "economic_good",
+      "telemetry_enabled": true,
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    }
+  ],
+  "building_types": [
+    {
+      "guid": "2795",
+      "name": "Apiary",
+      "workforce_guid": "2181",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "8427",
+      "name": "Apiary",
+      "workforce_guid": "2192",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "13808",
+      "name": "Armourer",
+      "workforce_guid": "2184",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "55945",
+      "name": "Armourer",
+      "workforce_guid": "2198",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "3174",
+      "name": "Bakery",
+      "workforce_guid": "2184",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5960",
+      "name": "Bakery",
+      "workforce_guid": "2198",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2799",
+      "name": "Barley Farm",
+      "workforce_guid": "2192",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "31770",
+      "name": "Beaver Hatter",
+      "workforce_guid": "2197",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "31759",
+      "name": "Beaver Trapper",
+      "workforce_guid": "2192",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5851",
+      "name": "Bird Charmer",
+      "workforce_guid": "2199",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5614",
+      "name": "Birrus Stitcher",
+      "workforce_guid": "2197",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5570",
+      "name": "Brewery",
+      "workforce_guid": "2196",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5470",
+      "name": "Bronze Smelter",
+      "workforce_guid": "2196",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "145229",
+      "name": "Caelator",
+      "workforce_guid": "2185",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [
+        "67902"
+      ],
+      "icon": null
+    },
+    {
+      "guid": "3198",
+      "name": "Chair Maker",
+      "workforce_guid": "2186",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2880",
+      "name": "Charcoal Burner",
+      "workforce_guid": "2184",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5977",
+      "name": "Charcoal Burner",
+      "workforce_guid": "2192",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5616",
+      "name": "Chariot Workshop",
+      "workforce_guid": "2197",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5611",
+      "name": "Chassis Builder",
+      "workforce_guid": "2197",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2970",
+      "name": "Clay Pit",
+      "workforce_guid": "2184",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "144810",
+      "name": "Coal Mine",
+      "workforce_guid": "2184",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [
+        "67902"
+      ],
+      "icon": null
+    },
+    {
+      "guid": "144811",
+      "name": "Coal Mine",
+      "workforce_guid": "2192",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [
+        "67902"
+      ],
+      "icon": null
+    },
+    {
+      "guid": "5278",
+      "name": "Cockle Picker",
+      "workforce_guid": "2192",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "3129",
+      "name": "Concrete Mixer",
+      "workforce_guid": "2185",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5946",
+      "name": "Concrete Mixer",
+      "workforce_guid": "2199",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5290",
+      "name": "Copper Mine",
+      "workforce_guid": "2196",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "8887",
+      "name": "Cushion Stuffer",
+      "workforce_guid": "2186",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "6586",
+      "name": "Dairy",
+      "workforce_guid": "2196",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5967",
+      "name": "Donkey Mill",
+      "workforce_guid": "2198",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2999",
+      "name": "Dye Works",
+      "workforce_guid": "2185",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "31767",
+      "name": "Earth Oven",
+      "workforce_guid": "2197",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5299",
+      "name": "Eel Grabber",
+      "workforce_guid": "2192",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5604",
+      "name": "Epicure of Air",
+      "workforce_guid": "2199",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "3186",
+      "name": "Epicure of Water",
+      "workforce_guid": "2186",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5605",
+      "name": "Fibularium",
+      "workforce_guid": "2198",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "8893",
+      "name": "Fish Gutter",
+      "workforce_guid": "2186",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2955",
+      "name": "Fishing Hut",
+      "workforce_guid": "2181",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2669",
+      "name": "Flax Farm",
+      "workforce_guid": "2181",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5971",
+      "name": "Flax Farm",
+      "workforce_guid": "2192",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "3070",
+      "name": "Furnace",
+      "workforce_guid": "2184",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5969",
+      "name": "Furnace",
+      "workforce_guid": "2192",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "3185",
+      "name": "Garum Works",
+      "workforce_guid": "2184",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "3081",
+      "name": "Gilder",
+      "workforce_guid": "2186",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "3074",
+      "name": "Glass Smelter",
+      "workforce_guid": "2185",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "3202",
+      "name": "Glassblower",
+      "workforce_guid": "2185",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "50280",
+      "name": "Gold Mine",
+      "workforce_guid": "2184",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "31753",
+      "name": "Gold Washer",
+      "workforce_guid": "2184",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "31755",
+      "name": "Goldsmith",
+      "workforce_guid": "2186",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "3075",
+      "name": "Grain Mill",
+      "workforce_guid": "2184",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "41811",
+      "name": "Granite Cutter",
+      "workforce_guid": "2197",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5295",
+      "name": "Granite Quarry",
+      "workforce_guid": "2196",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5469",
+      "name": "Greenhands",
+      "workforce_guid": "2197",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "31766",
+      "name": "Headpiece Maker",
+      "workforce_guid": "2199",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "31750",
+      "name": "Hemp Farm",
+      "workforce_guid": "2181",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "31762",
+      "name": "Hemp Farm",
+      "workforce_guid": "2192",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "31764",
+      "name": "Herb Garden",
+      "workforce_guid": "2192",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "55963",
+      "name": "Horner",
+      "workforce_guid": "2196",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "15514",
+      "name": "Horse Breeder",
+      "workforce_guid": "2199",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2794",
+      "name": "Horse Breeder",
+      "workforce_guid": "2185",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5975",
+      "name": "Horsecatcher",
+      "workforce_guid": "2197",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5608",
+      "name": "Hosier",
+      "workforce_guid": "2196",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2918",
+      "name": "Iron Mine",
+      "workforce_guid": "2184",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5982",
+      "name": "Iron Mine",
+      "workforce_guid": "2192",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "3192",
+      "name": "Jeweller",
+      "workforce_guid": "2186",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5935",
+      "name": "Labourer's Yard",
+      "workforce_guid": "2196",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "145230",
+      "name": "Latrunculi Workshop",
+      "workforce_guid": "2186",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [
+        "67902"
+      ],
+      "icon": null
+    },
+    {
+      "guid": "2698",
+      "name": "Lavender Grower",
+      "workforce_guid": "2181",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2916",
+      "name": "Limestone Quarry",
+      "workforce_guid": "2184",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5978",
+      "name": "Limestone Quarry",
+      "workforce_guid": "2198",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "3191",
+      "name": "Loom Weavery",
+      "workforce_guid": "2185",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "4832",
+      "name": "Lythier",
+      "workforce_guid": "2186",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5474",
+      "name": "Malthouse",
+      "workforce_guid": "2196",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "3138",
+      "name": "Marble Mason",
+      "workforce_guid": "2185",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2954",
+      "name": "Marble Quarry",
+      "workforce_guid": "2184",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "3082",
+      "name": "Mineral Crusher",
+      "workforce_guid": "2184",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2920",
+      "name": "Mineral Quarry",
+      "workforce_guid": "2184",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5848",
+      "name": "Mud Drier",
+      "workforce_guid": "2192",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5615",
+      "name": "Narcissium",
+      "workforce_guid": "2199",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2200",
+      "name": "Oat Farm",
+      "workforce_guid": "2181",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5847",
+      "name": "Ochs Farm",
+      "workforce_guid": "2192",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2699",
+      "name": "Olive Grower",
+      "workforce_guid": "2181",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "4831",
+      "name": "Olive Press",
+      "workforce_guid": "2184",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "8586",
+      "name": "Oyster Bed",
+      "workforce_guid": "2181",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2793",
+      "name": "Pig Farm",
+      "workforce_guid": "2181",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5974",
+      "name": "Pig Farm",
+      "workforce_guid": "2192",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "3188",
+      "name": "Pileus Felter",
+      "workforce_guid": "2181",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "3171",
+      "name": "Porridge Stand",
+      "workforce_guid": "2181",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "3199",
+      "name": "Potter",
+      "workforce_guid": "2184",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "55962",
+      "name": "Potter",
+      "workforce_guid": "2198",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5849",
+      "name": "Reed Gatherer",
+      "workforce_guid": "2192",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "31756",
+      "name": "Renderer",
+      "workforce_guid": "2184",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5475",
+      "name": "Renderer",
+      "workforce_guid": "2198",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "31752",
+      "name": "Resin Tapper",
+      "workforce_guid": "2184",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "31761",
+      "name": "Resin Tapper",
+      "workforce_guid": "2198",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "3168",
+      "name": "Ropemaker",
+      "workforce_guid": "2184",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5956",
+      "name": "Ropemaker",
+      "workforce_guid": "2192",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "3169",
+      "name": "Sailmaker",
+      "workforce_guid": "2184",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5955",
+      "name": "Sailmaker",
+      "workforce_guid": "2192",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5959",
+      "name": "Salsicium",
+      "workforce_guid": "2198",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2957",
+      "name": "Salt Ponds",
+      "workforce_guid": "2184",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "31772",
+      "name": "Saltwort Burner",
+      "workforce_guid": "2197",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2796",
+      "name": "Saltwort Picker",
+      "workforce_guid": "2192",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "10929",
+      "name": "Sand Refinery",
+      "workforce_guid": "2198",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2958",
+      "name": "Sand Refinery",
+      "workforce_guid": "2184",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "3190",
+      "name": "Sandal Maker",
+      "workforce_guid": "2184",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "8579",
+      "name": "Sandarac Nursery",
+      "workforce_guid": "2181",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "3089",
+      "name": "Sawmill",
+      "workforce_guid": "2181",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5945",
+      "name": "Sawmill",
+      "workforce_guid": "2192",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2956",
+      "name": "Scomber's Shack",
+      "workforce_guid": "2181",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2786",
+      "name": "Sheep Farm",
+      "workforce_guid": "2181",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5973",
+      "name": "Sheep Farm",
+      "workforce_guid": "2192",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "8431",
+      "name": "Shell Gatherer",
+      "workforce_guid": "2199",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "31773",
+      "name": "Shieldbeater",
+      "workforce_guid": "2196",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5609",
+      "name": "Shoe Weaver",
+      "workforce_guid": "2192",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5472",
+      "name": "Silver Forge",
+      "workforce_guid": "2198",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5980",
+      "name": "Silver Mine",
+      "workforce_guid": "2198",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "8580",
+      "name": "Snailery",
+      "workforce_guid": "2181",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "3189",
+      "name": "Soap Maker",
+      "workforce_guid": "2184",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "3187",
+      "name": "Spinner",
+      "workforce_guid": "2181",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5958",
+      "name": "Spinner",
+      "workforce_guid": "2192",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5481",
+      "name": "Stringer",
+      "workforce_guid": "2186",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2971",
+      "name": "Sturgeon Hatchery",
+      "workforce_guid": "2181",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "3201",
+      "name": "Tabulus",
+      "workforce_guid": "2185",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2994",
+      "name": "Tannery",
+      "workforce_guid": "2184",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "80612",
+      "name": "Tannery",
+      "workforce_guid": "2198",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "3203",
+      "name": "Tessera Works",
+      "workforce_guid": "2186",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "3091",
+      "name": "Tiler",
+      "workforce_guid": "2184",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5947",
+      "name": "Tiler",
+      "workforce_guid": "2192",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5291",
+      "name": "Tin Mine",
+      "workforce_guid": "2196",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5477",
+      "name": "Tongue Plucker",
+      "workforce_guid": "2198",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "23723",
+      "name": "Vineyard",
+      "workforce_guid": "2192",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2694",
+      "name": "Vineyard",
+      "workforce_guid": "2181",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "23753",
+      "name": "Vintner",
+      "workforce_guid": "2199",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "3177",
+      "name": "Vintner",
+      "workforce_guid": "2185",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "3170",
+      "name": "Weaponsmith",
+      "workforce_guid": "2184",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5954",
+      "name": "Weaponsmith",
+      "workforce_guid": "2192",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "3079",
+      "name": "Weaver",
+      "workforce_guid": "2185",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2800",
+      "name": "Weld Crop",
+      "workforce_guid": "2192",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2693",
+      "name": "Wheat Farm",
+      "workforce_guid": "2181",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5972",
+      "name": "Wheat Farm",
+      "workforce_guid": "2192",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "31769",
+      "name": "Wig Maker",
+      "workforce_guid": "2199",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5606",
+      "name": "Wire-Twister",
+      "workforce_guid": "2196",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "2878",
+      "name": "Woodcutter",
+      "workforce_guid": "2181",
+      "associated_regions": [
+        "Roman"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    },
+    {
+      "guid": "5976",
+      "name": "Woodcutter",
+      "workforce_guid": "2192",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "dlc_unlocks": [],
+      "icon": null
+    }
+  ],
+  "recipes": [
+    {
+      "recipe_id": "factory:2795",
+      "building_guid": "2795",
+      "name": "Apiary",
+      "cycle_seconds": 45.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2076",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:8427",
+      "building_guid": "8427",
+      "name": "Apiary",
+      "cycle_seconds": 45.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2076",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:13808",
+      "building_guid": "13808",
+      "name": "Armourer",
+      "cycle_seconds": 90.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2115",
+          "amount": 1.0
+        },
+        {
+          "role": "input",
+          "product_guid": "2110",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "13810",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:55945",
+      "building_guid": "55945",
+      "name": "Armourer",
+      "cycle_seconds": 90.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2115",
+          "amount": 1.0
+        },
+        {
+          "role": "input",
+          "product_guid": "2110",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "13810",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:3174",
+      "building_guid": "3174",
+      "name": "Bakery",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2119",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2137",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5960",
+      "building_guid": "5960",
+      "name": "Bakery",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2119",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2137",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:2799",
+      "building_guid": "2799",
+      "name": "Barley Farm",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2093",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:31770",
+      "building_guid": "31770",
+      "name": "Beaver Hatter",
+      "cycle_seconds": 120.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "31702",
+          "amount": 1.0
+        },
+        {
+          "role": "input",
+          "product_guid": "31703",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "31707",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:31759",
+      "building_guid": "31759",
+      "name": "Beaver Trapper",
+      "cycle_seconds": 90.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "31702",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5851",
+      "building_guid": "5851",
+      "name": "Bird Charmer",
+      "cycle_seconds": 90.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2106",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5614",
+      "building_guid": "5614",
+      "name": "Birrus Stitcher",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2073",
+          "amount": 1.0
+        },
+        {
+          "role": "input",
+          "product_guid": "2126",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2161",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5570",
+      "building_guid": "5570",
+      "name": "Brewery",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2131",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2154",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5470",
+      "building_guid": "5470",
+      "name": "Bronze Smelter",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2100",
+          "amount": 1.0
+        },
+        {
+          "role": "input",
+          "product_guid": "2099",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2127",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:145229",
+      "building_guid": "145229",
+      "name": "Caelator",
+      "cycle_seconds": 180.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "145102",
+          "amount": 1.0
+        },
+        {
+          "role": "input",
+          "product_guid": "2084",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "145220",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:3198",
+      "building_guid": "3198",
+      "name": "Chair Maker",
+      "cycle_seconds": 120.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "8561",
+          "amount": 1.0
+        },
+        {
+          "role": "input",
+          "product_guid": "8562",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2147",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:2880",
+      "building_guid": "2880",
+      "name": "Charcoal Burner",
+      "cycle_seconds": 30.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2085",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5977",
+      "building_guid": "5977",
+      "name": "Charcoal Burner",
+      "cycle_seconds": 30.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2085",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5616",
+      "building_guid": "5616",
+      "name": "Chariot Workshop",
+      "cycle_seconds": 120.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "8404",
+          "amount": 1.0
+        },
+        {
+          "role": "input",
+          "product_guid": "2128",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2163",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5611",
+      "building_guid": "5611",
+      "name": "Chassis Builder",
+      "cycle_seconds": 90.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2077",
+          "amount": 1.0
+        },
+        {
+          "role": "input",
+          "product_guid": "2103",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2128",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:2970",
+      "building_guid": "2970",
+      "name": "Clay Pit",
+      "cycle_seconds": 30.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2086",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:144810",
+      "building_guid": "144810",
+      "name": "Coal Mine",
+      "cycle_seconds": 30.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2085",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:144811",
+      "building_guid": "144811",
+      "name": "Coal Mine",
+      "cycle_seconds": 30.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2085",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5278",
+      "building_guid": "5278",
+      "name": "Cockle Picker",
+      "cycle_seconds": 45.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2097",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:3129",
+      "building_guid": "3129",
+      "name": "Concrete Mixer",
+      "cycle_seconds": 90.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2078",
+          "amount": 1.0
+        },
+        {
+          "role": "input",
+          "product_guid": "2091",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2178",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5946",
+      "building_guid": "5946",
+      "name": "Concrete Mixer",
+      "cycle_seconds": 90.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2078",
+          "amount": 1.0
+        },
+        {
+          "role": "input",
+          "product_guid": "2091",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2178",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5290",
+      "building_guid": "5290",
+      "name": "Copper Mine",
+      "cycle_seconds": 30.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2099",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:8887",
+      "building_guid": "8887",
+      "name": "Cushion Stuffer",
+      "cycle_seconds": 90.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2063",
+          "amount": 1.0
+        },
+        {
+          "role": "input",
+          "product_guid": "2180",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "8562",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:6586",
+      "building_guid": "6586",
+      "name": "Dairy",
+      "cycle_seconds": 120.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2105",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2153",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5967",
+      "building_guid": "5967",
+      "name": "Donkey Mill",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2069",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2119",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:2999",
+      "building_guid": "2999",
+      "name": "Dye Works",
+      "cycle_seconds": 120.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "3158",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2180",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:31767",
+      "building_guid": "31767",
+      "name": "Earth Oven",
+      "cycle_seconds": 120.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "7985",
+          "amount": 1.0
+        },
+        {
+          "role": "input",
+          "product_guid": "2105",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "31768",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5299",
+      "building_guid": "5299",
+      "name": "Eel Grabber",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2108",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5604",
+      "building_guid": "5604",
+      "name": "Epicure of Air",
+      "cycle_seconds": 90.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2133",
+          "amount": 1.0
+        },
+        {
+          "role": "input",
+          "product_guid": "2132",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2155",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:3186",
+      "building_guid": "3186",
+      "name": "Epicure of Water",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2112",
+          "amount": 1.0
+        },
+        {
+          "role": "input",
+          "product_guid": "8558",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2140",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5605",
+      "building_guid": "5605",
+      "name": "Fibularium",
+      "cycle_seconds": 120.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2129",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2156",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:8893",
+      "building_guid": "8893",
+      "name": "Fish Gutter",
+      "cycle_seconds": 45.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2087",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "8558",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:2955",
+      "building_guid": "2955",
+      "name": "Fishing Hut",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2088",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:2669",
+      "building_guid": "2669",
+      "name": "Flax Farm",
+      "cycle_seconds": 90.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2063",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5971",
+      "building_guid": "5971",
+      "name": "Flax Farm",
+      "cycle_seconds": 90.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2063",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:3070",
+      "building_guid": "3070",
+      "name": "Furnace",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2080",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2115",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5969",
+      "building_guid": "5969",
+      "name": "Furnace",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2080",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2115",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:3185",
+      "building_guid": "3185",
+      "name": "Garum Works",
+      "cycle_seconds": 90.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2089",
+          "amount": 1.0
+        },
+        {
+          "role": "input",
+          "product_guid": "2090",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2139",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:3081",
+      "building_guid": "3081",
+      "name": "Gilder",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "8561",
+          "amount": 1.0
+        },
+        {
+          "role": "input",
+          "product_guid": "31698",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2123",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:3074",
+      "building_guid": "3074",
+      "name": "Glass Smelter",
+      "cycle_seconds": 90.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2091",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2117",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:3202",
+      "building_guid": "3202",
+      "name": "Glassblower",
+      "cycle_seconds": 120.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2124",
+          "amount": 1.0
+        },
+        {
+          "role": "input",
+          "product_guid": "2117",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2151",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:50280",
+      "building_guid": "50280",
+      "name": "Gold Mine",
+      "cycle_seconds": 150.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "31697",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:31753",
+      "building_guid": "31753",
+      "name": "Gold Washer",
+      "cycle_seconds": 240.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "31697",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:31755",
+      "building_guid": "31755",
+      "name": "Goldsmith",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "31697",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "31698",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:3075",
+      "building_guid": "3075",
+      "name": "Grain Mill",
+      "cycle_seconds": 30.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2069",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2119",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:41811",
+      "building_guid": "41811",
+      "name": "Granite Cutter",
+      "cycle_seconds": 120.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2101",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "31709",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5295",
+      "building_guid": "5295",
+      "name": "Granite Quarry",
+      "cycle_seconds": 45.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2101",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5469",
+      "building_guid": "5469",
+      "name": "Greenhands",
+      "cycle_seconds": 90.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2094",
+          "amount": 1.0
+        },
+        {
+          "role": "input",
+          "product_guid": "2099",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2126",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:31766",
+      "building_guid": "31766",
+      "name": "Headpiece Maker",
+      "cycle_seconds": 120.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2063",
+          "amount": 1.0
+        },
+        {
+          "role": "input",
+          "product_guid": "31695",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "31704",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:31750",
+      "building_guid": "31750",
+      "name": "Hemp Farm",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "31694",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:31762",
+      "building_guid": "31762",
+      "name": "Hemp Farm",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "31694",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:31764",
+      "building_guid": "31764",
+      "name": "Herb Garden",
+      "cycle_seconds": 90.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "31701",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:55963",
+      "building_guid": "55963",
+      "name": "Horner",
+      "cycle_seconds": 120.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2105",
+          "amount": 1.0
+        },
+        {
+          "role": "input",
+          "product_guid": "2100",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "55954",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:15514",
+      "building_guid": "15514",
+      "name": "Horse Breeder",
+      "cycle_seconds": 120.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2075",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:2794",
+      "building_guid": "2794",
+      "name": "Horse Breeder",
+      "cycle_seconds": 120.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2075",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5975",
+      "building_guid": "5975",
+      "name": "Horsecatcher",
+      "cycle_seconds": 90.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "8404",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5608",
+      "building_guid": "5608",
+      "name": "Hosier",
+      "cycle_seconds": 90.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2073",
+          "amount": 1.0
+        },
+        {
+          "role": "input",
+          "product_guid": "2094",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2158",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:2918",
+      "building_guid": "2918",
+      "name": "Iron Mine",
+      "cycle_seconds": 30.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2080",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5982",
+      "building_guid": "5982",
+      "name": "Iron Mine",
+      "cycle_seconds": 30.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2080",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:3192",
+      "building_guid": "3192",
+      "name": "Jeweller",
+      "cycle_seconds": 90.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "8563",
+          "amount": 1.0
+        },
+        {
+          "role": "input",
+          "product_guid": "31698",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2146",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5935",
+      "building_guid": "5935",
+      "name": "Labourer's Yard",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2103",
+          "amount": 1.0
+        },
+        {
+          "role": "input",
+          "product_guid": "2102",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2169",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:145230",
+      "building_guid": "145230",
+      "name": "Latrunculi Workshop",
+      "cycle_seconds": 90.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "145102",
+          "amount": 1.0
+        },
+        {
+          "role": "input",
+          "product_guid": "2123",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "145221",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:2698",
+      "building_guid": "2698",
+      "name": "Lavender Grower",
+      "cycle_seconds": 120.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2071",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:2916",
+      "building_guid": "2916",
+      "name": "Limestone Quarry",
+      "cycle_seconds": 30.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2078",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5978",
+      "building_guid": "5978",
+      "name": "Limestone Quarry",
+      "cycle_seconds": 30.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2078",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:3191",
+      "building_guid": "3191",
+      "name": "Loom Weavery",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2121",
+          "amount": 1.0
+        },
+        {
+          "role": "input",
+          "product_guid": "2180",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2145",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:4832",
+      "building_guid": "4832",
+      "name": "Lythier",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2135",
+          "amount": 1.0
+        },
+        {
+          "role": "input",
+          "product_guid": "2123",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2166",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5474",
+      "building_guid": "5474",
+      "name": "Malthouse",
+      "cycle_seconds": 30.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2093",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2131",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:3138",
+      "building_guid": "3138",
+      "name": "Marble Mason",
+      "cycle_seconds": 90.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2084",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2179",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:2954",
+      "building_guid": "2954",
+      "name": "Marble Quarry",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2084",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:3082",
+      "building_guid": "3082",
+      "name": "Mineral Crusher",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "8563",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2124",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:2920",
+      "building_guid": "2920",
+      "name": "Mineral Quarry",
+      "cycle_seconds": 45.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "8563",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5848",
+      "building_guid": "5848",
+      "name": "Mud Drier",
+      "cycle_seconds": 90.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2102",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5615",
+      "building_guid": "5615",
+      "name": "Narcissium",
+      "cycle_seconds": 120.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "8420",
+          "amount": 1.0
+        },
+        {
+          "role": "input",
+          "product_guid": "2129",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2162",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:2200",
+      "building_guid": "2200",
+      "name": "Oat Farm",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2068",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5847",
+      "building_guid": "5847",
+      "name": "Ochs Farm",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2105",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:2699",
+      "building_guid": "2699",
+      "name": "Olive Grower",
+      "cycle_seconds": 120.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2072",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:4831",
+      "building_guid": "4831",
+      "name": "Olive Press",
+      "cycle_seconds": 90.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2072",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2149",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:8586",
+      "building_guid": "8586",
+      "name": "Oyster Bed",
+      "cycle_seconds": 90.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2112",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:2793",
+      "building_guid": "2793",
+      "name": "Pig Farm",
+      "cycle_seconds": 30.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2074",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5974",
+      "building_guid": "5974",
+      "name": "Pig Farm",
+      "cycle_seconds": 30.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2074",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:3188",
+      "building_guid": "3188",
+      "name": "Pileus Felter",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2073",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2142",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:3171",
+      "building_guid": "3171",
+      "name": "Porridge Stand",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2068",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2136",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:3199",
+      "building_guid": "3199",
+      "name": "Potter",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2086",
+          "amount": 1.0
+        },
+        {
+          "role": "input",
+          "product_guid": "31695",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "31700",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:55962",
+      "building_guid": "55962",
+      "name": "Potter",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2102",
+          "amount": 1.0
+        },
+        {
+          "role": "input",
+          "product_guid": "31695",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "31700",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5849",
+      "building_guid": "5849",
+      "name": "Reed Gatherer",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2103",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:31756",
+      "building_guid": "31756",
+      "name": "Renderer",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2074",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2132",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5475",
+      "building_guid": "5475",
+      "name": "Renderer",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2074",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2132",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:31752",
+      "building_guid": "31752",
+      "name": "Resin Tapper",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "31695",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:31761",
+      "building_guid": "31761",
+      "name": "Resin Tapper",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "31695",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:3168",
+      "building_guid": "3168",
+      "name": "Ropemaker",
+      "cycle_seconds": 120.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "31694",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2171",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5956",
+      "building_guid": "5956",
+      "name": "Ropemaker",
+      "cycle_seconds": 120.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "31694",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2171",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:3169",
+      "building_guid": "3169",
+      "name": "Sailmaker",
+      "cycle_seconds": 90.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2073",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2172",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5955",
+      "building_guid": "5955",
+      "name": "Sailmaker",
+      "cycle_seconds": 90.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2073",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2172",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5959",
+      "building_guid": "5959",
+      "name": "Salsicium",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2074",
+          "amount": 1.0
+        },
+        {
+          "role": "input",
+          "product_guid": "31701",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "8405",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:2957",
+      "building_guid": "2957",
+      "name": "Salt Ponds",
+      "cycle_seconds": 30.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2090",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:31772",
+      "building_guid": "31772",
+      "name": "Saltwort Burner",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "7985",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "31703",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:2796",
+      "building_guid": "2796",
+      "name": "Saltwort Picker",
+      "cycle_seconds": 90.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "7985",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:10929",
+      "building_guid": "10929",
+      "name": "Sand Refinery",
+      "cycle_seconds": 45.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2091",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:2958",
+      "building_guid": "2958",
+      "name": "Sand Refinery",
+      "cycle_seconds": 45.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2091",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:3190",
+      "building_guid": "3190",
+      "name": "Sandal Maker",
+      "cycle_seconds": 120.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2110",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2144",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:8579",
+      "building_guid": "8579",
+      "name": "Sandarac Nursery",
+      "cycle_seconds": 90.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "8561",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:3089",
+      "building_guid": "3089",
+      "name": "Sawmill",
+      "cycle_seconds": 30.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2077",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2174",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5945",
+      "building_guid": "5945",
+      "name": "Sawmill",
+      "cycle_seconds": 30.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2077",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2174",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:2956",
+      "building_guid": "2956",
+      "name": "Scomber's Shack",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2089",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:2786",
+      "building_guid": "2786",
+      "name": "Sheep Farm",
+      "cycle_seconds": 30.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2073",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5973",
+      "building_guid": "5973",
+      "name": "Sheep Farm",
+      "cycle_seconds": 30.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2073",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:8431",
+      "building_guid": "8431",
+      "name": "Shell Gatherer",
+      "cycle_seconds": 45.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "8420",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:31773",
+      "building_guid": "31773",
+      "name": "Shieldbeater",
+      "cycle_seconds": 90.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2094",
+          "amount": 1.0
+        },
+        {
+          "role": "input",
+          "product_guid": "2127",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "31706",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5609",
+      "building_guid": "5609",
+      "name": "Shoe Weaver",
+      "cycle_seconds": 120.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2103",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2159",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5472",
+      "building_guid": "5472",
+      "name": "Silver Forge",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2079",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2129",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5980",
+      "building_guid": "5980",
+      "name": "Silver Mine",
+      "cycle_seconds": 30.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2079",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:8580",
+      "building_guid": "8580",
+      "name": "Snailery",
+      "cycle_seconds": 90.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "3158",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:3189",
+      "building_guid": "3189",
+      "name": "Soap Maker",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2071",
+          "amount": 1.0
+        },
+        {
+          "role": "input",
+          "product_guid": "2132",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2143",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:3187",
+      "building_guid": "3187",
+      "name": "Spinner",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "31694",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2141",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5958",
+      "building_guid": "5958",
+      "name": "Spinner",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "31694",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2141",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5481",
+      "building_guid": "5481",
+      "name": "Stringer",
+      "cycle_seconds": 90.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2073",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2135",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:2971",
+      "building_guid": "2971",
+      "name": "Sturgeon Hatchery",
+      "cycle_seconds": 90.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2087",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:3201",
+      "building_guid": "3201",
+      "name": "Tabulus",
+      "cycle_seconds": 120.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "8561",
+          "amount": 1.0
+        },
+        {
+          "role": "input",
+          "product_guid": "2076",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2150",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:2994",
+      "building_guid": "2994",
+      "name": "Tannery",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2074",
+          "amount": 1.0
+        },
+        {
+          "role": "input",
+          "product_guid": "2090",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2110",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:80612",
+      "building_guid": "80612",
+      "name": "Tannery",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2074",
+          "amount": 1.0
+        },
+        {
+          "role": "input",
+          "product_guid": "2077",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2110",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:3203",
+      "building_guid": "3203",
+      "name": "Tessera Works",
+      "cycle_seconds": 120.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2086",
+          "amount": 1.0
+        },
+        {
+          "role": "input",
+          "product_guid": "2124",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2152",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:3091",
+      "building_guid": "3091",
+      "name": "Tiler",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2086",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2176",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5947",
+      "building_guid": "5947",
+      "name": "Tiler",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2102",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2176",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5291",
+      "building_guid": "5291",
+      "name": "Tin Mine",
+      "cycle_seconds": 30.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2100",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5477",
+      "building_guid": "5477",
+      "name": "Tongue Plucker",
+      "cycle_seconds": 120.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2106",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2133",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:23723",
+      "building_guid": "23723",
+      "name": "Vineyard",
+      "cycle_seconds": 90.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2070",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:2694",
+      "building_guid": "2694",
+      "name": "Vineyard",
+      "cycle_seconds": 90.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2070",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:23753",
+      "building_guid": "23753",
+      "name": "Vintner",
+      "cycle_seconds": 45.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2070",
+          "amount": 1.0
+        },
+        {
+          "role": "input",
+          "product_guid": "2076",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2138",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:3177",
+      "building_guid": "3177",
+      "name": "Vintner",
+      "cycle_seconds": 45.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2070",
+          "amount": 1.0
+        },
+        {
+          "role": "input",
+          "product_guid": "2076",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2138",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:3170",
+      "building_guid": "3170",
+      "name": "Weaponsmith",
+      "cycle_seconds": 90.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2115",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2173",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5954",
+      "building_guid": "5954",
+      "name": "Weaponsmith",
+      "cycle_seconds": 90.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2115",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2173",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:3079",
+      "building_guid": "3079",
+      "name": "Weaver",
+      "cycle_seconds": 120.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2063",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2121",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:2800",
+      "building_guid": "2800",
+      "name": "Weld Crop",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2094",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:2693",
+      "building_guid": "2693",
+      "name": "Wheat Farm",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2069",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5972",
+      "building_guid": "5972",
+      "name": "Wheat Farm",
+      "cycle_seconds": 60.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2069",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:31769",
+      "building_guid": "31769",
+      "name": "Wig Maker",
+      "cycle_seconds": 90.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2075",
+          "amount": 1.0
+        },
+        {
+          "role": "input",
+          "product_guid": "31704",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "31708",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5606",
+      "building_guid": "5606",
+      "name": "Wire-Twister",
+      "cycle_seconds": 90.0,
+      "items": [
+        {
+          "role": "input",
+          "product_guid": "2099",
+          "amount": 1.0
+        },
+        {
+          "role": "output",
+          "product_guid": "2157",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:2878",
+      "building_guid": "2878",
+      "name": "Woodcutter",
+      "cycle_seconds": 30.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2077",
+          "amount": 1.0
+        }
+      ]
+    },
+    {
+      "recipe_id": "factory:5976",
+      "building_guid": "5976",
+      "name": "Woodcutter",
+      "cycle_seconds": 30.0,
+      "items": [
+        {
+          "role": "output",
+          "product_guid": "2077",
+          "amount": 1.0
+        }
+      ]
+    }
+  ],
+  "maintenance_items": [
+    {
+      "building_guid": "2955",
+      "product_guid": "1010017",
+      "amount": 6.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "2955",
+      "product_guid": "2181",
+      "amount": 4.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "2956",
+      "product_guid": "1010017",
+      "amount": 8.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "2956",
+      "product_guid": "2181",
+      "amount": 4.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "2957",
+      "product_guid": "1010017",
+      "amount": 8.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "2957",
+      "product_guid": "2184",
+      "amount": 4.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "8580",
+      "product_guid": "1010017",
+      "amount": 10.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "8580",
+      "product_guid": "2181",
+      "amount": 5.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "2958",
+      "product_guid": "1010017",
+      "amount": 10.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "2958",
+      "product_guid": "2184",
+      "amount": 5.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "8586",
+      "product_guid": "1010017",
+      "amount": 12.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "8586",
+      "product_guid": "2181",
+      "amount": 5.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "2994",
+      "product_guid": "1010017",
+      "amount": 10.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "2994",
+      "product_guid": "2184",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "2999",
+      "product_guid": "1010017",
+      "amount": 12.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "2999",
+      "product_guid": "2185",
+      "amount": 8.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "31756",
+      "product_guid": "1010017",
+      "amount": 10.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "31756",
+      "product_guid": "2184",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "3079",
+      "product_guid": "1010017",
+      "amount": 12.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "3079",
+      "product_guid": "2185",
+      "amount": 10.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "3081",
+      "product_guid": "1010017",
+      "amount": 14.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "3081",
+      "product_guid": "2186",
+      "amount": 8.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "8887",
+      "product_guid": "1010017",
+      "amount": 16.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "8887",
+      "product_guid": "2186",
+      "amount": 6.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5481",
+      "product_guid": "1010017",
+      "amount": 14.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5481",
+      "product_guid": "2186",
+      "amount": 8.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "3070",
+      "product_guid": "1010017",
+      "amount": 8.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "3070",
+      "product_guid": "2184",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "3082",
+      "product_guid": "1010017",
+      "amount": 10.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "3082",
+      "product_guid": "2184",
+      "amount": 4.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "31755",
+      "product_guid": "1010017",
+      "amount": 26.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "31755",
+      "product_guid": "2186",
+      "amount": 10.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "8893",
+      "product_guid": "1010017",
+      "amount": 30.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "8893",
+      "product_guid": "2186",
+      "amount": 6.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "3171",
+      "product_guid": "1010017",
+      "amount": 8.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "3171",
+      "product_guid": "2181",
+      "amount": 2.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "3174",
+      "product_guid": "1010017",
+      "amount": 14.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "3174",
+      "product_guid": "2184",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "3185",
+      "product_guid": "1010017",
+      "amount": 12.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "3185",
+      "product_guid": "2184",
+      "amount": 4.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "3177",
+      "product_guid": "1010017",
+      "amount": 30.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "3177",
+      "product_guid": "2185",
+      "amount": 14.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "3186",
+      "product_guid": "1010017",
+      "amount": 40.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "3186",
+      "product_guid": "2186",
+      "amount": 12.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "3187",
+      "product_guid": "1010017",
+      "amount": 8.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "3187",
+      "product_guid": "2181",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "3188",
+      "product_guid": "1010017",
+      "amount": 8.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "3188",
+      "product_guid": "2181",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "3189",
+      "product_guid": "1010017",
+      "amount": 12.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "3189",
+      "product_guid": "2184",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "3190",
+      "product_guid": "1010017",
+      "amount": 12.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "3190",
+      "product_guid": "2184",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "3191",
+      "product_guid": "1010017",
+      "amount": 20.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "3191",
+      "product_guid": "2185",
+      "amount": 6.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "3192",
+      "product_guid": "1010017",
+      "amount": 48.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "3192",
+      "product_guid": "2186",
+      "amount": 6.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "3199",
+      "product_guid": "1010017",
+      "amount": 14.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "3199",
+      "product_guid": "2184",
+      "amount": 4.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "4831",
+      "product_guid": "1010017",
+      "amount": 16.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "4831",
+      "product_guid": "2184",
+      "amount": 5.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "3201",
+      "product_guid": "1010017",
+      "amount": 22.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "3201",
+      "product_guid": "2185",
+      "amount": 10.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "3202",
+      "product_guid": "1010017",
+      "amount": 26.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "3202",
+      "product_guid": "2185",
+      "amount": 12.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "3198",
+      "product_guid": "1010017",
+      "amount": 28.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "3198",
+      "product_guid": "2186",
+      "amount": 12.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "4832",
+      "product_guid": "1010017",
+      "amount": 30.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "4832",
+      "product_guid": "2186",
+      "amount": 10.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "3089",
+      "product_guid": "1010017",
+      "amount": 8.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "3089",
+      "product_guid": "2181",
+      "amount": 4.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "3091",
+      "product_guid": "1010017",
+      "amount": 12.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "3091",
+      "product_guid": "2184",
+      "amount": 4.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "3129",
+      "product_guid": "1010017",
+      "amount": 16.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "3129",
+      "product_guid": "2185",
+      "amount": 8.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "3138",
+      "product_guid": "1010017",
+      "amount": 24.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "3138",
+      "product_guid": "2185",
+      "amount": 10.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "3203",
+      "product_guid": "1010017",
+      "amount": 30.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "3203",
+      "product_guid": "2186",
+      "amount": 14.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "3168",
+      "product_guid": "1010017",
+      "amount": 10.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "3168",
+      "product_guid": "2184",
+      "amount": 5.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "3169",
+      "product_guid": "1010017",
+      "amount": 12.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "3169",
+      "product_guid": "2184",
+      "amount": 6.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "3170",
+      "product_guid": "1010017",
+      "amount": 16.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "3170",
+      "product_guid": "2184",
+      "amount": 5.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "13808",
+      "product_guid": "1010017",
+      "amount": 20.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "13808",
+      "product_guid": "2184",
+      "amount": 6.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "8431",
+      "product_guid": "1010017",
+      "amount": 20.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "8431",
+      "product_guid": "2199",
+      "amount": 10.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "10929",
+      "product_guid": "1010017",
+      "amount": 10.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "10929",
+      "product_guid": "2198",
+      "amount": 5.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5475",
+      "product_guid": "1010017",
+      "amount": 10.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5475",
+      "product_guid": "2198",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "80612",
+      "product_guid": "1010017",
+      "amount": 10.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "80612",
+      "product_guid": "2198",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "31766",
+      "product_guid": "1010017",
+      "amount": 10.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "31766",
+      "product_guid": "2199",
+      "amount": 8.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5969",
+      "product_guid": "1010017",
+      "amount": 8.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5969",
+      "product_guid": "2192",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5472",
+      "product_guid": "1010017",
+      "amount": 8.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5472",
+      "product_guid": "2198",
+      "amount": 5.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5967",
+      "product_guid": "1010017",
+      "amount": 8.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5967",
+      "product_guid": "2198",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5960",
+      "product_guid": "1010017",
+      "amount": 14.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5960",
+      "product_guid": "2198",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5959",
+      "product_guid": "1010017",
+      "amount": 14.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5959",
+      "product_guid": "2198",
+      "amount": 4.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5604",
+      "product_guid": "1010017",
+      "amount": 22.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5604",
+      "product_guid": "2199",
+      "amount": 12.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "23753",
+      "product_guid": "1010017",
+      "amount": 30.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "23753",
+      "product_guid": "2199",
+      "amount": 14.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5958",
+      "product_guid": "1010017",
+      "amount": 8.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5958",
+      "product_guid": "2192",
+      "amount": 2.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5605",
+      "product_guid": "1010017",
+      "amount": 10.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5605",
+      "product_guid": "2198",
+      "amount": 5.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "31769",
+      "product_guid": "1010017",
+      "amount": 16.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "31769",
+      "product_guid": "2199",
+      "amount": 8.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "55962",
+      "product_guid": "1010017",
+      "amount": 14.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "55962",
+      "product_guid": "2198",
+      "amount": 4.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5615",
+      "product_guid": "1010017",
+      "amount": 30.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5615",
+      "product_guid": "2199",
+      "amount": 12.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5945",
+      "product_guid": "1010017",
+      "amount": 8.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5945",
+      "product_guid": "2192",
+      "amount": 4.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5947",
+      "product_guid": "1010017",
+      "amount": 12.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5947",
+      "product_guid": "2192",
+      "amount": 4.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5946",
+      "product_guid": "1010017",
+      "amount": 16.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5946",
+      "product_guid": "2199",
+      "amount": 8.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5955",
+      "product_guid": "1010017",
+      "amount": 12.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5955",
+      "product_guid": "2192",
+      "amount": 6.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5956",
+      "product_guid": "1010017",
+      "amount": 10.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5956",
+      "product_guid": "2192",
+      "amount": 5.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5954",
+      "product_guid": "1010017",
+      "amount": 16.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5954",
+      "product_guid": "2192",
+      "amount": 5.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "55945",
+      "product_guid": "1010017",
+      "amount": 20.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "55945",
+      "product_guid": "2198",
+      "amount": 6.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "2796",
+      "product_guid": "1010017",
+      "amount": 8.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "2796",
+      "product_guid": "2192",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5278",
+      "product_guid": "1010017",
+      "amount": 6.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5278",
+      "product_guid": "2192",
+      "amount": 4.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5469",
+      "product_guid": "1010017",
+      "amount": 20.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5469",
+      "product_guid": "2197",
+      "amount": 8.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "31772",
+      "product_guid": "1010017",
+      "amount": 10.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "31772",
+      "product_guid": "2197",
+      "amount": 6.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5611",
+      "product_guid": "1010017",
+      "amount": 16.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5611",
+      "product_guid": "2197",
+      "amount": 10.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5470",
+      "product_guid": "1010017",
+      "amount": 8.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5470",
+      "product_guid": "2196",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5474",
+      "product_guid": "1010017",
+      "amount": 8.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5474",
+      "product_guid": "2196",
+      "amount": 4.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5570",
+      "product_guid": "1010017",
+      "amount": 10.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5570",
+      "product_guid": "2196",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "31767",
+      "product_guid": "1010017",
+      "amount": 16.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "31767",
+      "product_guid": "2197",
+      "amount": 8.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5608",
+      "product_guid": "1010017",
+      "amount": 10.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5608",
+      "product_guid": "2196",
+      "amount": 4.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5606",
+      "product_guid": "1010017",
+      "amount": 10.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5606",
+      "product_guid": "2196",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5614",
+      "product_guid": "1010017",
+      "amount": 24.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5614",
+      "product_guid": "2197",
+      "amount": 10.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "31770",
+      "product_guid": "1010017",
+      "amount": 14.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "31770",
+      "product_guid": "2197",
+      "amount": 6.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "55963",
+      "product_guid": "1010017",
+      "amount": 12.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "55963",
+      "product_guid": "2196",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "31773",
+      "product_guid": "1010017",
+      "amount": 14.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "31773",
+      "product_guid": "2196",
+      "amount": 4.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5616",
+      "product_guid": "1010017",
+      "amount": 24.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5616",
+      "product_guid": "2197",
+      "amount": 12.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "41811",
+      "product_guid": "1010017",
+      "amount": 16.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "41811",
+      "product_guid": "2197",
+      "amount": 12.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "145229",
+      "product_guid": "1010017",
+      "amount": 28.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "145229",
+      "product_guid": "2185",
+      "amount": 12.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "145230",
+      "product_guid": "1010017",
+      "amount": 32.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "145230",
+      "product_guid": "2186",
+      "amount": 10.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "2878",
+      "product_guid": "1010017",
+      "amount": 4.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "2878",
+      "product_guid": "2181",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "2880",
+      "product_guid": "1010017",
+      "amount": 8.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "2880",
+      "product_guid": "2184",
+      "amount": 4.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "31752",
+      "product_guid": "1010017",
+      "amount": 8.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "31752",
+      "product_guid": "2184",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "2795",
+      "product_guid": "1010017",
+      "amount": 14.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "2795",
+      "product_guid": "2181",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5976",
+      "product_guid": "1010017",
+      "amount": 4.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5976",
+      "product_guid": "2192",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5977",
+      "product_guid": "1010017",
+      "amount": 8.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5977",
+      "product_guid": "2192",
+      "amount": 4.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "31761",
+      "product_guid": "1010017",
+      "amount": 8.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "31761",
+      "product_guid": "2198",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "8427",
+      "product_guid": "1010017",
+      "amount": 14.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "8427",
+      "product_guid": "2192",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5975",
+      "product_guid": "1010017",
+      "amount": 8.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5975",
+      "product_guid": "2197",
+      "amount": 12.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "2200",
+      "product_guid": "1010017",
+      "amount": 4.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "2200",
+      "product_guid": "2181",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "31750",
+      "product_guid": "1010017",
+      "amount": 4.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "31750",
+      "product_guid": "2181",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "2693",
+      "product_guid": "1010017",
+      "amount": 6.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "2693",
+      "product_guid": "2181",
+      "amount": 4.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "2694",
+      "product_guid": "1010017",
+      "amount": 8.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "2694",
+      "product_guid": "2181",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "2698",
+      "product_guid": "1010017",
+      "amount": 6.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "2698",
+      "product_guid": "2181",
+      "amount": 4.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "2699",
+      "product_guid": "1010017",
+      "amount": 6.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "2699",
+      "product_guid": "2181",
+      "amount": 4.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "2669",
+      "product_guid": "1010017",
+      "amount": 8.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "2669",
+      "product_guid": "2181",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "8579",
+      "product_guid": "1010017",
+      "amount": 8.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "8579",
+      "product_guid": "2181",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "2786",
+      "product_guid": "1010017",
+      "amount": 4.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "2786",
+      "product_guid": "2181",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "2793",
+      "product_guid": "1010017",
+      "amount": 6.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "2793",
+      "product_guid": "2181",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "2794",
+      "product_guid": "1010017",
+      "amount": 16.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "2794",
+      "product_guid": "2185",
+      "amount": 6.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "23723",
+      "product_guid": "1010017",
+      "amount": 8.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "23723",
+      "product_guid": "2192",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5971",
+      "product_guid": "1010017",
+      "amount": 8.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5971",
+      "product_guid": "2192",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5972",
+      "product_guid": "1010017",
+      "amount": 6.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5972",
+      "product_guid": "2192",
+      "amount": 4.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "31762",
+      "product_guid": "1010017",
+      "amount": 4.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "31762",
+      "product_guid": "2192",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "31764",
+      "product_guid": "1010017",
+      "amount": 6.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "31764",
+      "product_guid": "2192",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5974",
+      "product_guid": "1010017",
+      "amount": 6.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5974",
+      "product_guid": "2192",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "15514",
+      "product_guid": "1010017",
+      "amount": 16.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "15514",
+      "product_guid": "2199",
+      "amount": 6.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "2799",
+      "product_guid": "1010017",
+      "amount": 4.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "2799",
+      "product_guid": "2192",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "2800",
+      "product_guid": "1010017",
+      "amount": 4.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "2800",
+      "product_guid": "2192",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5973",
+      "product_guid": "1010017",
+      "amount": 4.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5973",
+      "product_guid": "2192",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5477",
+      "product_guid": "1010017",
+      "amount": 16.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5477",
+      "product_guid": "2198",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5848",
+      "product_guid": "1010017",
+      "amount": 4.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5848",
+      "product_guid": "2192",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "6586",
+      "product_guid": "1010017",
+      "amount": 10.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "6586",
+      "product_guid": "2196",
+      "amount": 4.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5609",
+      "product_guid": "1010017",
+      "amount": 8.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5609",
+      "product_guid": "2192",
+      "amount": 2.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5935",
+      "product_guid": "1010017",
+      "amount": 10.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5935",
+      "product_guid": "2196",
+      "amount": 5.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5299",
+      "product_guid": "1010017",
+      "amount": 6.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5299",
+      "product_guid": "2192",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5851",
+      "product_guid": "1010017",
+      "amount": 12.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5851",
+      "product_guid": "2199",
+      "amount": 6.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "31759",
+      "product_guid": "1010017",
+      "amount": 8.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "31759",
+      "product_guid": "2192",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5849",
+      "product_guid": "1010017",
+      "amount": 2.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5849",
+      "product_guid": "2192",
+      "amount": 4.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5847",
+      "product_guid": "1010017",
+      "amount": 4.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5847",
+      "product_guid": "2192",
+      "amount": 4.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "2918",
+      "product_guid": "1010017",
+      "amount": 10.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "2918",
+      "product_guid": "2184",
+      "amount": 5.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "2916",
+      "product_guid": "1010017",
+      "amount": 12.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "2916",
+      "product_guid": "2184",
+      "amount": 5.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "2954",
+      "product_guid": "1010017",
+      "amount": 16.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "2954",
+      "product_guid": "2184",
+      "amount": 5.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "2920",
+      "product_guid": "1010017",
+      "amount": 20.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "2920",
+      "product_guid": "2184",
+      "amount": 5.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "50280",
+      "product_guid": "1010017",
+      "amount": 20.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "50280",
+      "product_guid": "2184",
+      "amount": 5.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "2970",
+      "product_guid": "1010017",
+      "amount": 8.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "2970",
+      "product_guid": "2184",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "2971",
+      "product_guid": "1010017",
+      "amount": 12.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "2971",
+      "product_guid": "2181",
+      "amount": 2.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "31753",
+      "product_guid": "1010017",
+      "amount": 20.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "31753",
+      "product_guid": "2184",
+      "amount": 4.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "3074",
+      "product_guid": "1010017",
+      "amount": 12.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "3074",
+      "product_guid": "2185",
+      "amount": 8.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "3075",
+      "product_guid": "1010017",
+      "amount": 8.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "3075",
+      "product_guid": "2184",
+      "amount": 3.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5978",
+      "product_guid": "1010017",
+      "amount": 12.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5978",
+      "product_guid": "2198",
+      "amount": 5.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5980",
+      "product_guid": "1010017",
+      "amount": 10.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5980",
+      "product_guid": "2198",
+      "amount": 5.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5982",
+      "product_guid": "1010017",
+      "amount": 10.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5982",
+      "product_guid": "2192",
+      "amount": 5.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5291",
+      "product_guid": "1010017",
+      "amount": 4.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5291",
+      "product_guid": "2196",
+      "amount": 5.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5290",
+      "product_guid": "1010017",
+      "amount": 4.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5290",
+      "product_guid": "2196",
+      "amount": 5.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "5295",
+      "product_guid": "1010017",
+      "amount": 8.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "5295",
+      "product_guid": "2196",
+      "amount": 5.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "144810",
+      "product_guid": "1010017",
+      "amount": 10.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "144810",
+      "product_guid": "2184",
+      "amount": 5.0,
+      "kind": "workforce_or_product"
+    },
+    {
+      "building_guid": "144811",
+      "product_guid": "1010017",
+      "amount": 10.0,
+      "kind": "money"
+    },
+    {
+      "building_guid": "144811",
+      "product_guid": "2192",
+      "amount": 5.0,
+      "kind": "workforce_or_product"
+    }
+  ]
+}

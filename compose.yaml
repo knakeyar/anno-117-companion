@@ -15,10 +15,14 @@ services:
       ANNO_DATABASE_PATH: /data/anno-companion.sqlite3
       ANNO_TELEMETRY_DIR: /telemetry
       ANNO_TELEMETRY_GLOB: ${ANNO_TELEMETRY_GLOB:-*.log}
-      ANNO_CATALOG_PATH: /app/catalog/starter-catalog.json
+      ANNO_CATALOG_PATH: /app/catalog/anno117-community-2.1-c6a6e752.json
       ANNO_POLL_INTERVAL_SECONDS: ${ANNO_POLL_INTERVAL_SECONDS:-1}
       ANNO_SNAPSHOT_INTERVAL_SECONDS: 30
       ANNO_STALE_AFTER_SECONDS: ${ANNO_STALE_AFTER_SECONDS:-75}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-5.6-luna}
+      OPENAI_REASONING_EFFORT: ${OPENAI_REASONING_EFFORT:-low}
+      OPENAI_TIMEOUT_SECONDS: ${OPENAI_TIMEOUT_SECONDS:-30}
     volumes:
       - type: bind
         source: ${ANNO_LOG_DIR:-./runtime-data/telemetry}
@@ -62,4 +66,3 @@ services:
       timeout: 3s
       start_period: 5s
       retries: 5
-

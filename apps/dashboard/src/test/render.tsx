@@ -27,6 +27,10 @@ export function installFetchMock(overrides: Record<string, unknown> = {}) {
         play_session_id: parsed.play_session_id,
       })
     }
+    if (method === 'POST' && url.pathname === '/api/v1/trade-plans') {
+      const parsed = JSON.parse(body)
+      return Response.json({ trade_plan_id: 'plan-1', campaign_id: parsed.campaign_id, source_area_pk: parsed.source_area_pk, source_area_name: 'Juliana', destination_area_pk: parsed.destination_area_pk, destination_area_name: 'Naissus', status: 'planned', reason: parsed.reason, evidence: parsed.evidence, goods: parsed.goods, created_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+    }
     if (url.pathname === '/api/v1/inventory/history') {
       return Response.json({ items: [] })
     }

@@ -1,10 +1,10 @@
-# Anno Companion v1
+# Anno Companion v1.1
 
-Anno Companion is a local, read-only operations dashboard for Anno 117. It turns JSON records emitted to the game log into durable inventory history, trade planning, production-chain pressure, finance, workforce, and route-health views.
+Anno Companion is a local, read-only economic workspace for Anno 117. It turns JSON records emitted to the game log into durable campaign state, interactive regional maps, ranked actions and trade plans, city-specific production pressure, finance guidance, workforce facts, and an optional on-demand advisor.
 
 ## What runs
 
-- `anno-companion-data` polls the mounted game-log directory, creates `/data/anno-companion.sqlite3`, normalizes only complete production snapshots, calculates deterministic management signals, and serves the private API.
+- `anno-companion-data` polls the mounted game-log directory, creates `/data/anno-companion.sqlite3`, normalizes only complete production snapshots, owns persistent campaign state, calculates deterministic management signals, and serves the private API. The optional OpenAI call also runs here so the API key never enters the browser image.
 - `anno-companion-dashboard` serves the React application on `http://127.0.0.1:8080` and proxies API/SSE traffic over the internal Compose network.
 - `mod/anno-companion-telemetry` is the production game mod. The research probe remains separate and is not required at runtime.
 
@@ -12,7 +12,7 @@ The dashboard never mounts or opens SQLite directly. Mount a directory for `/dat
 
 ## Windows setup
 
-1. Copy the entire [`mod/anno-companion-telemetry`](mod/anno-companion-telemetry) folder into the Anno 117 **Documents** mods directory. Disable the telemetry probe while using the production mod.
+1. Copy the entire [`mod/anno-companion-telemetry`](mod/anno-companion-telemetry) folder into the Anno 117 **Documents** mods directory. Confirm its manifest is version `1.1.0`. Disable the telemetry probe during ordinary use.
 2. Copy `.env.example` to `.env` and replace `YOUR_WINDOWS_USER`. `ANNO_LOG_DIR` must be the directory containing the game log where `ANNO_COMPANION_TELEMETRY_JSON` appears.
 3. Create the `ANNO_DATA_DIR` directory if it does not exist.
 4. From PowerShell in this repository, run:
@@ -34,9 +34,17 @@ The SQLite database remains in `ANNO_DATA_DIR`. Do not use `docker compose down 
 
 Campaigns start with an automatically generated “Unassigned” name. Settings can rename the current campaign or move the current play session to another campaign when the game seed/participant evidence belongs to an existing save.
 
+Cities, current inventory, finance, last-observed workforce, map placement, actions, conversations, and companion route plans are stored in SQLite. Leaving the game or stopping telemetry makes these values stale/inactive; it does not hide or reset them. The Areas screen supports manual Latium/Albion placement when a runtime coordinate binding is unavailable.
+
+## Optional advisor
+
+Set `OPENAI_API_KEY` in `.env` to enable the Ask advisor drawer. The model, reasoning effort, and timeout are configurable; the default is `gpt-5.6-luna` with low reasoning effort. No AI request runs during ingestion or ordinary dashboard use. Each submitted question sends only a compact selected-campaign summary, deterministic action evidence, catalog coverage, and up to 12 local conversation messages. Raw logs and the database are never sent, hosted tools are not enabled, and Responses are requested with `store=false`.
+
+If the key is missing or the request fails, deterministic actions continue to work and the dashboard shows a non-blocking advisor error. `store=false` avoids Responses application-state storage, but normal API abuse-monitoring retention can still apply under the OpenAI account's data controls.
+
 ## Data contract
 
-The production mod emits a lifecycle event, snapshot start, participant record, one bounded record per controlled area, and snapshot completion every 30 seconds of advancing game time. The data service promotes a snapshot to current state only when its completion record and expected area count agree.
+Telemetry schema v2 emits a full baseline after load, change-only snapshots every 30 seconds of advancing game time, and a complete reconciliation every 10 game minutes. Product and building records are chunked to bound log-line size. The data service promotes state only when every required chunk and completion record agrees; read failures preserve the previous value and mark that section stale rather than writing zero.
 
 Important scope rules are visible in both the API and dashboard:
 
@@ -45,10 +53,14 @@ Important scope rules are visible in both the API and dashboard:
 - workforce is current-camera-area scope;
 - UI-selected production statistics/history are raw-only and are not assigned to islands;
 - engine trend and free-space values remain raw diagnostics;
-- transfer candidates do not imply a feasible route;
+- route proposals are companion plans and do not imply route feasibility or an existing in-game route;
 - production pressure is inferred from stock history unless a verified static recipe relationship exists.
 
-See [`docs/data-model-v1.md`](docs/data-model-v1.md) for the schema and [`catalog/starter-catalog.json`](catalog/starter-catalog.json) for current reference-data coverage.
+The pinned community catalog release contains 145 reference products, 113 inventory-enabled factory goods, and 144 factory recipes. It records source revision and attribution but does not bundle proprietary icon binaries. See [`docs/data-model-v1.md`](docs/data-model-v1.md), [`catalog/anno117-community-2.1-c6a6e752.json`](catalog/anno117-community-2.1-c6a6e752.json), and [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+
+## Runtime capability check
+
+Coordinates and per-city factory counts depend on game Lua bindings that cannot be verified outside Anno. Before treating them as proven on your installation, temporarily enable [`mod/anno-companion-telemetry-probe`](mod/anno-companion-telemetry-probe), capture one `scope_runtime_capabilities` record in Latium and one in Albion, then disable the probe again. Failed coordinate reads use manual map placement; failed building reads remain `presence unknown` and production remains stock-derived.
 
 ## Development and verification
 

@@ -1,81 +1,59 @@
-import { AlertTriangle, ArrowRight, Banknote, Boxes, ShipWheel, TrendingDown, UsersRound, Warehouse } from 'lucide-react'
+import { AlertTriangle, ArrowRight, Banknote, Bot, Check, Clock3, Route, TrendingDown } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { useOverview } from '../api'
-import { CatalogBadge, ErrorState, FreshnessBanner, LoadingState, MetricCard, PageHeader, SectionHeader, EmptyState } from '../components/Common'
-import { SignalList } from '../components/SignalList'
-import { formatMoney, formatNumber, titleCase } from '../utils'
+import { useAreas, useCompanionMutations, useFinanceHistory, useOverview } from '../api'
+import { CatalogBadge, EmptyState, ErrorState, FreshnessBanner, LoadingState, PageHeader, SectionHeader } from '../components/Common'
+import { areaRegion, RegionMap } from '../components/RegionMap'
+import { formatMoney, formatNumber } from '../utils'
 
 export function CommandCenterPage() {
   const overview = useOverview()
-  if (overview.isLoading) return <LoadingState />
-  if (overview.error) return <ErrorState error={overview.error} retry={() => void overview.refetch()} />
-  if (!overview.data) return null
+  const areas = useAreas()
+  const history = useFinanceHistory()
+  const mutations = useCompanionMutations()
+  if (overview.isLoading || areas.isLoading) return <LoadingState />
+  const error = overview.error || areas.error
+  if (error) return <ErrorState error={error} retry={() => { void overview.refetch(); void areas.refetch() }} />
+  if (!overview.data || !areas.data) return null
   const data = overview.data
-  const critical = data.signals.filter((signal) => signal.severity === 'critical').length
+  const critical = data.actions.filter((item) => item.severity === 'critical').length
+  const latium = areas.data.items.filter((item) => areaRegion(item) === 'latium')
+  const albion = areas.data.items.filter((item) => areaRegion(item) === 'albion')
+  const treasuryPoints = history.data?.items.filter((item) => item.treasury != null) ?? []
+  const treasuryMin = Math.min(...treasuryPoints.map((item) => item.treasury!), 0)
+  const treasuryMax = Math.max(...treasuryPoints.map((item) => item.treasury!), 1)
 
-  return (
-    <div className="page command-page">
-      <PageHeader
-        eyebrow="Economy command center"
-        title="Keep every island moving."
-        description="One operational view for stock pressure, trade opportunities, workforce, and route health."
-        actions={<CatalogBadge catalog={data.catalog} />}
-      />
-      <FreshnessBanner meta={data.meta} />
-      <section className="metric-grid" aria-label="Economy summary">
-        <MetricCard label="Treasury" value={formatMoney(data.finance?.treasury)} supporting="Participant-wide" icon={<Banknote size={16} />} />
-        <MetricCard
-          label="Balance"
-          value={formatMoney(data.finance?.total_balance_raw)}
-          supporting="Raw game balance"
-          tone={(data.finance?.total_balance_raw ?? 0) < 0 ? 'critical' : 'positive'}
-          icon={<TrendingDown size={16} />}
-        />
-        <MetricCard label="Critical pressure" value={critical} supporting={`${data.counts.signals} total signals`} tone={critical ? 'critical' : 'positive'} icon={<AlertTriangle size={16} />} />
-        <MetricCard label="Transfer candidates" value={data.counts.transfer_candidates} supporting="Route feasibility unknown" tone={data.counts.transfer_candidates ? 'warning' : 'neutral'} icon={<ShipWheel size={16} />} />
-      </section>
+  return <div className="page command-page">
+    <PageHeader eyebrow="Economy command center" title="Decide what to fix next." description="Persistent campaign facts, ranked actions, and city-specific evidence remain available while Anno is inactive." actions={<div className="header-actions"><button className="button primary" onClick={() => window.dispatchEvent(new Event('anno:open-advisor'))}><Bot size={15} /> Ask advisor</button><CatalogBadge catalog={data.catalog} /></div>} />
+    <FreshnessBanner meta={data.meta} />
+    <section className="metric-grid clickable-metrics" aria-label="Economy summary">
+      <Link to="/#balance" className="metric-card"><span className="metric-label"><Banknote size={16} /> Treasury</span><strong className="metric-value">{formatMoney(data.finance?.treasury)}</strong><small className="metric-supporting">{data.balance_analysis?.treasury_is_falling ? 'Falling over this play session' : 'Participant-wide persisted value'}</small></Link>
+      <Link to="/#balance" className={`metric-card ${(data.finance?.total_balance_raw ?? 0) < 0 ? 'critical' : 'positive'}`}><span className="metric-label"><TrendingDown size={16} /> Reported balance</span><strong className="metric-value">{formatMoney(data.finance?.total_balance_raw)}</strong><small className="metric-supporting">Separate from treasury movement</small></Link>
+      <Link to="/#actions" className={`metric-card ${critical ? 'critical' : 'positive'}`}><span className="metric-label"><AlertTriangle size={16} /> Critical actions</span><strong className="metric-value">{critical}</strong><small className="metric-supporting">{data.actions.length} actionable recommendations</small></Link>
+      <Link to="/trade" className={`metric-card ${data.suggested_routes.length ? 'warning' : ''}`}><span className="metric-label"><Route size={16} /> Suggested routes</span><strong className="metric-value">{data.suggested_routes.length}</strong><small className="metric-supporting">Grouped plans · feasibility unknown</small></Link>
+    </section>
 
-      <div className="command-grid">
-        <section className="panel span-two">
-          <SectionHeader title="Priority queue" description="Observed facts and stock-based inferred pressure, ranked for action." action={<Link className="text-link" to="/trade">Open trade planner <ArrowRight size={14} /></Link>} />
-          <SignalList signals={data.signals} limit={8} />
-        </section>
-        <section className="panel">
-          <SectionHeader title="Move stock" description="Potential source-to-destination transfers." />
-          {data.transfer_candidates.length ? (
-            <div className="transfer-list">
-              {data.transfer_candidates.slice(0, 5).map((item) => (
-                <div className="transfer-row" key={`${item.product_guid}-${item.source_area_pk}-${item.destination_area_pk}`}>
-                  <span className="product-glyph"><Boxes size={17} /></span>
-                  <div><strong>{item.product_name}</strong><small>{item.source_area_name} <ArrowRight size={11} /> {item.destination_area_name}</small></div>
-                  <b>{formatNumber(item.advisory_amount)}</b>
-                </div>
-              ))}
-              <Link className="button ghost full" to="/trade">Review all candidates</Link>
-            </div>
-          ) : <EmptyState title="No transfer candidates" description="No observed island is simultaneously above its high target while another is below its low target." />}
-        </section>
-      </div>
-
-      <div className="command-grid bottom">
-        <section className="panel">
-          <SectionHeader title="Route warnings" description="Coarse game warnings; names are not stable route IDs." />
-          {data.route_issues.length ? <div className="compact-list">
-            {data.route_issues.map((issue, index) => <div className={`compact-row ${issue.severity}`} key={`${issue.route_name}-${issue.issue_code}-${index}`}>
-              <Warehouse size={17} /><span><strong>{issue.route_name || 'Unnamed route'}</strong><small>{titleCase(issue.issue_code)}</small></span>
-            </div>)}
-          </div> : <EmptyState title="No route warnings" description="The latest complete snapshot contained no coarse route issues." />}
-        </section>
-        <section className="panel">
-          <SectionHeader title="Current-area workforce" description="Only valid for the camera area at observation time." />
-          {data.workforce_shortages.length ? <div className="compact-list">
-            {data.workforce_shortages.map((item) => <Link to={`/areas/${item.area_pk}`} className="compact-row critical" key={item.workforce_guid}>
-              <UsersRound size={17} /><span><strong>{item.name || item.workforce_guid}</strong><small>{item.area_name} · deficit {formatNumber(Math.abs(item.delta_without_buffs ?? 0), 1)}</small></span>
-            </Link>)}
-          </div> : <EmptyState title="No observed workforce deficit" description="Either the current camera area is balanced or workforce was not observable in this snapshot." />}
-        </section>
-      </div>
+    <div className="command-map-grid">
+      <RegionMap compact region="latium" areas={latium} signals={data.signals} />
+      <RegionMap compact region="albion" areas={albion} signals={data.signals} />
     </div>
-  )
-}
 
+    <div className="command-grid" id="actions">
+      <section className="panel span-two"><SectionHeader title="Top economic actions" description="Deterministic, evidence-backed work ranked before any AI call." action={<Link className="text-link" to="/trade">Open trade plans <ArrowRight size={14} /></Link>} />
+        {data.actions.length ? <div className="action-list">{data.actions.slice(0, 6).map((action, index) => <article className={`action-card ${action.severity}`} key={action.action_id}>
+          <span className="action-rank">{index + 1}</span><Link to={action.deep_link || '/'}><strong>{action.title}</strong><p>{action.summary}</p><small>{action.kind.replaceAll('_', ' ')} · evidence available</small></Link>
+          <div className="action-controls"><button title="Accept" onClick={() => mutations.patchAction.mutate({ id: action.action_id, status: 'accepted' })}><Check size={14} /></button><button title="Snooze" onClick={() => mutations.patchAction.mutate({ id: action.action_id, status: 'snoozed' })}><Clock3 size={14} /></button></div>
+        </article>)}</div> : <EmptyState title="No active actions" description="The current observations do not trigger a deterministic intervention." />}
+      </section>
+      <section className="panel" id="balance"><SectionHeader title="Why balance is changing" description="Reported balance and treasury movement are intentionally separate." />
+        {data.balance_analysis ? <div className="balance-analysis">
+          <div className="treasury-spark" aria-label="Treasury history">{treasuryPoints.map((point, index) => <i key={`${point.observed_at}-${index}`} style={{ height: `${18 + ((point.treasury! - treasuryMin) / Math.max(1, treasuryMax - treasuryMin)) * 62}%` }} />)}</div>
+          {data.balance_analysis.guidance.map((item) => <article key={item.code}><strong>{item.title}</strong><p>{item.suggestion}</p></article>)}
+          <dl><div><dt>Passive trade</dt><dd>{formatMoney(data.balance_analysis.trade_balance.passive)}</dd></div><div><dt>Active trade</dt><dd>{formatMoney(data.balance_analysis.trade_balance.active)}</dd></div><div><dt>Treasury / game min</dt><dd>{formatNumber(data.balance_analysis.treasury_change_per_game_minute, 1)}</dd></div></dl>
+          <div className="finance-category"><span>Estimated base factory maintenance</span><b>{formatMoney(data.balance_analysis.estimated_base_maintenance.total)}</b></div>
+          <small>{data.balance_analysis.estimated_base_maintenance.notice}</small>
+          <h3>Largest expenses</h3>{data.balance_analysis.largest_negative_categories.slice(0, 4).map((item) => <div className="finance-category" key={`${item.kind}-${item.ordinal}`}><span>{item.localized_label || item.category_guid_raw || 'Unknown category'}</span><b>{formatMoney(item.value)}</b></div>)}
+        </div> : <EmptyState title="No finance observation" description="Finance guidance appears after a complete participant snapshot." />}
+      </section>
+    </div>
+  </div>
+}

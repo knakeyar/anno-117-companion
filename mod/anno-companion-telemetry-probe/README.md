@@ -1,4 +1,4 @@
-# Anno Companion Focused Scope Probe 0.2.1
+# Anno Companion Focused Scope Probe 0.3.0
 
 This is the second, smaller read-only runtime test. The first broad run established that log transport, controlled-area enumeration, inventory, population, finance, trade-route issues, ships, and factories are reachable. This version focuses on the remaining scope questions that affect the stable v1 data model.
 
@@ -21,6 +21,7 @@ The records cover:
 - production/consumption statistics for those products;
 - workforce supply, demand, and balance candidates;
 - four statistics-history indices.
+- Kontor `Position2D`/session identity and building-count bindings for every controlled area.
 
 The target area is chosen in this order:
 
@@ -32,7 +33,7 @@ The `target_area_reason` field states which rule was used.
 
 ## Install/update
 
-Copy the entire `anno-companion-telemetry-probe` folder into the Anno 117 `mods` directory. Confirm that the installed manifest is version `0.2.1` and keep only one copy of this ModID enabled.
+Copy the entire `anno-companion-telemetry-probe` folder into the Anno 117 `mods` directory. Confirm that the installed manifest is version `0.3.0` and keep only one copy of this ModID enabled.
 
 The final layout must be:
 
@@ -63,7 +64,7 @@ The probe is complete when it emits `scope_probe_completed`. Reloading the save 
 
 ## Return the output
 
-Search the game log for `ANNO_COMPANION_PROBE_JSON` and send all version `0.2.1` lines from `scope_probe_loaded` through `scope_probe_completed` (or `scope_probe_unloaded` if you stop early).
+Search the game log for `scope_runtime_capabilities`. Capture at least one version `0.3.0` record while the camera is in Latium and one after moving to Albion. Those records prove coordinate/session and building-count availability before we treat the fields as runtime-verified.
 
 Also tell us which island was used in each step and which passive-trade setting you changed. That manual UI evidence is needed to determine whether the statistics and workforce globals follow the current camera area, the statistics UI selection, or another hidden context.
 

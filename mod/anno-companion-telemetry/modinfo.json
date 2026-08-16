@@ -1,6 +1,6 @@
 {
   "Anno": 8,
-  "Version": "1.0.0",
+  "Version": "1.1.0",
   "ModID": "anno-companion-telemetry-local",
   "Difficulty": "unchanged",
   "Category": {
@@ -10,7 +10,7 @@
     "English": "Anno Companion Telemetry"
   },
   "Description": {
-    "English": "Read-only economy telemetry for Anno Companion. Emits bounded JSON records to the game log every 30 seconds of play time."
+    "English": "Read-only persistent economy telemetry for Anno Companion. Emits chunked baselines, deltas, and reconciliations to the game log."
   },
   "CreatorName": "Anno Companion",
   "GameSetup": {
@@ -30,4 +30,3 @@
     "Tick": "AnnoCompanionTelemetry:Tick()"
   }
 }
-

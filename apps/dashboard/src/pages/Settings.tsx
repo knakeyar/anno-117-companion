@@ -43,6 +43,10 @@ export function SettingsPage() {
       await queryClient.invalidateQueries()
     },
   })
+  const selection = useMutation({
+    mutationFn: (campaignId: string) => api.selectCampaign(campaignId),
+    onSuccess: async () => { await queryClient.invalidateQueries() },
+  })
   if (status.isLoading || campaigns.isLoading) return <LoadingState label="Inspecting the data pipeline…" />
   const error = status.error || campaigns.error
   if (error) return <ErrorState error={error} retry={() => { void status.refetch(); void campaigns.refetch() }} />
@@ -61,7 +65,7 @@ export function SettingsPage() {
       <div className="settings-grid">
         <section className="panel">
           <SectionHeader title="Campaign identity" description="Seed and participant are provisional evidence until you name the campaign." />
-          {campaigns.data.length ? <div className="campaign-list">{campaigns.data.map((campaign) => <CampaignNameEditor campaign={campaign} key={campaign.campaign_id} />)}</div> : <EmptyState title="No campaign observed" description="A campaign will be created when the first snapshot supplies game seed and participant evidence." />}
+          {campaigns.data.length ? <><label className="select-field active-campaign"><span>Dashboard campaign</span><select value={data.selected_campaign_id ?? ''} disabled={selection.isPending} onChange={(event) => selection.mutate(event.target.value)}>{campaigns.data.map((campaign) => <option value={campaign.campaign_id} key={campaign.campaign_id}>{campaign.display_name}</option>)}</select></label><div className="campaign-list">{campaigns.data.map((campaign) => <CampaignNameEditor campaign={campaign} key={campaign.campaign_id} />)}</div></> : <EmptyState title="No campaign observed" description="A campaign will be created when the first snapshot supplies game seed and participant evidence." />}
         </section>
         <section className="panel">
           <SectionHeader title="Current play session" description="Every mod load opens a new authority epoch." />
@@ -94,6 +98,11 @@ export function SettingsPage() {
           <div><strong>{source.path}</strong><small>{formatNumber(source.byte_offset)} / {formatNumber(source.file_size)} bytes · {source.last_read_at ? `read ${new Date(source.last_read_at).toLocaleString()}` : 'not read yet'}</small>{source.last_error && <em>{source.last_error}</em>}</div>
           <CheckCircle2 size={18} className={source.last_error ? 'negative' : 'positive'} />
         </div>)}</div> : <EmptyState title="No log file discovered" description="Confirm ANNO_LOG_DIR points to the Anno 117 Documents log directory and contains a matching .log file." />}
+      </section>
+
+      <section className="panel">
+        <SectionHeader title="OpenAI advisor" description="Optional, on-demand analysis grounded only in deterministic companion actions." />
+        <dl className="detail-list"><div><dt>Configured</dt><dd>{data.advisor.configured ? 'Yes' : 'No — deterministic actions still work'}</dd></div><div><dt>Model</dt><dd>{data.advisor.model}</dd></div><div><dt>Reasoning effort</dt><dd>{data.advisor.reasoning_effort}</dd></div><div><dt>Storage</dt><dd>Local conversation · API request store=false</dd></div></dl>
       </section>
 
       <section className="panel onboarding-panel">
