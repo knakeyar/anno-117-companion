@@ -129,6 +129,69 @@ def test_exact_tag_detection_aggregates_route_ships_and_planned_goods(session_fa
         assert plan["route_tag"] in plan["suggested_route_name"]
 
 
+def test_route_name_convention_auto_links_unique_city_aliases_and_named_good(session_factory, app_settings) -> None:
+    seed_complete_snapshots(session_factory)
+    with session_factory() as session:
+        play = session.scalar(select(PlaySession).where(PlaySession.is_current.is_(True)))
+        snapshot = latest_complete_snapshot(session, play.campaign_id)
+        cudslip = Area(
+            campaign_id=play.campaign_id,
+            area_id_raw="8451",
+            latest_name="Cudslip",
+            confirmed_region_guid="6626",
+            confirmed_game_session_guid="6569",
+            region_evidence="test",
+        )
+        rhydfell = Area(
+            campaign_id=play.campaign_id,
+            area_id_raw="8452",
+            latest_name="Rhydfell",
+            confirmed_region_guid="6626",
+            confirmed_game_session_guid="6569",
+            region_evidence="test",
+        )
+        session.add_all([cudslip, rhydfell])
+        session.flush()
+        session.add(_route(
+            key="named-route",
+            name="Timber Cud - Rhy",
+            campaign_id=play.campaign_id,
+            play_session_id=play.play_session_id,
+            snapshot_id=snapshot.snapshot_id,
+        ))
+        session.add(_ship("named-route", "9001", paused=False, name="Minerva"))
+        campaign_id = play.campaign_id
+        session.commit()
+
+    app = create_app(app_settings, session_factory)
+    with TestClient(app) as client:
+        network = client.get("/api/v1/trade/network").json()
+        assert not any(item["route_key"] == "named-route" for item in network["unmapped_routes"])
+        edge = network["graphs"]["albion"]["edges"][0]
+        assert edge["source_area_name"] == "Cudslip"
+        assert edge["destination_area_name"] == "Rhydfell"
+        assert edge["status"] == "running"
+        assert edge["goods_verification"] == "route_name_only"
+        assert edge["route_name_goods"] == [{
+            "product_guid": "2174",
+            "product_name": "Timber",
+            "amount": None,
+            "evidence_kind": "route_name_label",
+            "trade_plan_id": None,
+            "ship_id": None,
+            "area_id": None,
+            "stop_ordinal": None,
+            "observed_at": None,
+        }]
+        assert edge["summary"] == {"goods": 1, "routes": 1, "ships": 1, "plans": 0}
+        with session_factory() as session:
+            link = session.scalar(select(TradeRouteLink).where(
+                TradeRouteLink.campaign_id == campaign_id,
+                TradeRouteLink.route_key == "named-route",
+            ))
+            assert link is not None and link.link_method == "route_name"
+
+
 def test_manual_link_moves_an_opaque_route_into_cross_region_graph_and_unlinks(session_factory, app_settings) -> None:
     seed_complete_snapshots(session_factory)
     with session_factory() as session:

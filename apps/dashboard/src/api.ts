@@ -10,6 +10,7 @@ import type {
   Finance,
   FinanceAnalysis,
   HistoryPoint,
+  HistorySeries,
   InventoryResponse,
   ObservationMeta,
   OverviewResponse,
@@ -60,6 +61,10 @@ export const api = {
   history: (areaPk: number, productGuid: string) =>
     unwrap<{ items: HistoryPoint[] }>(client.GET('/api/v1/inventory/history', {
       params: { query: { area_pk: areaPk, product_guid: productGuid } },
+    })),
+  historyGroup: (areaPk: number, productGuids: string[]) =>
+    unwrap<{ items?: never; series: HistorySeries[] }>(client.GET('/api/v1/inventory/history/group', {
+      params: { query: { area_pk: areaPk, product_guid: productGuids } },
     })),
   overview: () => unwrap<OverviewResponse>(client.GET('/api/v1/dashboard/overview')),
   trade: () => unwrap<TradeResponse>(client.GET('/api/v1/trade/opportunities')),
@@ -116,6 +121,7 @@ export const queryKeys = {
   workforce: ['workforce'] as const,
   policies: ['policies'] as const,
   history: (areaPk: number, productGuid: string) => ['history', areaPk, productGuid] as const,
+  historyGroup: (areaPk: number, productGuids: string[]) => ['history-group', areaPk, [...productGuids].sort().join(',')] as const,
 }
 
 const queryOptions = { refetchInterval: 30_000, staleTime: 10_000, retry: 2 }
@@ -145,6 +151,13 @@ export const useHistory = (areaPk: number, productGuid: string) =>
     queryKey: queryKeys.history(areaPk, productGuid),
     queryFn: () => api.history(areaPk, productGuid),
     enabled: Boolean(areaPk && productGuid),
+  })
+
+export const useHistoryGroup = (areaPk: number, productGuids: string[]) =>
+  useQuery({
+    queryKey: queryKeys.historyGroup(areaPk, productGuids),
+    queryFn: () => api.historyGroup(areaPk, productGuids),
+    enabled: Boolean(areaPk && productGuids.length),
   })
 
 export function useCompanionMutations() {

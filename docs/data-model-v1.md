@@ -45,7 +45,7 @@ Only a complete production snapshot can become current. Legacy focused-probe rec
 | `trade_route_issue_observation` | Ephemeral route-name label and coarse issue code; not a durable route identity. |
 | `active_trade_route_current` / `active_trade_route_ship_current` | Last complete ship-backed route-name evidence. Route names remain mutable labels and ship IDs remain the stronger rename clue. |
 
-UI-selected production statistics/history, inferred route topology, periodic factory records, and the invalid `buffed_delta` candidate have no normalized v1 tables. The optional route-good observation table remains empty until configured goods or cargo are independently validated; failed or speculative probes are raw-only.
+UI-selected production statistics/history, periodic factory records, and the invalid `buffed_delta` candidate have no normalized v1 tables. Route endpoints may be linked from exact `Good SRC - DST` names only when both three-letter aliases resolve uniquely inside the campaign; this is stored as `route_name` evidence and is never fuzzy-matched. The optional route-good observation table remains empty until configured goods or cargo are independently validated; product labels parsed from route names are presentation evidence only, while failed or speculative probes are raw-only.
 
 Materialized state changes only after a complete baseline, delta, or reconciliation. A failed read updates freshness/error evidence without replacing the previous value. A telemetry unload ends the active play session but never clears selected campaign state.
 
@@ -55,7 +55,7 @@ Materialized state changes only after a complete baseline, delta, or reconciliat
 |---|---|
 | `management_action` | Stable deterministic action identity and active/accepted/snoozed/dismissed/completed/resolved workflow. |
 | `trade_plan` / `trade_plan_item` | Companion-only route intent; no write is made to Anno. |
-| `trade_route_link` | User-confirmed or exact-tag evidence connecting an opaque observed Anno route to source/destination cities and, optionally, a companion plan. |
+| `trade_route_link` | Exact-tag, exact unique route-name convention, or user-confirmed evidence connecting an opaque observed Anno route to source/destination cities and, optionally, a companion plan. |
 | `trade_route_good_observation` | Optional future normalized evidence for configured route goods or cargo aboard. Evidence kind is mandatory; planned intent is never written here. |
 | `advisor_conversation` / `advisor_message` | Campaign-scoped local conversation history and validated action references. |
 
@@ -74,5 +74,6 @@ The API calculates rather than persists:
 - grouped, bounded source/destination route proposals with unknown feasibility.
 - campaign-scoped Latium, Albion, and cross-region graph edges aggregated by directed city pair without summing unlike goods;
 - exact, case-insensitive `AC-XXXXX` route-tag matching with separate workflow, runtime, and freshness states.
+- exact, unique three-letter city-alias resolution for observed `Good SRC - DST` route names; ambiguous names remain unmapped.
 
 These outputs always carry snapshot, play-session, observation time, scope, freshness, and catalog coverage. They use “net stock change” and “inferred pressure”; they are not presented as measured factory production or consumption.

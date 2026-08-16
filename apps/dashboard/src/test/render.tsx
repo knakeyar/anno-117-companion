@@ -41,6 +41,9 @@ export function installFetchMock(overrides: Record<string, unknown> = {}) {
     if (url.pathname === '/api/v1/inventory/history') {
       return Response.json({ items: [] })
     }
+    if (url.pathname === '/api/v1/inventory/history/group') {
+      return Response.json({ series: url.searchParams.getAll('product_guid').map((productGuid) => ({ product_guid: productGuid, items: [] })) })
+    }
     const fixture = fixtures[url.pathname]
     if (fixture === undefined) return new Response('Not found', { status: 404 })
     return Response.json(fixture)

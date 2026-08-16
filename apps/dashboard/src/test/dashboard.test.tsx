@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react'
+import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { App } from '../App'
 import { inventory, overview } from './fixtures'
@@ -18,19 +18,16 @@ describe('first-class management dashboard', () => {
   it('keeps isolated cities visible without geographic coordinates or routes', async () => {
     installFetchMock()
     renderApp(<App />, '/areas')
-    expect(await screen.findByRole('region', { name: /Albion trade network/i })).toBeInTheDocument()
-    expect(screen.getAllByText('Cudslip').length).toBeGreaterThan(0)
-    expect(screen.getByText(/Endpoints require a companion plan/i)).toBeInTheDocument()
+    expect(await screen.findByText('Albion')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Cudslip/i })).toHaveAttribute('href', '/areas/3')
   })
 
-  it('opens city evidence with important goods and stock-derived pressure', async () => {
+  it('opens a persisted city from the regional list', async () => {
     installFetchMock()
     renderApp(<App />, '/areas')
-    const cityNodes = await screen.findAllByLabelText(/Naissus, critical, 1 economic pressures/i)
-    fireEvent.click(cityNodes[0])
-    expect(screen.getByRole('dialog', { name: /City evidence for Naissus/i })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Important goods' })).toBeInTheDocument()
-    expect(screen.getByText(/Stock is below the management target/i)).toBeInTheDocument()
+    await userEvent.click(await screen.findByRole('link', { name: /Naissus/i }))
+    expect(await screen.findByRole('heading', { name: 'Naissus' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Stock history by workforce' })).toBeInTheDocument()
   })
 
   it('makes stale telemetry explicit without turning observations into zero', async () => {
@@ -113,10 +110,9 @@ describe('first-class management dashboard', () => {
     })
     renderApp(<App />, '/areas/1')
     expect(await screen.findByRole('heading', { name: 'Juliana' })).toBeInTheDocument()
-    expect(screen.getByLabelText('Stock to chart')).toBeInTheDocument()
-    expect(screen.getByRole('group', { name: 'Latium · Libertus Workforce' })).toBeInTheDocument()
-    expect(screen.getByRole('group', { name: 'Albion · Wader Workforce' })).toBeInTheDocument()
-    expect(screen.getByRole('option', { name: 'Barley · 17 stock' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Resource workforce')).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'Latium · Libertus Workforce · 1 goods' })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'Albion · Wader Workforce · 1 goods' })).toBeInTheDocument()
     expect(screen.getByText('Construction materials')).toBeInTheDocument()
   })
 

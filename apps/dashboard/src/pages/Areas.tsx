@@ -3,18 +3,17 @@ import ReactEChartsCoreImport from 'echarts-for-react/lib/core'
 import type { ComponentType, CSSProperties } from 'react'
 import * as echarts from 'echarts/core'
 import { LineChart } from 'echarts/charts'
-import { GridComponent, TooltipComponent } from 'echarts/components'
+import { GridComponent, LegendComponent, TooltipComponent } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
-import { ArrowRight, Boxes, CircleDollarSign, Crown, Hammer, MapPinned, Pickaxe, Scale, Search, UsersRound, Warehouse, Waves, Wheat } from 'lucide-react'
+import { Boxes, ChevronRight, CircleDollarSign, Crown, Hammer, MapPinned, Pickaxe, Scale, Search, UsersRound, Warehouse, Waves, Wheat } from 'lucide-react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { useAreas, useChains, useCompanionMutations, useFinance, useHistory, useInventory, useTradeNetwork, useTradePlans, useWorkforce } from '../api'
+import { useAreas, useChains, useFinance, useHistoryGroup, useInventory, useWorkforce } from '../api'
 import { EmptyState, ErrorState, FillBar, FreshnessBanner, LoadingState, MetricCard, PageHeader, SectionHeader } from '../components/Common'
 import { PolicyEditor } from '../components/PolicyEditor'
-import { TradeNetworkCards } from '../components/TradeNetworkGraph'
 import type { InventoryItem, ProductionChain } from '../types'
 import { formatMoney, formatNumber, formatRate } from '../utils'
 
-echarts.use([LineChart, GridComponent, TooltipComponent, CanvasRenderer])
+echarts.use([LineChart, GridComponent, LegendComponent, TooltipComponent, CanvasRenderer])
 
 // echarts-for-react publishes this entry point as CommonJS. Vite can expose
 // that default export as a module object in a production build even though the
@@ -137,30 +136,25 @@ function GoodsDomainSection({ domain, items, pressureProducts, initiallyOpen, on
 export function AreasPage() {
   const areas = useAreas()
   const inventory = useInventory()
-  const mutations = useCompanionMutations()
-  const network = useTradeNetwork()
-  const plans = useTradePlans()
-  if (areas.isLoading || inventory.isLoading || network.isLoading || plans.isLoading) return <LoadingState label="Building the trade network…" />
-  const error = areas.error || inventory.error || network.error || plans.error
-  if (error) return <ErrorState error={error} retry={() => { void areas.refetch(); void inventory.refetch(); void network.refetch(); void plans.refetch() }} />
-  if (!areas.data || !inventory.data || !network.data || !plans.data) return null
+  if (areas.isLoading || inventory.isLoading) return <LoadingState label="Loading persisted cities…" />
+  const error = areas.error || inventory.error
+  if (error) return <ErrorState error={error} retry={() => { void areas.refetch(); void inventory.refetch() }} />
+  if (!areas.data || !inventory.data) return null
+  const regionGroups = [
+    { key: 'latium', name: 'Latium', guids: new Set(['3225', '3245']), items: areas.data.items.filter((area) => ['3225', '3245'].includes(area.region_guid ?? '')) },
+    { key: 'albion', name: 'Albion', guids: new Set(['6626', '6627']), items: areas.data.items.filter((area) => ['6626', '6627'].includes(area.region_guid ?? '')) },
+    { key: 'unknown', name: 'Region not confirmed', guids: new Set<string>(), items: areas.data.items.filter((area) => !['3225', '3245', '6626', '6627'].includes(area.region_guid ?? '')) },
+  ].filter((group) => group.items.length)
   return (
     <div className="page">
-      <PageHeader eyebrow="Controlled areas" title="Your cities form a trade network." description="Latium, Albion, and cross-region relationships remain available from persisted campaign evidence when Anno is inactive." />
+      <PageHeader eyebrow="Controlled areas" title="Choose a city to manage." description="Persisted cities remain available after Anno closes. Trade relationships live in the dedicated Trade workspace." />
       <FreshnessBanner meta={inventory.data.meta} />
-      {areas.data.items.length ? <TradeNetworkCards network={network.data} areas={areas.data.items} plans={plans.data.items} onLink={(body) => mutations.linkTradeRoute.mutate(body)} onUnlink={(linkId) => mutations.unlinkTradeRoute.mutate(linkId)} onRelink={(linkId, routeKey) => mutations.relinkTradeRoute.mutate({ linkId, routeKey })} /> : null}
-      {network.data.graphs.latium.nodes.length + network.data.graphs.albion.nodes.length < areas.data.items.length && <div className="notice warning"><MapPinned size={18} /><div><strong>Some cities have no confirmed region</strong><span>They remain in the city list but cannot enter a regional graph until telemetry identifies Latium or Albion.</span></div></div>}
-      {areas.data.items.length ? <div className="area-card-grid">
-        {areas.data.items.map((area) => {
-          const items = inventory.data.items.filter((item) => item.area_pk === area.area_pk)
-          const pressure = inventory.data.signals.filter((signal) => signal.area_pk === area.area_pk)
-          return <Link to={`/areas/${area.area_pk}`} className="area-card" key={area.area_pk}>
-            <header><span className="area-mark"><MapPinned size={18} /></span><div><h2>{area.name}</h2><p>{area.region_guid ? `Region ${area.region_guid}` : 'Region not yet correlated'}</p></div><ArrowRight size={17} /></header>
-            <div className="area-card-stats"><span><strong>{items.length}</strong><small>tracked goods</small></span><span><strong>{pressure.length}</strong><small>pressure signals</small></span></div>
-            <div className="mini-goods">{items.slice(0, 3).map((item) => <span key={item.product_guid}><small>{item.product_name}</small><b>{formatNumber(item.stock)}</b></span>)}</div>
-          </Link>
-        })}
-      </div> : <EmptyState title="No controlled areas yet" description="The data service is waiting for a complete production telemetry snapshot." />}
+      {areas.data.items.length ? <div className="region-area-list">{regionGroups.map((group) => <details open key={group.key}><summary><span><MapPinned size={16} /><strong>{group.name}</strong></span><small>{group.items.length} {group.items.length === 1 ? 'city' : 'cities'}</small></summary><div>{group.items.sort((a, b) => a.name.localeCompare(b.name)).map((area) => {
+        const items = inventory.data.items.filter((item) => item.area_pk === area.area_pk)
+        const pressure = inventory.data.signals.filter((signal) => signal.area_pk === area.area_pk)
+        const critical = pressure.filter((signal) => signal.severity === 'critical').length
+        return <Link to={`/areas/${area.area_pk}`} className="area-list-row" key={area.area_pk}><span className={`area-severity-dot ${critical ? 'critical' : pressure.length ? 'warning' : 'stable'}`} /><span><strong>{area.name}</strong><small>{area.latest_observation.observed_at ? `Last observed ${new Date(String(area.latest_observation.observed_at)).toLocaleString()}` : 'Awaiting first observation'}</small></span><span className="area-list-stats"><b>{items.length}</b><small>goods</small></span><span className="area-list-stats"><b>{pressure.length}</b><small>pressures</small></span><ChevronRight size={16} /></Link>
+      })}</div></details>)}</div> : <EmptyState title="No controlled areas yet" description="The data service is waiting for a complete production telemetry snapshot." />}
     </div>
   )
 }
@@ -176,15 +170,10 @@ export function AreaDetailPage() {
   const chains = useChains()
   const area = areas.data?.items.find((item) => item.area_pk === areaId)
   const areaItems = useMemo(() => inventory.data?.items.filter((item) => item.area_pk === areaId) ?? [], [inventory.data?.items, areaId])
-  const [selectedProduct, setSelectedProduct] = useState(() => searchParams.get('product') ?? '')
+  const requestedProduct = searchParams.get('product') ?? ''
+  const [selectedStockGroup, setSelectedStockGroup] = useState('')
   const [goodsSearch, setGoodsSearch] = useState('')
   const [editing, setEditing] = useState<InventoryItem | null>(null)
-  const suggestedProduct = inventory.data?.signals.find((signal) => signal.area_pk === areaId)?.product_guid
-    ?? areaItems.find((item) => (item.stock ?? 0) > 0)?.product_guid
-    ?? areaItems[0]?.product_guid
-  const effectiveProduct = selectedProduct || suggestedProduct || ''
-  const history = useHistory(areaId, effectiveProduct)
-  const selected = areaItems.find((item) => item.product_guid === effectiveProduct)
   const workforceItems = workforce.data?.items.filter((item) => item.area_pk === areaId) ?? []
   const pressureProducts = useMemo(() => new Set(inventory.data?.signals.filter((signal) => signal.area_pk === areaId).map((signal) => signal.product_guid) ?? []), [inventory.data?.signals, areaId])
   const goodsGroups = useMemo(() => {
@@ -201,6 +190,14 @@ export function AreaDetailPage() {
     () => stockPickerGroups(areaItems, chains.data?.chains, area?.region_guid ?? null),
     [areaItems, chains.data?.chains, area?.region_guid],
   )
+  const effectiveStockGroup = stockGroups.find((group) => group.key === selectedStockGroup)
+    ?? stockGroups.find((group) => group.items.some((item) => item.product_guid === requestedProduct))
+    ?? stockGroups[0]
+  const groupProductGuids = useMemo(
+    () => effectiveStockGroup?.items.map((item) => item.product_guid) ?? [],
+    [effectiveStockGroup],
+  )
+  const history = useHistoryGroup(areaId, groupProductGuids)
 
   if (areas.isLoading || inventory.isLoading) return <LoadingState />
   const error = areas.error || inventory.error
@@ -209,11 +206,20 @@ export function AreaDetailPage() {
 
   const chart = {
     backgroundColor: 'transparent',
-    grid: { left: 42, right: 18, top: 20, bottom: 30 },
+    legend: { type: 'scroll', top: 0, left: 0, right: 0, textStyle: { color: '#a8babc', fontSize: 10 }, pageTextStyle: { color: '#a8babc' }, pageIconColor: '#d9a64e', pageIconInactiveColor: '#52676a' },
+    grid: { left: 48, right: 24, top: 62, bottom: 38 },
     tooltip: { trigger: 'axis' },
-    xAxis: { type: 'category', data: (history.data?.items ?? []).map((point) => new Date(point.observed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })), axisLabel: { color: '#789094' }, axisLine: { lineStyle: { color: '#2b3d40' } } },
+    xAxis: { type: 'time', axisLabel: { color: '#789094' }, axisLine: { lineStyle: { color: '#2b3d40' } } },
     yAxis: { type: 'value', axisLabel: { color: '#789094' }, splitLine: { lineStyle: { color: '#213235' } } },
-    series: [{ name: 'Observed stock', type: 'line', smooth: true, showSymbol: false, areaStyle: { color: 'rgba(217, 166, 78, .12)' }, lineStyle: { color: '#d9a64e', width: 2 }, data: (history.data?.items ?? []).map((point) => point.stock) }],
+    series: (history.data?.series ?? []).map((series) => ({
+      name: effectiveStockGroup?.items.find((item) => item.product_guid === series.product_guid)?.product_name ?? series.product_guid,
+      type: 'line',
+      smooth: true,
+      showSymbol: false,
+      lineStyle: { width: 2 },
+      data: series.items.map((point) => [point.observed_at, point.stock]),
+      connectNulls: false,
+    })),
   }
 
   return (
@@ -225,16 +231,14 @@ export function AreaDetailPage() {
         <MetricCard label="Participant balance" value={formatMoney(finance.data?.finance?.total_balance_raw)} supporting="Participant scope" icon={<CircleDollarSign size={16} />} />
         <MetricCard label="Workforce groups" value={workforceItems.length || 'Not observed'} supporting="Current-camera scope" icon={<UsersRound size={16} />} />
       </section>
-      <div className="area-detail-grid">
-        <section className="panel span-two">
-          <SectionHeader title="Stock history" description="Resources are grouped by producing region and workforce. The city’s own region appears first." action={<label className="history-product-picker"><span>Stock to chart</span><select aria-label="Stock to chart" value={effectiveProduct} onChange={(event) => setSelectedProduct(event.target.value)}>{stockGroups.map((group) => <optgroup label={group.label} key={group.key}>{group.items.map((item) => <option value={item.product_guid} key={`${group.key}:${item.product_guid}`}>{item.product_name} · {item.stock == null ? 'not observed' : `${formatNumber(item.stock)} stock`}</option>)}</optgroup>)}</select></label>} />
-          {selected ? <><div className="history-summary"><span><small>Current</small><strong>{formatNumber(selected.stock)}</strong></span><span><small>Capacity</small><strong>{formatNumber(selected.capacity)}</strong></span><span><small>Net stock change</small><strong className={(selected.velocity?.net_stock_change_per_minute ?? 0) < 0 ? 'negative' : 'positive'}>{formatRate(selected.velocity?.net_stock_change_per_minute)}</strong></span></div><ReactEChartsCore echarts={echarts} option={chart} style={{ height: 260 }} /></> : <EmptyState title="No product selected" description="This area has no observed product rows." />}
-        </section>
-        <section className="panel">
+      <section className="panel stock-history-panel">
+          <SectionHeader title="Stock history by workforce" description="Every resource produced by the selected regional workforce is plotted together. Click legend items to show or hide individual resources." action={<label className="history-product-picker"><span>Resource workforce</span><select aria-label="Resource workforce" value={effectiveStockGroup?.key ?? ''} onChange={(event) => setSelectedStockGroup(event.target.value)}>{stockGroups.map((group) => <option value={group.key} key={group.key}>{group.label} · {group.items.length} goods</option>)}</select></label>} />
+          {effectiveStockGroup ? <>{history.isLoading ? <LoadingState label="Loading resource histories…" /> : <><div className="history-series-summary">{effectiveStockGroup.items.map((item) => <span key={item.product_guid}><small>{item.product_name}</small><strong>{formatNumber(item.stock)}</strong><em className={(item.velocity?.net_stock_change_per_minute ?? 0) < 0 ? 'negative' : 'positive'}>{formatRate(item.velocity?.net_stock_change_per_minute)}</em></span>)}</div><ReactEChartsCore echarts={echarts} option={chart} style={{ height: 430 }} /></>}</> : <EmptyState title="No resource group available" description="This area has no observed product rows." />}
+      </section>
+      <section className="panel workforce-panel">
           <SectionHeader title="Current-area workforce" description="Shown only when this was the camera area." />
           {workforceItems.length ? <div className="workforce-list">{workforceItems.map((item) => <div key={item.workforce_guid}><WorkforceGlyph name={item.name} /><span><strong>{item.name || item.workforce_guid}</strong><small>Supply {formatNumber(item.registered_production, 1)} · demand {formatNumber(Math.abs(item.registered_consumption ?? 0), 1)}</small></span><b className={(item.delta_without_buffs ?? 0) < 0 ? 'negative' : 'positive'}>{formatNumber(item.delta_without_buffs, 1)}</b></div>)}</div> : <EmptyState title="Workforce not observed here" description="Move the game camera to this island and wait for a complete snapshot." />}
-        </section>
-      </div>
+      </section>
       <section className="panel">
         <SectionHeader title="Goods and targets" description="Planning domains are derived from verified recipe roles. Select a good to change companion-only targets." action={<label className="search-field goods-search"><Search size={15} /><input aria-label="Search city goods" value={goodsSearch} onChange={(event) => setGoodsSearch(event.target.value)} placeholder="Find a good" /></label>} />
         {areaItems.length ? <div className="goods-domain-list">{goodsGroups.map((group, index) => <GoodsDomainSection key={group.domain} domain={group.domain} items={group.items} pressureProducts={pressureProducts} initiallyOpen={index === 0 || group.items.some((item) => pressureProducts.has(item.product_guid))} onEdit={setEditing} />)}</div> : <EmptyState title="No inventory observed" description="Wait for the next complete snapshot." />}

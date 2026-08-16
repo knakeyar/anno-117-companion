@@ -94,7 +94,7 @@ const networkEdge = {
   endpoint_evidence: [{ kind: 'route_tag', trade_plan_id: tradePlan.trade_plan_id }],
   plans: [{ trade_plan_id: tradePlan.trade_plan_id, plan_kind: tradePlan.plan_kind, workflow_status: tradePlan.status, runtime_status: tradePlan.runtime_status, runtime_freshness: tradePlan.runtime_freshness, route_tag: tradePlan.route_tag, suggested_route_name: tradePlan.suggested_route_name, reason: tradePlan.reason, goods: [{ ...tradePlan.goods[0], evidence_kind: 'planned' as const, trade_plan_id: tradePlan.trade_plan_id }] }],
   routes: [taggedRoute], ships: taggedRoute.ships, planned_goods: [{ ...tradePlan.goods[0], evidence_kind: 'planned' as const, trade_plan_id: tradePlan.trade_plan_id }],
-  configured_goods: [], cargo_aboard: [], issues: [], actions: [], summary: { goods: 1, routes: 1, ships: 2, plans: 1 },
+  route_name_goods: [], configured_goods: [], cargo_aboard: [], issues: [], actions: [], summary: { goods: 1, routes: 1, ships: 2, plans: 1 },
 }
 
 export const tradeNetwork: TradeNetworkResponse = {

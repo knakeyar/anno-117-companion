@@ -250,6 +250,7 @@ def test_api_contract_and_observed_types(session_factory, app_settings) -> None:
             "/api/v1/products",
             "/api/v1/inventory/latest",
             "/api/v1/inventory/history",
+            "/api/v1/inventory/history/group",
             "/api/v1/trade/opportunities",
             "/api/v1/production/chains",
             "/api/v1/finance",
@@ -271,6 +272,10 @@ def test_api_contract_and_observed_types(session_factory, app_settings) -> None:
                 "/api/v1/inventory/history",
                 params={"area_pk": area["area_pk"], "product_guid": "2174"},
             ).json(),
+            client.get(
+                "/api/v1/inventory/history/group",
+                params=[("area_pk", area["area_pk"]), ("product_guid", "2174")],
+            ).json(),
             client.get("/api/v1/trade/opportunities").json(),
             client.get("/api/v1/production/chains").json(),
             client.get("/api/v1/finance").json(),
@@ -282,6 +287,10 @@ def test_api_contract_and_observed_types(session_factory, app_settings) -> None:
             assert response["meta"]["play_session_id"] is not None
             assert response["meta"]["scope"] == "all_controlled_areas"
             assert response["catalog"]["release_id"] == "anno117-v1-starter"
+        grouped = economy_responses[4]
+        assert grouped["scope"] == "area_product_group"
+        assert grouped["series"][0]["product_guid"] == "2174"
+        assert len(grouped["series"][0]["items"]) == 4
 
     with session_factory() as session:
         assert session.scalar(select(func.count()).select_from(SnapshotBatch).where(SnapshotBatch.is_complete)) == 4

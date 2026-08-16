@@ -207,12 +207,13 @@ export interface TradeNetworkEdge {
   status: TradeNetworkStatus
   severity: 'critical' | 'warning' | 'stable'
   freshness: 'live' | 'stale' | 'historical'
-  goods_verification: 'planned_only' | 'configured' | 'unavailable'
+  goods_verification: 'planned_only' | 'route_name_only' | 'configured' | 'unavailable'
   endpoint_evidence: Array<{ kind: string; trade_plan_id?: string; link_id?: string }>
   plans: TradeNetworkPlanEvidence[]
   routes: ActiveTradeRoute[]
   ships: ActiveTradeRouteShip[]
   planned_goods: TradeNetworkPlanEvidence['goods']
+  route_name_goods: Array<{ product_guid: string; product_name: string | null; amount: null; evidence_kind: 'route_name_label' }>
   configured_goods: Array<Record<string, unknown>>
   cargo_aboard: Array<Record<string, unknown>>
   issues: RouteIssue[]
@@ -250,7 +251,7 @@ export interface TradeRouteLink {
   source_area_name: string
   destination_area_pk: number
   destination_area_name: string
-  link_method: 'tag' | 'manual'
+  link_method: 'tag' | 'manual' | 'route_name'
   first_seen_at: string
   last_seen_at: string
   updated_at: string
@@ -402,6 +403,11 @@ export interface HistoryPoint {
   stock: number | null
   available_stock: number | null
   capacity: number | null
+}
+
+export interface HistorySeries {
+  product_guid: string
+  items: HistoryPoint[]
 }
 
 export interface RecipeItem {

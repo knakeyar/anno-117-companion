@@ -1108,6 +1108,145 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "InventoryHistoryGroupResponse": {
+        "properties": {
+          "area_pk": {
+            "title": "Area Pk",
+            "type": "integer"
+          },
+          "catalog": {
+            "additionalProperties": true,
+            "title": "Catalog",
+            "type": "object"
+          },
+          "meta": {
+            "additionalProperties": true,
+            "title": "Meta",
+            "type": "object"
+          },
+          "product_guids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Product Guids",
+            "type": "array"
+          },
+          "scope": {
+            "const": "area_product_group",
+            "title": "Scope",
+            "type": "string"
+          },
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/InventoryHistorySeriesView"
+            },
+            "title": "Series",
+            "type": "array"
+          }
+        },
+        "required": [
+          "meta",
+          "catalog",
+          "scope",
+          "area_pk",
+          "product_guids",
+          "series"
+        ],
+        "title": "InventoryHistoryGroupResponse",
+        "type": "object"
+      },
+      "InventoryHistoryPointView": {
+        "properties": {
+          "available_stock": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Available Stock"
+          },
+          "capacity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capacity"
+          },
+          "observed_at": {
+            "title": "Observed At",
+            "type": "string"
+          },
+          "play_session_id": {
+            "title": "Play Session Id",
+            "type": "string"
+          },
+          "play_time": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Play Time"
+          },
+          "snapshot_id": {
+            "title": "Snapshot Id",
+            "type": "integer"
+          },
+          "stock": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stock"
+          }
+        },
+        "required": [
+          "snapshot_id",
+          "play_session_id",
+          "observed_at",
+          "play_time",
+          "stock",
+          "available_stock",
+          "capacity"
+        ],
+        "title": "InventoryHistoryPointView",
+        "type": "object"
+      },
+      "InventoryHistorySeriesView": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/InventoryHistoryPointView"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "product_guid": {
+            "title": "Product Guid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "product_guid",
+          "items"
+        ],
+        "title": "InventoryHistorySeriesView",
+        "type": "object"
+      },
       "MapPositionWrite": {
         "properties": {
           "clear": {
@@ -1323,7 +1462,8 @@
           "link_method": {
             "enum": [
               "tag",
-              "manual"
+              "manual",
+              "route_name"
             ],
             "title": "Link Method",
             "type": "string"
@@ -1514,6 +1654,7 @@
           "goods_verification": {
             "enum": [
               "planned_only",
+              "route_name_only",
               "configured",
               "unavailable"
             ],
@@ -1540,6 +1681,13 @@
               "$ref": "#/components/schemas/TradeNetworkPlanEvidenceView"
             },
             "title": "Plans",
+            "type": "array"
+          },
+          "route_name_goods": {
+            "items": {
+              "$ref": "#/components/schemas/TradeNetworkGoodEvidenceView"
+            },
+            "title": "Route Name Goods",
             "type": "array"
           },
           "routes": {
@@ -1617,6 +1765,7 @@
           "routes",
           "ships",
           "planned_goods",
+          "route_name_goods",
           "configured_goods",
           "cargo_aboard",
           "issues",
@@ -3178,6 +3327,72 @@
           }
         },
         "summary": "History",
+        "tags": [
+          "economy"
+        ]
+      }
+    },
+    "/api/v1/inventory/history/group": {
+      "get": {
+        "operationId": "history_group_api_v1_inventory_history_group_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "area_pk",
+            "required": true,
+            "schema": {
+              "title": "Area Pk",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "product_guid",
+            "required": true,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Product Guid",
+              "type": "array"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 240,
+              "maximum": 2000,
+              "minimum": 2,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryHistoryGroupResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "History Group",
         "tags": [
           "economy"
         ]

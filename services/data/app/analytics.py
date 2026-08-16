@@ -444,6 +444,55 @@ def inventory_history(
     ]
 
 
+def inventory_history_group(
+    session: Session,
+    *,
+    area_pk: int,
+    product_guids: list[str],
+    play_session_id: str,
+    limit: int = 240,
+) -> list[dict]:
+    rows = session.execute(
+        select(AreaProductObservation, SnapshotBatch)
+        .join(SnapshotBatch, SnapshotBatch.snapshot_id == AreaProductObservation.snapshot_id)
+        .where(
+            AreaProductObservation.area_pk == area_pk,
+            AreaProductObservation.product_guid.in_(product_guids),
+            SnapshotBatch.is_complete.is_(True),
+            SnapshotBatch.play_session_id == play_session_id,
+        )
+        .order_by(
+            AreaProductObservation.product_guid,
+            SnapshotBatch.snapshot_sequence.desc(),
+        )
+    ).all()
+    grouped: dict[str, list[tuple[AreaProductObservation, SnapshotBatch]]] = {
+        guid: [] for guid in product_guids
+    }
+    for observed, snapshot in rows:
+        bucket = grouped.setdefault(observed.product_guid, [])
+        if len(bucket) < limit:
+            bucket.append((observed, snapshot))
+    return [
+        {
+            "product_guid": guid,
+            "items": [
+                {
+                    "snapshot_id": snapshot.snapshot_id,
+                    "play_session_id": snapshot.play_session_id,
+                    "observed_at": _iso(snapshot.completed_at or snapshot.received_at),
+                    "play_time": snapshot.play_time,
+                    "stock": observed.stock,
+                    "available_stock": observed.available_stock,
+                    "capacity": observed.storage_capacity,
+                }
+                for observed, snapshot in reversed(grouped.get(guid, []))
+            ],
+        }
+        for guid in product_guids
+    ]
+
+
 def finance_latest(session: Session, snapshot: SnapshotBatch | None) -> dict | None:
     if snapshot is None:
         return None

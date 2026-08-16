@@ -86,15 +86,15 @@ test('production coverage and health remain transparent', async ({ page }) => {
   await expect(page.getByText('/data/anno-companion.sqlite3')).toBeVisible()
 })
 
-test('city cards open the persisted area detail view', async ({ page }) => {
+test('regional city list opens the persisted area detail view', async ({ page }) => {
   const pageErrors: string[] = []
   page.on('pageerror', (error) => pageErrors.push(error.message))
   await page.goto('/areas')
-  await expect(page.getByRole('heading', { name: 'Your cities form a trade network.' })).toBeVisible()
-  await page.locator('.area-card').filter({ hasText: 'Juliana' }).click()
+  await expect(page.getByRole('heading', { name: 'Choose a city to manage.' })).toBeVisible()
+  await page.locator('.area-list-row').filter({ hasText: 'Juliana' }).click()
   await expect(page).toHaveURL(/\/areas\/1$/)
   await expect(page.getByRole('heading', { name: 'Juliana' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Stock history' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Stock history by workforce' })).toBeVisible()
   expect(pageErrors).toEqual([])
 })
 

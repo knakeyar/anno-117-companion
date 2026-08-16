@@ -227,6 +227,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/inventory/history/group": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** History Group */
+        get: operations["history_group_api_v1_inventory_history_group_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/inventory/latest": {
         parameters: {
             query?: never;
@@ -843,6 +860,52 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /** InventoryHistoryGroupResponse */
+        InventoryHistoryGroupResponse: {
+            /** Area Pk */
+            area_pk: number;
+            /** Catalog */
+            catalog: {
+                [key: string]: unknown;
+            };
+            /** Meta */
+            meta: {
+                [key: string]: unknown;
+            };
+            /** Product Guids */
+            product_guids: string[];
+            /**
+             * Scope
+             * @constant
+             */
+            scope: "area_product_group";
+            /** Series */
+            series: components["schemas"]["InventoryHistorySeriesView"][];
+        };
+        /** InventoryHistoryPointView */
+        InventoryHistoryPointView: {
+            /** Available Stock */
+            available_stock: number | null;
+            /** Capacity */
+            capacity: number | null;
+            /** Observed At */
+            observed_at: string;
+            /** Play Session Id */
+            play_session_id: string;
+            /** Play Time */
+            play_time: number | null;
+            /** Snapshot Id */
+            snapshot_id: number;
+            /** Stock */
+            stock: number | null;
+        };
+        /** InventoryHistorySeriesView */
+        InventoryHistorySeriesView: {
+            /** Items */
+            items: components["schemas"]["InventoryHistoryPointView"][];
+            /** Product Guid */
+            product_guid: string;
+        };
         /** MapPositionWrite */
         MapPositionWrite: {
             /**
@@ -924,7 +987,7 @@ export interface components {
              * Link Method
              * @enum {string}
              */
-            link_method: "tag" | "manual";
+            link_method: "tag" | "manual" | "route_name";
             /** Route Key */
             route_key: string;
             /** Route Name */
@@ -991,7 +1054,7 @@ export interface components {
              * Goods Verification
              * @enum {string}
              */
-            goods_verification: "planned_only" | "configured" | "unavailable";
+            goods_verification: "planned_only" | "route_name_only" | "configured" | "unavailable";
             /** Issues */
             issues: {
                 [key: string]: unknown;
@@ -1000,6 +1063,8 @@ export interface components {
             planned_goods: components["schemas"]["TradeNetworkGoodEvidenceView"][];
             /** Plans */
             plans: components["schemas"]["TradeNetworkPlanEvidenceView"][];
+            /** Route Name Goods */
+            route_name_goods: components["schemas"]["TradeNetworkGoodEvidenceView"][];
             /** Routes */
             routes: components["schemas"]["ActiveTradeRouteView"][];
             /**
@@ -1757,6 +1822,39 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    history_group_api_v1_inventory_history_group_get: {
+        parameters: {
+            query: {
+                area_pk: number;
+                product_guid: string[];
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InventoryHistoryGroupResponse"];
                 };
             };
             /** @description Validation Error */

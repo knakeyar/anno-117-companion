@@ -25,6 +25,10 @@ from .models import (
 
 
 ACTIVE_PLAN_STATUSES = {"planned", "implemented", "implemented_unverified"}
+ROUTE_ENDPOINT_PATTERN = re.compile(
+    r"(?:^|\s)(?P<source>[A-Z0-9]{3})\s*-\s*(?P<destination>[A-Z0-9]{3})\s*$",
+    flags=re.IGNORECASE,
+)
 
 
 def new_route_identity(session: Session, campaign_id: str, source_name: str, destination_name: str) -> tuple[str, str]:
@@ -62,6 +66,37 @@ def _tag_matches(route_name: str, route_tag: str) -> bool:
         route_name,
         flags=re.IGNORECASE,
     ) is not None
+
+
+def _area_abbreviation(name: str) -> str:
+    return ("".join(character for character in name if character.isalnum())[:3] or "CITY").upper()
+
+
+def _route_name_parts(route_name: str) -> tuple[str, str, str] | None:
+    """Read the user's ``Good SRC - DST`` naming convention without fuzzy matching."""
+    match = ROUTE_ENDPOINT_PATTERN.search(route_name.strip())
+    if match is None:
+        return None
+    label = route_name[:match.start()].strip()
+    return label, match.group("source").upper(), match.group("destination").upper()
+
+
+def _resolve_route_name_endpoints(
+    route_name: str,
+    areas: list[Area],
+) -> tuple[Area, Area, str] | None:
+    parts = _route_name_parts(route_name)
+    if parts is None:
+        return None
+    label, source_code, destination_code = parts
+    candidates: dict[str, list[Area]] = defaultdict(list)
+    for area in areas:
+        candidates[_area_abbreviation(area.latest_name or area.area_id_raw)].append(area)
+    source = candidates.get(source_code, [])
+    destination = candidates.get(destination_code, [])
+    if len(source) != 1 or len(destination) != 1 or source[0].area_pk == destination[0].area_pk:
+        return None
+    return source[0], destination[0], label
 
 
 def _route_runtime_status(routes: list[dict[str, Any]]) -> str:
@@ -115,6 +150,9 @@ def sync_trade_plan_runtime(
         ).all()
     }
     routes_by_key = {str(item.get("route_key")): item for item in route_items}
+    areas = session.scalars(
+        select(Area).where(Area.campaign_id == campaign_id).order_by(Area.area_pk)
+    ).all()
     for route_key, link in existing_links.items():
         route = routes_by_key.get(route_key)
         if route is None:
@@ -209,6 +247,43 @@ def sync_trade_plan_runtime(
             session.add(link)
             existing_links[route_key] = link
             plan_tag_link = link
+
+    # Existing Anno routes use an explicit ``Good SRC - DST`` naming convention.
+    # Promote only exact, unique three-letter city aliases. Anything ambiguous
+    # remains unmapped instead of being guessed.
+    for route in route_items:
+        route_key = str(route.get("route_key") or "")
+        resolved = _resolve_route_name_endpoints(str(route.get("route_name") or ""), areas)
+        if not route_key or resolved is None:
+            continue
+        source, destination, _label = resolved
+        link = existing_links.get(route_key)
+        if link is not None and link.link_method not in {"route_name"}:
+            continue
+        ship_ids = sorted({str(item["ship_id"]) for item in route.get("ships") or []})
+        if link is None:
+            link = TradeRouteLink(
+                link_id=str(uuid.uuid4()),
+                campaign_id=campaign_id,
+                route_key=route_key,
+                route_name=str(route["route_name"]),
+                ship_ids_json=json.dumps(ship_ids),
+                source_area_pk=source.area_pk,
+                destination_area_pk=destination.area_pk,
+                link_method="route_name",
+                first_seen_at=now,
+                last_seen_at=now,
+                updated_at=now,
+            )
+            session.add(link)
+            existing_links[route_key] = link
+        else:
+            link.route_name = str(route["route_name"])
+            link.ship_ids_json = json.dumps(ship_ids)
+            link.source_area_pk = source.area_pk
+            link.destination_area_pk = destination.area_pk
+            link.last_seen_at = now
+            link.updated_at = now
     session.flush()
 
 
@@ -295,6 +370,14 @@ def build_trade_network(
         session,
         {item.product_guid for item in plan_items} | {item.product_guid for item in good_observations},
     )
+    release_id = (inventory.get("catalog") or {}).get("release_id")
+    catalog_products = session.scalars(
+        select(Product).where(Product.release_id == release_id).order_by(Product.product_guid)
+    ).all() if release_id else []
+    catalog_product_by_name: dict[str, Product | None] = {}
+    for product in catalog_products:
+        key = " ".join(product.name.casefold().split())
+        catalog_product_by_name[key] = None if key in catalog_product_by_name else product
     goods_by_route: dict[str, list[TradeRouteGoodObservation]] = defaultdict(list)
     for observation in good_observations:
         goods_by_route[observation.route_name.casefold()].append(observation)
@@ -330,6 +413,7 @@ def build_trade_network(
                 "routes": [],
                 "ships": [],
                 "planned_goods": [],
+                "route_name_goods": [],
                 "configured_goods": [],
                 "cargo_aboard": [],
                 "issues": [],
@@ -377,6 +461,15 @@ def build_trade_network(
             edge["routes"].append(route)
             edge["ships"].extend(route.get("ships") or [])
             edge["issues"].extend(route.get("issues") or [])
+            parts = _route_name_parts(str(route.get("route_name") or ""))
+            named_product = catalog_product_by_name.get(" ".join(parts[0].casefold().split())) if parts else None
+            if named_product is not None:
+                edge["route_name_goods"].append({
+                    "product_guid": named_product.product_guid,
+                    "product_name": named_product.name,
+                    "amount": None,
+                    "evidence_kind": "route_name_label",
+                })
             for observation in goods_by_route.get(str(route.get("route_name") or "").casefold(), []):
                 good = {
                     "product_guid": observation.product_guid,
@@ -417,6 +510,8 @@ def build_trade_network(
             edge["goods_verification"] = "configured"
         elif edge["planned_goods"]:
             edge["goods_verification"] = "planned_only"
+        elif edge["route_name_goods"]:
+            edge["goods_verification"] = "route_name_only"
         critical_pressure = any(
             item.get("severity") == "critical"
             and (not edge["planned_goods"] or item.get("product_guid") in {good["product_guid"] for good in edge["planned_goods"]})
@@ -442,7 +537,10 @@ def build_trade_network(
                     "deep_link": action.deep_link,
                 })
         edge["summary"] = {
-            "goods": len({item["product_guid"] for item in edge["planned_goods"] + edge["configured_goods"]}),
+            "goods": len({
+                item["product_guid"]
+                for item in edge["planned_goods"] + edge["route_name_goods"] + edge["configured_goods"]
+            }),
             "routes": len(edge["routes"]),
             "ships": len({item["ship_id"] for item in edge["ships"]}),
             "plans": len(edge["plans"]),
@@ -580,5 +678,5 @@ def build_trade_network(
         },
         "unmapped_routes": unmapped,
         "capabilities": active_routes.get("capabilities", {}),
-        "evidence_notice": "Endpoints come only from companion plans, validated telemetry, or explicit route links. Planned goods are not runtime-verified cargo.",
+        "evidence_notice": "Observed routes auto-link only when their exact three-letter city aliases are unique. Goods read from route names are labels, not verified route configuration or cargo.",
     }

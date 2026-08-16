@@ -25,6 +25,7 @@ from .analytics import (
     finance_history,
     finance_latest,
     inventory_history,
+    inventory_history_group,
     inventory_latest,
     latest_complete_snapshot,
     production_chains,
@@ -299,7 +300,7 @@ class RouteLinkView(BaseModel):
     source_area_name: str
     destination_area_pk: int
     destination_area_name: str
-    link_method: Literal["tag", "manual"]
+    link_method: Literal["tag", "manual", "route_name"]
     first_seen_at: str
     last_seen_at: str
     updated_at: str
@@ -368,12 +369,13 @@ class TradeNetworkEdgeView(BaseModel):
     status: Literal["running", "partially_paused", "paused", "issue", "planned", "inactive", "historical", "unknown"]
     severity: Literal["critical", "warning", "stable"]
     freshness: Literal["live", "stale", "historical"]
-    goods_verification: Literal["planned_only", "configured", "unavailable"]
+    goods_verification: Literal["planned_only", "route_name_only", "configured", "unavailable"]
     endpoint_evidence: list[TradeNetworkEndpointEvidenceView]
     plans: list[TradeNetworkPlanEvidenceView]
     routes: list[ActiveTradeRouteView]
     ships: list[ActiveTradeRouteShipView]
     planned_goods: list[TradeNetworkGoodEvidenceView]
+    route_name_goods: list[TradeNetworkGoodEvidenceView]
     configured_goods: list[TradeNetworkGoodEvidenceView]
     cargo_aboard: list[TradeNetworkGoodEvidenceView]
     issues: list[dict[str, Any]]
@@ -384,6 +386,30 @@ class TradeNetworkEdgeView(BaseModel):
 class TradeNetworkGraphView(BaseModel):
     nodes: list[TradeNetworkNodeView]
     edges: list[TradeNetworkEdgeView]
+
+
+class InventoryHistoryPointView(BaseModel):
+    snapshot_id: int
+    play_session_id: str
+    observed_at: str
+    play_time: float | None
+    stock: float | None
+    available_stock: float | None
+    capacity: float | None
+
+
+class InventoryHistorySeriesView(BaseModel):
+    product_guid: str
+    items: list[InventoryHistoryPointView]
+
+
+class InventoryHistoryGroupResponse(BaseModel):
+    meta: dict[str, Any]
+    catalog: dict[str, Any]
+    scope: Literal["area_product_group"]
+    area_pk: int
+    product_guids: list[str]
+    series: list[InventoryHistorySeriesView]
 
 
 class TradeNetworkGraphsView(BaseModel):
@@ -784,6 +810,42 @@ def create_app(
             "area_pk": area_pk,
             "product_guid": product_guid,
             "items": points,
+        }
+
+    @app.get(
+        "/api/v1/inventory/history/group",
+        tags=["economy"],
+        response_model=InventoryHistoryGroupResponse,
+    )
+    def history_group(
+        database: Database,
+        area_pk: int,
+        product_guid: list[str] = Query(...),
+        limit: int = Query(default=240, ge=2, le=2000),
+    ) -> dict:
+        unique_guids = list(dict.fromkeys(product_guid))
+        if not unique_guids or len(unique_guids) > 40:
+            raise HTTPException(status_code=422, detail="select between 1 and 40 products")
+        area = database.get(Area, area_pk)
+        snapshot = latest_complete_snapshot(database, area.campaign_id if area else None)
+        series = (
+            inventory_history_group(
+                database,
+                area_pk=area_pk,
+                product_guids=unique_guids,
+                play_session_id=snapshot.play_session_id,
+                limit=limit,
+            )
+            if snapshot is not None
+            else [{"product_guid": guid, "items": []} for guid in unique_guids]
+        )
+        return {
+            "meta": snapshot_meta(snapshot, stale_after_seconds=app_settings.stale_after_seconds),
+            "catalog": _catalog_for_snapshot(database, snapshot),
+            "scope": "area_product_group",
+            "area_pk": area_pk,
+            "product_guids": unique_guids,
+            "series": series,
         }
 
     @app.get("/api/v1/trade/opportunities", tags=["management"], response_model=TradeOpportunitiesResponse)
