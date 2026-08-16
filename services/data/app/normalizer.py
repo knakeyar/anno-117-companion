@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import func, select, update
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.orm import Session
 
 from .models import (
@@ -19,6 +20,8 @@ from .models import (
     AreaProductObservation,
     AreaSnapshot,
     AreaWorkforceObservation,
+    ActiveTradeRouteCurrent,
+    ActiveTradeRouteShipCurrent,
     Campaign,
     FinanceCategoryObservation,
     ParticipantFinanceObservation,
@@ -28,6 +31,7 @@ from .models import (
     StaticRelease,
     TelemetryRaw,
     TradeRouteIssueObservation,
+    TradeRouteShipObservation,
     utcnow,
 )
 
@@ -275,6 +279,91 @@ def _materialize_current_state(session: Session, play: PlaySession, snapshot: Sn
             current.presence_status = "installed" if count > 0 else "not_installed"
             current.observed_at = observed_at
             current.last_attempt_snapshot_id = snapshot.snapshot_id
+
+    route_section = session.scalar(
+        select(SnapshotSectionStatus).where(
+            SnapshotSectionStatus.snapshot_id == snapshot.snapshot_id,
+            SnapshotSectionStatus.section_name == "active_routes",
+            SnapshotSectionStatus.area_id_raw.is_(None),
+        )
+    )
+    if route_section is None or route_section.status != "success":
+        return
+
+    route_scope = snapshot.current_game_session_guid
+    scope_query = select(ActiveTradeRouteCurrent).where(
+        ActiveTradeRouteCurrent.campaign_id == play.campaign_id,
+        ActiveTradeRouteCurrent.game_session_guid == route_scope
+        if route_scope is not None
+        else ActiveTradeRouteCurrent.game_session_guid.is_(None),
+    )
+    previous_routes = session.scalars(scope_query).all()
+    for route in previous_routes:
+        route.is_active = False
+        route.snapshot_id = snapshot.snapshot_id
+        route.play_session_id = play.play_session_id
+        session.execute(
+            delete(ActiveTradeRouteShipCurrent).where(
+                ActiveTradeRouteShipCurrent.route_key == route.route_key
+            )
+        )
+
+    observed_ships = session.scalars(
+        select(TradeRouteShipObservation).where(
+            TradeRouteShipObservation.snapshot_id == snapshot.snapshot_id
+        )
+    ).all()
+    grouped: dict[tuple[str | None, str], list[TradeRouteShipObservation]] = {}
+    for ship in observed_ships:
+        ship_scope = ship.game_session_guid or route_scope
+        grouped.setdefault((ship_scope, ship.route_name), []).append(ship)
+
+    for (ship_scope, route_name), ships in grouped.items():
+        route_key = hashlib.sha256(
+            f"{play.campaign_id}|{ship_scope or 'unknown'}|{route_name}".encode()
+        ).hexdigest()
+        route = session.get(ActiveTradeRouteCurrent, route_key)
+        if route is None:
+            route = ActiveTradeRouteCurrent(
+                route_key=route_key,
+                campaign_id=play.campaign_id,
+                route_name=route_name,
+                game_session_guid=ship_scope,
+                play_session_id=play.play_session_id,
+                snapshot_id=snapshot.snapshot_id,
+                first_seen_at=observed_at,
+                last_seen_at=observed_at,
+            )
+            session.add(route)
+        route.route_name = route_name
+        route.game_session_guid = ship_scope
+        route.region_guid = snapshot.current_region_guid if ship_scope == route_scope else None
+        route.play_session_id = play.play_session_id
+        route.snapshot_id = snapshot.snapshot_id
+        route.assigned_ship_count = len(ships)
+        route.paused_ship_count = sum(item.is_paused is True for item in ships)
+        route.regular_ship_count = sum(item.on_regular_route is True for item in ships)
+        route.is_active = True
+        route.last_seen_at = observed_at
+        session.flush()
+        session.execute(
+            delete(ActiveTradeRouteShipCurrent).where(
+                ActiveTradeRouteShipCurrent.route_key == route.route_key
+            )
+        )
+        for ship in ships:
+            session.add(ActiveTradeRouteShipCurrent(
+                route_key=route.route_key,
+                ship_id_raw=ship.ship_id_raw,
+                ship_guid=ship.ship_guid,
+                owner_guid=ship.owner_guid,
+                game_session_guid=ship.game_session_guid,
+                area_id_raw=ship.area_id_raw,
+                is_paused=ship.is_paused,
+                on_regular_route=ship.on_regular_route,
+                loading_speed_factor=ship.loading_speed_factor,
+                observed_at=observed_at,
+            ))
 
 
 def refresh_materialized_state(session: Session, campaign_id: str | None = None) -> None:
@@ -535,17 +624,41 @@ def _normalise_participant(session: Session, snapshot: SnapshotBatch, data: dict
         "NoShipsActive": "no_ships",
         "AllShipsPausedActive": "all_ships_paused",
     }
+    engine_error_codes = {
+        0: "not_enough_slots",
+        1: "not_enough_stations",
+        2: "island_under_siege",
+        3: "no_valid_pier",
+        4: "no_trade_rights",
+        5: "configured_good_not_traded",
+        6: "loaded_good_never_unloaded",
+        7: "unloaded_good_never_loaded",
+        8: "goods_dont_match",
+        9: "storage_full",
+        10: "storage_empty",
+        11: "no_goods",
+        12: "no_ships",
+        13: "all_ships_paused",
+        14: "long_waiting_time",
+        15: "mismatching_good",
+        16: "goods_dropped",
+    }
     routes = (data.get("route_issues") or {}).get("items") or []
     for index, route in enumerate(routes, start=1):
         active_codes = [code for field, code in flags_to_code.items() if route.get(field) is True]
-        active_codes.extend(f"engine_error_{value}" for value in route.get("active_error_types") or [])
+        active_codes.extend(
+            engine_error_codes.get(_int(value), f"engine_error_{value}")
+            for value in route.get("active_error_types") or []
+        )
         if not active_codes:
             active_codes = ["unspecified_issue"]
         for code in dict.fromkeys(active_codes):
             key = (snapshot.snapshot_id, _int(route.get("ordinal")) or index, code)
             if session.get(TradeRouteIssueObservation, key) is not None:
                 continue
-            severe = code in {"no_ships", "not_enough_stations"}
+            severe = code in {
+                "no_ships", "not_enough_stations", "no_valid_pier", "no_trade_rights",
+            }
             session.add(
                 TradeRouteIssueObservation(
                     snapshot_id=snapshot.snapshot_id,
@@ -557,6 +670,28 @@ def _normalise_participant(session: Session, snapshot: SnapshotBatch, data: dict
                     raw_flags_json=json.dumps(route, ensure_ascii=False, sort_keys=True),
                 )
             )
+
+    route_ships = data.get("route_ships") or {}
+    for item in route_ships.get("items") or []:
+        ship_id = _text(_pick(item.get("ship_id"), item.get("ID")))
+        route_name = _text(_pick(item.get("route_name"), item.get("RouteName")))
+        if ship_id is None or not route_name:
+            continue
+        key = (snapshot.snapshot_id, ship_id)
+        if session.get(TradeRouteShipObservation, key) is not None:
+            continue
+        session.add(TradeRouteShipObservation(
+            snapshot_id=snapshot.snapshot_id,
+            ship_id_raw=ship_id,
+            route_name=route_name,
+            ship_guid=_text(_pick(item.get("ship_guid"), item.get("GUID"))),
+            owner_guid=_text(_pick(item.get("owner_guid"), item.get("Owner"))),
+            game_session_guid=_text(_pick(item.get("game_session_guid"), item.get("SessionGuid"))),
+            area_id_raw=_text(item.get("area_id")),
+            is_paused=_bool(_pick(item.get("is_paused"), item.get("IsPaused"))),
+            on_regular_route=_bool(_pick(item.get("on_regular_route"), item.get("OnRegularRoute"))),
+            loading_speed_factor=_float(_pick(item.get("loading_speed_factor"), item.get("LoadingSpeedFactor"))),
+        ))
 
 
 def _production_event(session: Session, raw: TelemetryRaw, envelope: dict) -> NormalizationResult:
@@ -620,6 +755,20 @@ def _production_event(session: Session, raw: TelemetryRaw, envelope: dict) -> No
             "participant",
             "success" if envelope.get("ok", True) else "failed",
             errors=data.get("section_errors"),
+        )
+        route_ships = data.get("route_ships") or {}
+        route_status = _text(route_ships.get("status")) or "not_observed"
+        if route_status not in {"success", "failed", "not_observed"}:
+            route_status = "not_observed"
+        _section_status(
+            session,
+            snapshot,
+            "active_routes",
+            route_status,
+            reported_count=_int(route_ships.get("reported_count")),
+            captured_count=_int(route_ships.get("assigned_count")),
+            truncated=_bool(route_ships.get("truncated")),
+            errors=route_ships.get("errors") or route_ships.get("error"),
         )
     elif event_type in {"area_snapshot", "area_core"}:
         if not data.get("area_id") and not data.get("ID"):

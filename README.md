@@ -4,6 +4,12 @@ Anno Companion is a local, read-only economic workspace for Anno 117. It turns J
 
 > Manage your empire the way Caesar definitely did: with fancy dashboards and up-to-date information about trade and resource production. Better yet, Caesar's greatest achievements were apparently powered by AI workers—although at the time he used the word “slaves.” Please do not quote us on these completely made-up historical facts. Connect your game data to AI for suggestions on keeping your people happy. Note: this only works for Anno, not real life.
 
+## Why Anno Companion?
+
+If you're anything like me, finding a meaningful block of uninterrupted time for Anno 117 is difficult—and let's be honest, two hours is barely enough to remember why you opened the trade-route screen. By the time I return to a campaign, I often no longer remember which shortage I was fixing, what needed to move between cities, or what I planned to build next.
+
+Anno Companion is designed for that stop-and-start way of playing. It preserves the last known state of your empire—along with your trade plans, resource pressures, and economic priorities—so you can end a session and return later without losing the thread. Instead of reconstructing yesterday's plans, you can see where you left off and decide what to do next.
+
 ## What runs
 
 - `anno-companion-data` polls the mounted game-log directory, creates `/data/anno-companion.sqlite3`, normalizes only complete production snapshots, owns persistent campaign state, calculates deterministic management signals, and serves the private API. The optional OpenAI call also runs here so the API key never enters the browser image.
@@ -14,7 +20,7 @@ The dashboard never mounts or opens SQLite directly. Mount a directory for `/dat
 
 ## Windows setup
 
-1. Copy the entire [`mod/anno-companion-telemetry`](mod/anno-companion-telemetry) folder into the Anno 117 **Documents** mods directory. Confirm its manifest is version `1.1.0`. Disable the telemetry probe during ordinary use.
+1. Copy the entire [`mod/anno-companion-telemetry`](mod/anno-companion-telemetry) folder into the Anno 117 **Documents** mods directory. Confirm its manifest is version `1.1.1`. Disable the telemetry probe during ordinary use. Version 1.1.1 adds the ship-backed active-route list.
 2. Copy `.env.example` to `.env` and replace `YOUR_WINDOWS_USER`. `ANNO_LOG_DIR` must be the directory containing the game log where `ANNO_COMPANION_TELEMETRY_JSON` appears.
 3. Create the `ANNO_DATA_DIR` directory if it does not exist.
 4. From PowerShell in this repository, run:

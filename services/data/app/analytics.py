@@ -13,6 +13,8 @@ from sqlalchemy.orm import Session
 from .catalog import catalog_summary
 from .models import (
     Area,
+    ActiveTradeRouteCurrent,
+    ActiveTradeRouteShipCurrent,
     AreaBuildingCurrent,
     AreaProductCurrent,
     AreaProductObservation,
@@ -29,6 +31,7 @@ from .models import (
     ProductionRecipe,
     ProductionRecipeItem,
     SnapshotBatch,
+    SnapshotSectionStatus,
     TradeRouteIssueObservation,
 )
 
@@ -372,6 +375,12 @@ def trade_opportunities(inventory: dict) -> list[dict]:
                         "destination_area_pk": destination["area_pk"],
                         "destination_area_name": destination["area_name"],
                         "advisory_amount": round(amount, 1),
+                        "source_available_stock": source["available_stock"],
+                        "source_high_target": source["high_target"],
+                        "projected_source_stock": round(source["available_stock"] - amount, 1),
+                        "destination_available_stock": destination["available_stock"],
+                        "destination_low_target": destination["low_target"],
+                        "projected_destination_stock": round(destination["available_stock"] + amount, 1),
                         "destination_priority": destination["priority"],
                         "route_feasibility": "unknown",
                         "interpretation": "transfer_candidate",
@@ -501,16 +510,202 @@ def route_issues_latest(session: Session, snapshot: SnapshotBatch | None) -> lis
         .where(TradeRouteIssueObservation.snapshot_id == snapshot.snapshot_id)
         .order_by(TradeRouteIssueObservation.ordinal, TradeRouteIssueObservation.issue_code)
     ).all()
-    return [
-        {
+    engine_codes = {
+        0: "not_enough_slots", 1: "not_enough_stations", 2: "island_under_siege",
+        3: "no_valid_pier", 4: "no_trade_rights", 5: "configured_good_not_traded",
+        6: "loaded_good_never_unloaded", 7: "unloaded_good_never_loaded",
+        8: "goods_dont_match", 9: "storage_full", 10: "storage_empty", 11: "no_goods",
+        12: "no_ships", 13: "all_ships_paused", 14: "long_waiting_time",
+        15: "mismatching_good", 16: "goods_dropped",
+    }
+    details = {
+        "not_enough_slots": ("Not enough cargo slots", "Reduce the configured goods or assign a ship with enough cargo slots."),
+        "not_enough_stations": ("Not enough stops", "Add the missing loading or unloading stop to the in-game route."),
+        "island_under_siege": ("Island under siege", "Review the affected stop and secure access before relying on this route."),
+        "no_valid_pier": ("No valid pier", "Check that each route stop has a reachable trading post or pier."),
+        "no_trade_rights": ("No trade rights", "Review diplomacy for the affected external trading stop."),
+        "configured_good_not_traded": ("Configured good is not traded", "Review the loading and unloading instructions for this good."),
+        "loaded_good_never_unloaded": ("Loaded cargo has no unload stop", "Add an unload instruction for every good loaded on the route."),
+        "unloaded_good_never_loaded": ("Unload has no matching load", "Add a loading instruction for the configured good."),
+        "goods_dont_match": ("Loading and unloading goods do not match", "Align the goods configured at the route's loading and unloading stops."),
+        "storage_full": ("Destination storage is full", "Reduce deliveries or create demand at the affected destination."),
+        "storage_empty": ("Source storage is empty", "Reduce the pickup amount or improve supply at the source."),
+        "no_goods": ("Route has no goods", "Configure at least one loading and unloading instruction."),
+        "no_ships": ("Route has no ships", "Assign an in-game ship to this route."),
+        "all_ships_paused": ("All route ships are paused", "Resume a ship in Anno when you are ready to run the route."),
+        "long_waiting_time": ("Long loading wait", "Review pier capacity, storage availability, and route timing."),
+        "mismatching_good": ("Mismatching cargo", "Check that every loaded good has a matching unload instruction on this route."),
+        "goods_dropped": ("Cargo was discarded", "Review loading amounts and available cargo slots on the assigned ships."),
+    }
+    result = []
+    reverse_engine_codes = {value: key for key, value in engine_codes.items()}
+    for item in rows:
+        code = item.issue_code
+        engine_error_code = None
+        if code.startswith("engine_error_"):
+            try:
+                engine_error_code = int(code.removeprefix("engine_error_"))
+            except ValueError:
+                pass
+            code = engine_codes.get(engine_error_code, code)
+        else:
+            engine_error_code = reverse_engine_codes.get(code)
+        label, guidance = details.get(
+            code,
+            (code.replace("_", " ").title(), "Review this route in Anno for the engine-reported issue."),
+        )
+        result.append({
             "route_name": item.route_name,
-            "issue_code": item.issue_code,
+            "issue_code": code,
+            "engine_error_code": engine_error_code,
+            "label": label,
+            "guidance": guidance,
             "severity": item.severity,
             "active_error_count": item.active_error_count,
             "identity_scope": "ephemeral_route_name",
-        }
-        for item in rows
-    ]
+        })
+    return result
+
+
+def active_trade_routes(
+    session: Session,
+    campaign_id: str | None,
+    snapshot: SnapshotBatch | None,
+    *,
+    stale_after_seconds: int,
+) -> dict:
+    """Return persistent route names backed by assigned ships or current issue evidence."""
+    section = None
+    if snapshot is not None:
+        section = session.scalar(
+            select(SnapshotSectionStatus).where(
+                SnapshotSectionStatus.snapshot_id == snapshot.snapshot_id,
+                SnapshotSectionStatus.section_name == "active_routes",
+                SnapshotSectionStatus.area_id_raw.is_(None),
+            )
+        )
+    telemetry_status = section.status if section is not None else "not_observed"
+    current_routes = []
+    if campaign_id is not None:
+        current_routes = session.scalars(
+            select(ActiveTradeRouteCurrent).where(
+                ActiveTradeRouteCurrent.campaign_id == campaign_id,
+                ActiveTradeRouteCurrent.is_active.is_(True),
+            ).order_by(ActiveTradeRouteCurrent.route_name, ActiveTradeRouteCurrent.game_session_guid)
+        ).all()
+    route_keys = [item.route_key for item in current_routes]
+    ships_by_route: dict[str, list[ActiveTradeRouteShipCurrent]] = defaultdict(list)
+    if route_keys:
+        for ship in session.scalars(
+            select(ActiveTradeRouteShipCurrent)
+            .where(ActiveTradeRouteShipCurrent.route_key.in_(route_keys))
+            .order_by(ActiveTradeRouteShipCurrent.ship_id_raw)
+        ).all():
+            ships_by_route[ship.route_key].append(ship)
+
+    issues = route_issues_latest(session, snapshot)
+    issues_by_name: dict[str, list[dict]] = defaultdict(list)
+    for issue in issues:
+        if issue.get("route_name"):
+            issues_by_name[str(issue["route_name"])].append(issue)
+
+    now = datetime.now(UTC)
+    items: list[dict] = []
+    observed_names: set[str] = set()
+    for route in current_routes:
+        observed_names.add(route.route_name)
+        observed_at = route.last_seen_at
+        if observed_at.tzinfo is None:
+            observed_at = observed_at.replace(tzinfo=UTC)
+        freshness = max(0.0, (now - observed_at).total_seconds())
+        if route.assigned_ship_count > 0 and route.paused_ship_count >= route.assigned_ship_count:
+            status = "paused"
+        elif route.paused_ship_count > 0:
+            status = "partially_paused"
+        else:
+            status = "running"
+        items.append({
+            "route_key": route.route_key,
+            "route_name": route.route_name,
+            "identity_scope": route.identity_scope,
+            "evidence_kind": "assigned_ships",
+            "status": status,
+            "is_active_last_observed": True,
+            "assigned_ship_count": route.assigned_ship_count,
+            "paused_ship_count": route.paused_ship_count,
+            "regular_ship_count": route.regular_ship_count,
+            "game_session_guid": route.game_session_guid,
+            "region_guid": route.region_guid,
+            "observed_at": _iso(route.last_seen_at),
+            "freshness_seconds": round(freshness, 1),
+            "is_stale": freshness > stale_after_seconds,
+            "issues": issues_by_name.get(route.route_name, []),
+            "ships": [{
+                "ship_id": ship.ship_id_raw,
+                "ship_guid": ship.ship_guid,
+                "game_session_guid": ship.game_session_guid,
+                "area_id": ship.area_id_raw,
+                "is_paused": ship.is_paused,
+                "on_regular_route": ship.on_regular_route,
+                "loading_speed_factor": ship.loading_speed_factor,
+            } for ship in ships_by_route[route.route_key]],
+        })
+
+    snapshot_time = (snapshot.completed_at or snapshot.received_at) if snapshot is not None else None
+    snapshot_freshness = None
+    if snapshot_time is not None:
+        if snapshot_time.tzinfo is None:
+            snapshot_time = snapshot_time.replace(tzinfo=UTC)
+        snapshot_freshness = max(0.0, (now - snapshot_time).total_seconds())
+    for route_name, route_issues in sorted(issues_by_name.items()):
+        if route_name in observed_names:
+            continue
+        issue_key = hashlib.sha256(
+            f"{campaign_id or 'unknown'}|issue|{route_name}".encode()
+        ).hexdigest()
+        items.append({
+            "route_key": f"issue-{issue_key}",
+            "route_name": route_name,
+            "identity_scope": "mutable_route_name",
+            "evidence_kind": "issue_only",
+            "status": "issue_reported",
+            "is_active_last_observed": None,
+            "assigned_ship_count": None,
+            "paused_ship_count": None,
+            "regular_ship_count": None,
+            "game_session_guid": snapshot.current_game_session_guid if snapshot else None,
+            "region_guid": snapshot.current_region_guid if snapshot else None,
+            "observed_at": _iso(snapshot_time),
+            "freshness_seconds": round(snapshot_freshness, 1) if snapshot_freshness is not None else None,
+            "is_stale": snapshot_freshness is None or snapshot_freshness > stale_after_seconds,
+            "issues": route_issues,
+            "ships": [],
+        })
+
+    items.sort(key=lambda item: (
+        item["evidence_kind"] != "assigned_ships",
+        not bool(item["issues"]),
+        item["route_name"].casefold(),
+    ))
+    return {
+        "campaign_id": campaign_id,
+        "telemetry_status": telemetry_status,
+        "scope": "assigned_trade_route_ships_in_observed_game_session",
+        "identity_notice": "Anno exposes a mutable route name but no stable route ID. Renamed or duplicate names may appear as separate or merged records.",
+        "capabilities": {
+            "assigned_ships": telemetry_status == "success" or bool(current_routes),
+            "route_issues": True,
+            "stops": False,
+            "configured_goods": False,
+            "ship_cargo": False,
+        },
+        "counts": {
+            "ship_backed_routes": sum(item["evidence_kind"] == "assigned_ships" for item in items),
+            "issue_only_routes": sum(item["evidence_kind"] == "issue_only" for item in items),
+            "assigned_ships": sum(item["assigned_ship_count"] or 0 for item in items),
+        },
+        "items": items,
+    }
 
 
 def production_chains(session: Session, inventory: dict) -> dict:
@@ -686,6 +881,8 @@ def finance_analysis(session: Session, snapshot: SnapshotBatch | None) -> dict |
     categories = [item for item in current["categories"] if item["value"] is not None]
     positives = sorted((item for item in categories if item["value"] > 0), key=lambda item: -item["value"])
     negatives = sorted((item for item in categories if item["value"] < 0), key=lambda item: item["value"])
+    gross_income = sum(item["value"] for item in positives)
+    gross_expenses = abs(sum(item["value"] for item in negatives))
     reported_negative = (current["total_balance_raw"] or 0) < 0
     treasury_falling = treasury_change is not None and treasury_change < 0
     estimated_maintenance = {
@@ -795,6 +992,12 @@ def finance_analysis(session: Session, snapshot: SnapshotBatch | None) -> dict |
             "passive": current["passive_trade_balance_period_raw"],
             "active": current["active_trade_balance_period_raw"],
         },
+        "category_totals": {
+            "gross_income": round(gross_income, 2),
+            "gross_expenses": round(gross_expenses, 2),
+            "net_profit": round(gross_income - gross_expenses, 2),
+            "interpretation": "sum_of_observed_finance_categories",
+        },
         "largest_positive_categories": positives[:5],
         "largest_negative_categories": negatives[:5],
         "estimated_base_maintenance": estimated_maintenance,
@@ -868,6 +1071,7 @@ def suggested_routes(session: Session, inventory: dict) -> list[dict]:
         if any(item["destination_priority"] > 0 for item in goods): reasons.append("explicit destination priority")
         reason_suffix = f" Priority includes {', '.join(reasons)}." if reasons else ""
         suggestion_id = f"route:{source_pk}:{destination_pk}"
+        selected_goods = goods[:8]
         result.append({
             "suggestion_id": suggestion_id,
             "action_id": "act_" + hashlib.sha256(suggestion_id.encode()).hexdigest()[:20],
@@ -882,12 +1086,22 @@ def suggested_routes(session: Session, inventory: dict) -> list[dict]:
                     "advisory_amount": item["advisory_amount"],
                     "active_production_input": item["active_production_input"],
                     "imminent_stockout": item["imminent_stockout"],
+                    "source_available_stock": item["source_available_stock"],
+                    "source_high_target": item["source_high_target"],
+                    "projected_source_stock": item["projected_source_stock"],
+                    "destination_available_stock": item["destination_available_stock"],
+                    "destination_low_target": item["destination_low_target"],
+                    "projected_destination_stock": item["projected_destination_stock"],
                 }
-                for item in goods[:8]
+                for item in selected_goods
             ],
             "confidence": "high" if urgency >= 8 else "medium",
-            "reason": f"{len(goods)} observed destination deficit{'s' if len(goods) != 1 else ''} can be supplied from bounded source surplus.{reason_suffix}",
-            "evidence": {"priority_score": urgency, "goods_count": len(goods)},
+            "reason": f"A focused bundle of {len(selected_goods)} good{'s' if len(selected_goods) != 1 else ''} was selected from {len(goods)} observed destination deficit{'s' if len(goods) != 1 else ''}; each amount is bounded by source surplus and destination need.{reason_suffix}",
+            "evidence": {
+                "priority_score": urgency,
+                "candidate_goods_count": len(goods),
+                "planned_goods_count": len(selected_goods),
+            },
             "route_feasibility": "unknown",
         })
     return sorted(result, key=lambda item: (-item["evidence"]["priority_score"], -len(item["goods"])))
@@ -969,7 +1183,8 @@ def deterministic_action_specs(
     for index, issue in enumerate(route_issues):
         specs.append({
             "key": f"route_issue:{issue['route_name']}:{issue['issue_code']}:{index}", "kind": "route_issue", "severity": issue["severity"],
-            "title": issue["route_name"] or "Route warning", "summary": issue["issue_code"].replace("_", " ").title(),
+            "title": issue["route_name"] or "Route warning",
+            "summary": f"{issue['label']}. {issue['guidance']}",
             "evidence": issue, "deep_link": "/trade",
         })
     for spec in specs:

@@ -83,6 +83,12 @@ export interface TransferCandidate {
   destination_area_pk: number
   destination_area_name: string
   advisory_amount: number
+  source_available_stock: number
+  source_high_target: number
+  projected_source_stock: number
+  destination_available_stock: number
+  destination_low_target: number
+  projected_destination_stock: number
   destination_priority: number
   route_feasibility: 'unknown'
   interpretation: 'transfer_candidate'
@@ -94,6 +100,56 @@ export interface TradeResponse {
   items: TransferCandidate[]
   suggested_routes: SuggestedRoute[]
   notice: string
+}
+
+export interface ActiveTradeRouteShip {
+  ship_id: string
+  ship_guid: string | null
+  game_session_guid: string | null
+  area_id: string | null
+  is_paused: boolean | null
+  on_regular_route: boolean | null
+  loading_speed_factor: number | null
+}
+
+export interface ActiveTradeRoute {
+  route_key: string
+  route_name: string
+  identity_scope: 'mutable_route_name'
+  evidence_kind: 'assigned_ships' | 'issue_only'
+  status: 'running' | 'partially_paused' | 'paused' | 'issue_reported'
+  is_active_last_observed: boolean | null
+  assigned_ship_count: number | null
+  paused_ship_count: number | null
+  regular_ship_count: number | null
+  game_session_guid: string | null
+  region_guid: string | null
+  observed_at: string | null
+  freshness_seconds: number | null
+  is_stale: boolean
+  issues: RouteIssue[]
+  ships: ActiveTradeRouteShip[]
+}
+
+export interface ActiveTradeRoutesResponse {
+  meta: ObservationMeta
+  campaign_id: string | null
+  telemetry_status: 'success' | 'failed' | 'not_observed'
+  scope: string
+  identity_notice: string
+  capabilities: {
+    assigned_ships: boolean
+    route_issues: boolean
+    stops: boolean
+    configured_goods: boolean
+    ship_cargo: boolean
+  }
+  counts: {
+    ship_backed_routes: number
+    issue_only_routes: number
+    assigned_ships: number
+  }
+  items: ActiveTradeRoute[]
 }
 
 export interface Finance {
@@ -120,6 +176,12 @@ export interface FinanceAnalysis {
   treasury_change: number | null
   treasury_change_per_game_minute: number | null
   trade_balance: { total: number | null; passive: number | null; active: number | null }
+  category_totals: {
+    gross_income: number
+    gross_expenses: number
+    net_profit: number
+    interpretation: 'sum_of_observed_finance_categories'
+  }
   largest_positive_categories: Finance['categories']
   largest_negative_categories: Finance['categories']
   estimated_base_maintenance: {
@@ -158,6 +220,9 @@ export interface WorkforceItem {
 export interface RouteIssue {
   route_name: string | null
   issue_code: string
+  engine_error_code: number | null
+  label: string
+  guidance: string
   severity: 'critical' | 'warning'
   active_error_count: number | null
   identity_scope: 'ephemeral_route_name'
@@ -275,7 +340,19 @@ export interface SuggestedRoute {
   source_area_name: string
   destination_area_pk: number
   destination_area_name: string
-  goods: Array<{ product_guid: string; product_name: string; advisory_amount: number; active_production_input?: boolean; imminent_stockout?: boolean }>
+  goods: Array<{
+    product_guid: string
+    product_name: string
+    advisory_amount: number
+    active_production_input?: boolean
+    imminent_stockout?: boolean
+    source_available_stock?: number
+    source_high_target?: number
+    projected_source_stock?: number
+    destination_available_stock?: number
+    destination_low_target?: number
+    projected_destination_stock?: number
+  }>
   confidence: 'high' | 'medium' | 'low'
   reason: string
   evidence: Record<string, unknown>

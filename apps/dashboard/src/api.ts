@@ -6,6 +6,7 @@ import type {
   Area,
   Campaign,
   AdvisorConversation,
+  ActiveTradeRoutesResponse,
   Finance,
   FinanceAnalysis,
   HistoryPoint,
@@ -60,6 +61,7 @@ export const api = {
     })),
   overview: () => unwrap<OverviewResponse>(client.GET('/api/v1/dashboard/overview')),
   trade: () => unwrap<TradeResponse>(client.GET('/api/v1/trade/opportunities')),
+  activeTradeRoutes: () => unwrap<ActiveTradeRoutesResponse>(client.GET('/api/v1/trade/routes')),
   tradePlans: () => unwrap<{ campaign_id: string | null; items: TradePlan[] }>(client.GET('/api/v1/trade-plans')),
   createTradePlan: (route: TradeResponse['suggested_routes'][number], campaignId: string) => unwrap<TradePlan>(client.POST('/api/v1/trade-plans', { body: {
     campaign_id: campaignId,
@@ -96,6 +98,7 @@ export const queryKeys = {
   inventory: ['inventory'] as const,
   overview: ['overview'] as const,
   trade: ['trade'] as const,
+  activeTradeRoutes: ['active-trade-routes'] as const,
   tradePlans: ['trade-plans'] as const,
   actions: ['actions'] as const,
   chains: ['chains'] as const,
@@ -116,6 +119,7 @@ export const useInventory = () =>
 export const useOverview = () =>
   useQuery({ queryKey: queryKeys.overview, queryFn: api.overview, ...queryOptions })
 export const useTrade = () => useQuery({ queryKey: queryKeys.trade, queryFn: api.trade, ...queryOptions })
+export const useActiveTradeRoutes = () => useQuery({ queryKey: queryKeys.activeTradeRoutes, queryFn: api.activeTradeRoutes, ...queryOptions })
 export const useTradePlans = () => useQuery({ queryKey: queryKeys.tradePlans, queryFn: api.tradePlans, ...queryOptions })
 export const useActions = () => useQuery({ queryKey: queryKeys.actions, queryFn: api.actions, ...queryOptions })
 export const useChains = () =>

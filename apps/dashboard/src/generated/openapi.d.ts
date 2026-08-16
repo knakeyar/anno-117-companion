@@ -382,6 +382,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/trade/routes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Known Trade Routes */
+        get: operations["known_trade_routes_api_v1_trade_routes_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workforce": {
         parameters: {
             query?: never;
@@ -477,6 +494,97 @@ export interface components {
         ActiveCampaignWrite: {
             /** Campaign Id */
             campaign_id: string;
+        };
+        /** ActiveTradeRouteShipView */
+        ActiveTradeRouteShipView: {
+            /** Area Id */
+            area_id: string | null;
+            /** Game Session Guid */
+            game_session_guid: string | null;
+            /** Is Paused */
+            is_paused: boolean | null;
+            /** Loading Speed Factor */
+            loading_speed_factor: number | null;
+            /** On Regular Route */
+            on_regular_route: boolean | null;
+            /** Ship Guid */
+            ship_guid: string | null;
+            /** Ship Id */
+            ship_id: string;
+        };
+        /** ActiveTradeRouteView */
+        ActiveTradeRouteView: {
+            /** Assigned Ship Count */
+            assigned_ship_count: number | null;
+            /**
+             * Evidence Kind
+             * @enum {string}
+             */
+            evidence_kind: "assigned_ships" | "issue_only";
+            /** Freshness Seconds */
+            freshness_seconds: number | null;
+            /** Game Session Guid */
+            game_session_guid: string | null;
+            /**
+             * Identity Scope
+             * @constant
+             */
+            identity_scope: "mutable_route_name";
+            /** Is Active Last Observed */
+            is_active_last_observed: boolean | null;
+            /** Is Stale */
+            is_stale: boolean;
+            /** Issues */
+            issues: {
+                [key: string]: unknown;
+            }[];
+            /** Observed At */
+            observed_at: string | null;
+            /** Paused Ship Count */
+            paused_ship_count: number | null;
+            /** Region Guid */
+            region_guid: string | null;
+            /** Regular Ship Count */
+            regular_ship_count: number | null;
+            /** Route Key */
+            route_key: string;
+            /** Route Name */
+            route_name: string;
+            /** Ships */
+            ships: components["schemas"]["ActiveTradeRouteShipView"][];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "running" | "partially_paused" | "paused" | "issue_reported";
+        };
+        /** ActiveTradeRoutesResponse */
+        ActiveTradeRoutesResponse: {
+            /** Campaign Id */
+            campaign_id: string | null;
+            /** Capabilities */
+            capabilities: {
+                [key: string]: boolean;
+            };
+            /** Counts */
+            counts: {
+                [key: string]: number;
+            };
+            /** Identity Notice */
+            identity_notice: string;
+            /** Items */
+            items: components["schemas"]["ActiveTradeRouteView"][];
+            /** Meta */
+            meta: {
+                [key: string]: unknown;
+            };
+            /** Scope */
+            scope: string;
+            /**
+             * Telemetry Status
+             * @enum {string}
+             */
+            telemetry_status: "success" | "failed" | "not_observed";
         };
         /** AdvisorConversationView */
         AdvisorConversationView: {
@@ -1635,6 +1743,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TradeOpportunitiesResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    known_trade_routes_api_v1_trade_routes_get: {
+        parameters: {
+            query?: {
+                campaign_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActiveTradeRoutesResponse"];
                 };
             };
             /** @description Validation Error */

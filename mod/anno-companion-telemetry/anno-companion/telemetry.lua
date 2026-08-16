@@ -2,7 +2,7 @@ local Telemetry = {}
 local json = require("json")
 local catalog = require("catalog")
 
-local VERSION = "1.1.0"
+local VERSION = "1.1.1"
 local SCHEMA_VERSION = 2
 local PREFIX = "ANNO_COMPANION_TELEMETRY_JSON "
 
@@ -14,6 +14,7 @@ local CONFIG = {
     max_workforces = 16,
     max_finance_categories = 32,
     max_issue_routes = 32,
+    max_route_vehicles = 128,
     product_chunk_size = 16,
     building_chunk_size = 32,
     reconciliation_interval_ms = 600000,
@@ -376,6 +377,97 @@ local function capture_route_issues(errors)
     return result
 end
 
+local function capture_route_ships()
+    local result = {
+        status = "not_observed",
+        reported_count = nil,
+        captured_count = 0,
+        assigned_count = 0,
+        truncated = false,
+        items = {},
+    }
+    local errors = {}
+    local property_ok, property_value, property_error = safe_get(Properties, "TradeRouteVehicle")
+    if not property_ok or property_value == nil then
+        result.error = tostring(property_error or "TradeRouteVehicle property unavailable")
+        return result
+    end
+    local participant = capture_fields(Participants, { "GetCurrentParticipantGUID" }).GetCurrentParticipantGUID
+    if participant == nil then
+        result.error = "participant GUID unavailable"
+        return result
+    end
+    local objects_ok, objects = pcall(function()
+        return Scripts:GetObjectGroupByProperty(property_value, participant)
+    end)
+    if not objects_ok or objects == nil then
+        result.error = tostring(objects or "trade-route vehicle enumeration unavailable")
+        return result
+    end
+    local vehicles, collection_error = read_collection(objects, CONFIG.max_route_vehicles)
+    if vehicles == nil then
+        result.error = tostring(collection_error)
+        return result
+    end
+    result.reported_count = vehicles.reported_count
+    result.captured_count = vehicles.captured_count
+    result.truncated = vehicles.truncated
+
+    for vehicle_index, ship in ipairs(vehicles.items) do
+        local route_ok, route_vehicle, route_error = safe_get(ship, "TradeRouteVehicle")
+        if not route_ok or route_vehicle == nil then
+            errors[#errors + 1] = { vehicle_index = vehicle_index, field = "TradeRouteVehicle", error = tostring(route_error) }
+        else
+            local assigned_ok, assigned, assigned_error = safe_get(route_vehicle, "IsAssignedOnTradeRoute")
+            if not assigned_ok then
+                errors[#errors + 1] = { vehicle_index = vehicle_index, field = "IsAssignedOnTradeRoute", error = tostring(assigned_error) }
+            elseif assigned == true then
+                local ship_fields = capture_fields(ship, { "ID", "GUID", "Owner", "SessionGuid" })
+                local route_fields = capture_fields(route_vehicle, {
+                    "RouteName", "IsPaused", "OnRegularRoute", "LoadingSpeedFactor",
+                })
+                local ship_id = ship_fields.ID
+                local route_name = route_fields.RouteName
+                if ship_id == nil or route_name == nil or tostring(route_name) == "" then
+                    errors[#errors + 1] = {
+                        vehicle_index = vehicle_index,
+                        field = ship_id == nil and "ID" or "RouteName",
+                        error = "assigned route ship is missing identity evidence",
+                    }
+                elseif ship_fields.read_errors ~= nil or route_fields.read_errors ~= nil then
+                    errors[#errors + 1] = {
+                        vehicle_index = vehicle_index,
+                        field = "ship_fields",
+                        error = "one or more assigned route ship fields were unreadable",
+                    }
+                else
+                    local area_ok, ship_area = safe_get(ship, "Area")
+                    local ship_area_id = area_ok and ship_area ~= nil and area_id(ship_area) or nil
+                    result.items[#result.items + 1] = {
+                        ship_id = safe_value(ship_id),
+                        ship_guid = safe_value(ship_fields.GUID),
+                        owner_guid = safe_value(ship_fields.Owner),
+                        game_session_guid = safe_value(ship_fields.SessionGuid),
+                        area_id = safe_value(ship_area_id),
+                        route_name = safe_value(route_name),
+                        is_paused = safe_value(route_fields.IsPaused),
+                        on_regular_route = safe_value(route_fields.OnRegularRoute),
+                        loading_speed_factor = safe_value(route_fields.LoadingSpeedFactor),
+                    }
+                end
+            end
+        end
+    end
+    result.assigned_count = #result.items
+    if #errors > 0 then result.errors = errors end
+    if not result.truncated and #errors == 0 then
+        result.status = "success"
+    elseif result.truncated then
+        result.error = "route vehicle enumeration was truncated; previous route state was preserved"
+    end
+    return result
+end
+
 local function capture_location(area)
     local kontor_ok, kontor_id, kontor_error = safe_get(area, "KontorID")
     if not kontor_ok or kontor_id == nil then
@@ -574,6 +666,7 @@ function Telemetry:Sample(trigger)
     local participant = {
         finance = capture_finance(participant_errors),
         route_issues = capture_route_issues(participant_errors),
+        route_ships = capture_route_ships(),
     }
     if next(participant_errors) ~= nil then participant.section_errors = participant_errors end
     emit("participant_snapshot", participant, snapshot, next(participant_errors) == nil)

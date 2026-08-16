@@ -402,6 +402,67 @@ class TradeRouteIssueObservation(Base):
     raw_flags_json: Mapped[str | None] = mapped_column(Text)
 
 
+class TradeRouteShipObservation(Base):
+    """A ship-backed route assignment observed in one complete telemetry batch."""
+
+    __tablename__ = "trade_route_ship_observation"
+
+    snapshot_id: Mapped[int] = mapped_column(ForeignKey("snapshot_batch.snapshot_id"), primary_key=True)
+    ship_id_raw: Mapped[str] = mapped_column(String, primary_key=True)
+    route_name: Mapped[str] = mapped_column(String, nullable=False)
+    ship_guid: Mapped[str | None] = mapped_column(String)
+    owner_guid: Mapped[str | None] = mapped_column(String)
+    game_session_guid: Mapped[str | None] = mapped_column(String)
+    area_id_raw: Mapped[str | None] = mapped_column(String)
+    is_paused: Mapped[bool | None] = mapped_column(Boolean)
+    on_regular_route: Mapped[bool | None] = mapped_column(Boolean)
+    loading_speed_factor: Mapped[float | None] = mapped_column(Float)
+
+    __table_args__ = (Index("ix_route_ship_observation_name", "snapshot_id", "route_name"),)
+
+
+class ActiveTradeRouteCurrent(Base):
+    """Last proven assignment state for a mutable in-game route name."""
+
+    __tablename__ = "active_trade_route_current"
+
+    route_key: Mapped[str] = mapped_column(String, primary_key=True)
+    campaign_id: Mapped[str] = mapped_column(ForeignKey("campaign.campaign_id"), nullable=False)
+    route_name: Mapped[str] = mapped_column(String, nullable=False)
+    identity_scope: Mapped[str] = mapped_column(String, default="mutable_route_name", nullable=False)
+    game_session_guid: Mapped[str | None] = mapped_column(String)
+    region_guid: Mapped[str | None] = mapped_column(String)
+    play_session_id: Mapped[str] = mapped_column(ForeignKey("play_session.play_session_id"), nullable=False)
+    snapshot_id: Mapped[int] = mapped_column(ForeignKey("snapshot_batch.snapshot_id"), nullable=False)
+    assigned_ship_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    paused_ship_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    regular_ship_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    first_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+    last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+    __table_args__ = (
+        Index("ix_active_route_campaign", "campaign_id", "is_active", "last_seen_at"),
+    )
+
+
+class ActiveTradeRouteShipCurrent(Base):
+    __tablename__ = "active_trade_route_ship_current"
+
+    route_key: Mapped[str] = mapped_column(
+        ForeignKey("active_trade_route_current.route_key", ondelete="CASCADE"), primary_key=True
+    )
+    ship_id_raw: Mapped[str] = mapped_column(String, primary_key=True)
+    ship_guid: Mapped[str | None] = mapped_column(String)
+    owner_guid: Mapped[str | None] = mapped_column(String)
+    game_session_guid: Mapped[str | None] = mapped_column(String)
+    area_id_raw: Mapped[str | None] = mapped_column(String)
+    is_paused: Mapped[bool | None] = mapped_column(Boolean)
+    on_regular_route: Mapped[bool | None] = mapped_column(Boolean)
+    loading_speed_factor: Mapped[float | None] = mapped_column(Float)
+    observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
 class AreaLocation(Base):
     __tablename__ = "area_location"
 

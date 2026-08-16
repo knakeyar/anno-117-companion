@@ -183,6 +183,323 @@
         "title": "ActiveCampaignWrite",
         "type": "object"
       },
+      "ActiveTradeRouteShipView": {
+        "properties": {
+          "area_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area Id"
+          },
+          "game_session_guid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Game Session Guid"
+          },
+          "is_paused": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Paused"
+          },
+          "loading_speed_factor": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Loading Speed Factor"
+          },
+          "on_regular_route": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "On Regular Route"
+          },
+          "ship_guid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ship Guid"
+          },
+          "ship_id": {
+            "title": "Ship Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ship_id",
+          "ship_guid",
+          "game_session_guid",
+          "area_id",
+          "is_paused",
+          "on_regular_route",
+          "loading_speed_factor"
+        ],
+        "title": "ActiveTradeRouteShipView",
+        "type": "object"
+      },
+      "ActiveTradeRouteView": {
+        "properties": {
+          "assigned_ship_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assigned Ship Count"
+          },
+          "evidence_kind": {
+            "enum": [
+              "assigned_ships",
+              "issue_only"
+            ],
+            "title": "Evidence Kind",
+            "type": "string"
+          },
+          "freshness_seconds": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Freshness Seconds"
+          },
+          "game_session_guid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Game Session Guid"
+          },
+          "identity_scope": {
+            "const": "mutable_route_name",
+            "title": "Identity Scope",
+            "type": "string"
+          },
+          "is_active_last_observed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active Last Observed"
+          },
+          "is_stale": {
+            "title": "Is Stale",
+            "type": "boolean"
+          },
+          "issues": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Issues",
+            "type": "array"
+          },
+          "observed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observed At"
+          },
+          "paused_ship_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Paused Ship Count"
+          },
+          "region_guid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Region Guid"
+          },
+          "regular_ship_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Regular Ship Count"
+          },
+          "route_key": {
+            "title": "Route Key",
+            "type": "string"
+          },
+          "route_name": {
+            "title": "Route Name",
+            "type": "string"
+          },
+          "ships": {
+            "items": {
+              "$ref": "#/components/schemas/ActiveTradeRouteShipView"
+            },
+            "title": "Ships",
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "running",
+              "partially_paused",
+              "paused",
+              "issue_reported"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "route_key",
+          "route_name",
+          "identity_scope",
+          "evidence_kind",
+          "status",
+          "is_active_last_observed",
+          "assigned_ship_count",
+          "paused_ship_count",
+          "regular_ship_count",
+          "game_session_guid",
+          "region_guid",
+          "observed_at",
+          "freshness_seconds",
+          "is_stale",
+          "issues",
+          "ships"
+        ],
+        "title": "ActiveTradeRouteView",
+        "type": "object"
+      },
+      "ActiveTradeRoutesResponse": {
+        "properties": {
+          "campaign_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Campaign Id"
+          },
+          "capabilities": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "title": "Capabilities",
+            "type": "object"
+          },
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Counts",
+            "type": "object"
+          },
+          "identity_notice": {
+            "title": "Identity Notice",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ActiveTradeRouteView"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "meta": {
+            "additionalProperties": true,
+            "title": "Meta",
+            "type": "object"
+          },
+          "scope": {
+            "title": "Scope",
+            "type": "string"
+          },
+          "telemetry_status": {
+            "enum": [
+              "success",
+              "failed",
+              "not_observed"
+            ],
+            "title": "Telemetry Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "meta",
+          "campaign_id",
+          "telemetry_status",
+          "scope",
+          "identity_notice",
+          "capabilities",
+          "counts",
+          "items"
+        ],
+        "title": "ActiveTradeRoutesResponse",
+        "type": "object"
+      },
       "AdvisorConversationView": {
         "properties": {
           "available": {
@@ -2340,6 +2657,55 @@
           }
         },
         "summary": "Opportunities",
+        "tags": [
+          "management"
+        ]
+      }
+    },
+    "/api/v1/trade/routes": {
+      "get": {
+        "operationId": "known_trade_routes_api_v1_trade_routes_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "campaign_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Campaign Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActiveTradeRoutesResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Known Trade Routes",
         "tags": [
           "management"
         ]

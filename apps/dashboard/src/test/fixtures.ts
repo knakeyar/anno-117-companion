@@ -1,4 +1,4 @@
-import type { InventoryResponse, OverviewResponse, StatusResponse, TradeResponse } from '../types'
+import type { ActiveTradeRoutesResponse, InventoryResponse, OverviewResponse, StatusResponse, TradeResponse } from '../types'
 
 export const meta = {
   snapshot_id: 44,
@@ -46,20 +46,38 @@ export const inventory: InventoryResponse = {
 
 export const trade: TradeResponse = {
   meta: { ...meta }, catalog,
-  items: [{ product_guid: '2174', product_name: 'Timber', source_area_pk: 1, source_area_name: 'Juliana', destination_area_pk: 2, destination_area_name: 'Naissus', advisory_amount: 12, destination_priority: 2, route_feasibility: 'unknown', interpretation: 'transfer_candidate' }],
-  suggested_routes: [{ suggestion_id: 'route:1:2', action_id: 'act-route', source_area_pk: 1, source_area_name: 'Juliana', destination_area_pk: 2, destination_area_name: 'Naissus', goods: [{ product_guid: '2174', product_name: 'Timber', advisory_amount: 12 }], confidence: 'high', reason: 'Observed destination deficit can be supplied from bounded source surplus.', evidence: { priority_score: 2 }, route_feasibility: 'unknown' }],
+  items: [{ product_guid: '2174', product_name: 'Timber', source_area_pk: 1, source_area_name: 'Juliana', destination_area_pk: 2, destination_area_name: 'Naissus', advisory_amount: 12, source_available_stock: 92, source_high_target: 80, projected_source_stock: 80, destination_available_stock: 8, destination_low_target: 25, projected_destination_stock: 20, destination_priority: 2, route_feasibility: 'unknown', interpretation: 'transfer_candidate' }],
+  suggested_routes: [{ suggestion_id: 'route:1:2', action_id: 'act-route', source_area_pk: 1, source_area_name: 'Juliana', destination_area_pk: 2, destination_area_name: 'Naissus', goods: [{ product_guid: '2174', product_name: 'Timber', advisory_amount: 12, source_available_stock: 92, source_high_target: 80, projected_source_stock: 80, destination_available_stock: 8, destination_low_target: 25, projected_destination_stock: 20 }], confidence: 'high', reason: 'Observed destination deficit can be supplied from bounded source surplus.', evidence: { priority_score: 2 }, route_feasibility: 'unknown' }],
   notice: 'Advisory transfer candidates; route feasibility is unknown.',
+}
+
+export const activeTradeRoutes: ActiveTradeRoutesResponse = {
+  meta: { ...meta },
+  campaign_id: 'campaign-1',
+  telemetry_status: 'success',
+  scope: 'assigned_trade_route_ships_in_observed_game_session',
+  identity_notice: 'Anno exposes a mutable route name but no stable route ID. Renamed or duplicate names may appear as separate or merged records.',
+  capabilities: { assigned_ships: true, route_issues: true, stops: false, configured_goods: false, ship_cargo: false },
+  counts: { ship_backed_routes: 1, issue_only_routes: 0, assigned_ships: 2 },
+  items: [{
+    route_key: 'route-olives', route_name: 'Olives Rav - Jul', identity_scope: 'mutable_route_name', evidence_kind: 'assigned_ships', status: 'partially_paused', is_active_last_observed: true,
+    assigned_ship_count: 2, paused_ship_count: 1, regular_ship_count: 2, game_session_guid: '3245', region_guid: '3225', observed_at: meta.observed_at, freshness_seconds: 12, is_stale: false, issues: [],
+    ships: [
+      { ship_id: '8121', ship_guid: '37222', game_session_guid: '3245', area_id: '8513', is_paused: false, on_regular_route: true, loading_speed_factor: 1 },
+      { ship_id: '8122', ship_guid: '37223', game_session_guid: '3245', area_id: '8513', is_paused: true, on_regular_route: true, loading_speed_factor: 1.2 },
+    ],
+  }],
 }
 
 export const overview: OverviewResponse = {
   meta: { ...meta }, catalog,
   finance: { participant_guid: '41', treasury: 3_756_154, total_balance_raw: 200, trade_balance_period_raw: 50, passive_trade_balance_period_raw: 20, active_trade_balance_period_raw: 30, categories: [] },
-  balance_analysis: { reported_balance: 200, reported_balance_is_negative: false, treasury: 3_756_154, treasury_is_falling: false, treasury_change: 100, treasury_change_per_game_minute: 5, trade_balance: { total: 50, passive: 20, active: 30 }, largest_positive_categories: [], largest_negative_categories: [], estimated_base_maintenance: { total: 12, cities: [{ area_pk: 1, area_name: 'Juliana', estimated_base_maintenance: 12, factories: [{ building_guid: '2955', building_name: 'Fishing Hut', count: 2, base_maintenance_each: 6, estimated_base_maintenance: 12 }] }], notice: 'Estimated base maintenance from catalog costs and observed factory counts; buffs and other modifiers are excluded.' }, guidance: [] },
+  balance_analysis: { reported_balance: 200, reported_balance_is_negative: false, treasury: 3_756_154, treasury_is_falling: false, treasury_change: 100, treasury_change_per_game_minute: 5, trade_balance: { total: 50, passive: 20, active: 30 }, category_totals: { gross_income: 300, gross_expenses: 100, net_profit: 200, interpretation: 'sum_of_observed_finance_categories' }, largest_positive_categories: [], largest_negative_categories: [], estimated_base_maintenance: { total: 12, cities: [{ area_pk: 1, area_name: 'Juliana', estimated_base_maintenance: 12, factories: [{ building_guid: '2955', building_name: 'Fishing Hut', count: 2, base_maintenance_each: 6, estimated_base_maintenance: 12 }] }], notice: 'Estimated base maintenance from catalog costs and observed factory counts; buffs and other modifiers are excluded.' }, guidance: [] },
   actions: [{ action_id: 'act-route', campaign_id: 'campaign-1', kind: 'transfer', severity: 'warning', title: 'Plan Juliana → Naissus', summary: 'Move Timber from observed surplus.', evidence: {}, deep_link: '/trade', status: 'active', snoozed_until: null, first_seen_at: new Date().toISOString(), last_seen_at: new Date().toISOString(), resolved_at: null }],
   suggested_routes: trade.suggested_routes,
   signals: inventory.signals,
   transfer_candidates: trade.items,
-  route_issues: [{ route_name: 'Supply route', issue_code: 'no_ships', severity: 'critical', active_error_count: 1, identity_scope: 'ephemeral_route_name' }],
+  route_issues: [{ route_name: 'Supply route', issue_code: 'no_ships', engine_error_code: 12, label: 'Route has no ships', guidance: 'Assign an in-game ship to this route.', severity: 'critical', active_error_count: 1, identity_scope: 'ephemeral_route_name' }],
   workforce_shortages: [{ area_pk: 1, area_name: 'Juliana', scope: 'current_camera_area', workforce_guid: '2181', name: 'Libertus Workforce', population_count: 100, resulting_from_population: 50, registered_production: 55, registered_consumption: -60, delta_without_buffs: -5, delta_with_buffs: -5 }],
   counts: { inventory_items: 2, signals: 2, transfer_candidates: 1 },
   language: { rate_label: 'Net stock change', pressure_label: 'Inferred pressure' },
@@ -83,6 +101,7 @@ export const apiFixtures: Record<string, unknown> = {
   '/api/v1/inventory/latest': inventory,
   '/api/v1/dashboard/overview': overview,
   '/api/v1/trade/opportunities': trade,
+  '/api/v1/trade/routes': activeTradeRoutes,
   '/api/v1/production/chains': { meta, catalog: { ...catalog, recipes: 1 }, chains: [{ recipe_id: 'factory:2955', name: 'Fishing Hut', building_guid: '2955', building_name: 'Fishing Hut', cycle_seconds: 60, items: [{ role: 'output', ordinal: 1, product_guid: '2174', product_name: 'Timber', amount: 1 }], inferred_pressures: [], associated_regions: ['Roman'], base_maintenance: 6, city_states: [{ area_pk: 1, area_name: 'Juliana', region_guid: '3225', building_count: 2, presence_status: 'installed', observed_at: meta.observed_at, inferred_pressures: [], stocks: [{ role: 'output', ordinal: 1, product_guid: '2174', product_name: 'Timber', amount: 1, stock: 92, capacity: 100, fill_ratio: .92, net_stock_change: { net_stock_change_per_minute: 4, interval_count: 5, window_minutes: 5, confidence: 'measured_history' } }] }], measurement_notice: 'Stock-based inferred pressure; no measured factory rate.' }] },
   '/api/v1/finance': { meta, finance: overview.finance, balance_analysis: overview.balance_analysis },
   '/api/v1/finance/history': { meta, items: [{ observed_at: meta.observed_at, treasury: 3_756_154, reported_balance: 200 }] },

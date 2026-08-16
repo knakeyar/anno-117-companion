@@ -5,9 +5,9 @@ import * as echarts from 'echarts/core'
 import { LineChart } from 'echarts/charts'
 import { GridComponent, TooltipComponent } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
-import { ArrowRight, Boxes, CircleDollarSign, MapPinned, Pencil, UsersRound, Warehouse } from 'lucide-react'
+import { ArrowRight, Boxes, CircleDollarSign, Crown, Hammer, MapPinned, Pencil, Pickaxe, Scale, Search, UsersRound, Warehouse, Waves, Wheat } from 'lucide-react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { useAreas, useCompanionMutations, useFinance, useHistory, useInventory, useWorkforce } from '../api'
+import { useAreas, useChains, useCompanionMutations, useFinance, useHistory, useInventory, useWorkforce } from '../api'
 import { EmptyState, ErrorState, FillBar, FreshnessBanner, LoadingState, MetricCard, PageHeader, SectionHeader } from '../components/Common'
 import { PolicyEditor } from '../components/PolicyEditor'
 import { areaRegion, RegionMap } from '../components/RegionMap'
@@ -26,6 +26,48 @@ const ReactEChartsCore = (
     ? (ReactEChartsCoreImport as { default: unknown }).default
     : ReactEChartsCoreImport
 ) as ComponentType<{ echarts: typeof echarts; option: object; style?: CSSProperties }>
+
+const planningDomainOrder = [
+  'Construction materials',
+  'Raw & agricultural materials',
+  'Intermediate goods',
+  'Consumer & finished goods',
+]
+
+function planningDomain(item: InventoryItem, chains: ReturnType<typeof useChains>['data']): string {
+  if (item.category === 'construction_material') return 'Construction materials'
+  const recipes = chains?.chains ?? []
+  const producers = recipes.filter((chain) => chain.items.some((part) => part.role === 'output' && part.product_guid === item.product_guid))
+  if (producers.some((chain) => !chain.items.some((part) => part.role === 'input'))) return 'Raw & agricultural materials'
+  if (recipes.some((chain) => chain.items.some((part) => part.role === 'input' && part.product_guid === item.product_guid))) return 'Intermediate goods'
+  return 'Consumer & finished goods'
+}
+
+function WorkforceGlyph({ name }: { name: string | null }) {
+  const value = (name ?? '').toLowerCase()
+  const Icon = value.includes('wader') || value.includes('water') ? Waves
+    : value.includes('smith') ? Hammer
+      : value.includes('mercator') || value.includes('merchant') ? Scale
+        : value.includes('noble') ? Crown
+          : value.includes('farmer') || value.includes('agric') ? Wheat
+            : value.includes('miner') ? Pickaxe
+              : UsersRound
+  return <span className="workforce-glyph" aria-hidden="true"><Icon size={18} /></span>
+}
+
+function GoodsDomainSection({ domain, items, pressureProducts, initiallyOpen, onEdit }: {
+  domain: string
+  items: InventoryItem[]
+  pressureProducts: Set<string>
+  initiallyOpen: boolean
+  onEdit: (item: InventoryItem) => void
+}) {
+  const [isOpen, setIsOpen] = useState(initiallyOpen)
+  return <details open={isOpen} onToggle={(event) => setIsOpen(event.currentTarget.open)}><summary><span>{domain}</span><small>{items.length} goods</small></summary><div className="goods-target-grid">{items.map((item) => <button className={pressureProducts.has(item.product_guid) ? 'has-pressure' : ''} key={item.product_guid} onClick={() => onEdit(item)}>
+    <div><span className="product-glyph"><Warehouse size={15} /></span><span><strong>{item.product_name}</strong><small>{item.passive_trade_mode.replaceAll('_', ' ')} · {item.policy_source.replaceAll('_', ' ')}</small></span><b>{formatNumber(item.stock)} / {formatNumber(item.capacity)}</b></div>
+    <FillBar value={item.fill_ratio} low={item.capacity ? (item.low_target ?? 0) / item.capacity : null} high={item.capacity ? (item.high_target ?? 0) / item.capacity : null} />
+  </button>)}</div></details>
+}
 
 export function AreasPage() {
   const areas = useAreas()
@@ -67,14 +109,30 @@ export function AreaDetailPage() {
   const inventory = useInventory()
   const workforce = useWorkforce()
   const finance = useFinance()
+  const chains = useChains()
   const area = areas.data?.items.find((item) => item.area_pk === areaId)
   const areaItems = useMemo(() => inventory.data?.items.filter((item) => item.area_pk === areaId) ?? [], [inventory.data?.items, areaId])
   const [selectedProduct, setSelectedProduct] = useState(() => searchParams.get('product') ?? '')
+  const [goodsSearch, setGoodsSearch] = useState('')
   const [editing, setEditing] = useState<InventoryItem | null>(null)
-  const effectiveProduct = selectedProduct || areaItems[0]?.product_guid || ''
+  const suggestedProduct = inventory.data?.signals.find((signal) => signal.area_pk === areaId)?.product_guid
+    ?? areaItems.find((item) => (item.stock ?? 0) > 0)?.product_guid
+    ?? areaItems[0]?.product_guid
+  const effectiveProduct = selectedProduct || suggestedProduct || ''
   const history = useHistory(areaId, effectiveProduct)
   const selected = areaItems.find((item) => item.product_guid === effectiveProduct)
   const workforceItems = workforce.data?.items.filter((item) => item.area_pk === areaId) ?? []
+  const pressureProducts = useMemo(() => new Set(inventory.data?.signals.filter((signal) => signal.area_pk === areaId).map((signal) => signal.product_guid) ?? []), [inventory.data?.signals, areaId])
+  const goodsGroups = useMemo(() => {
+    const needle = goodsSearch.trim().toLowerCase()
+    return planningDomainOrder.flatMap((domain) => {
+      const items = areaItems
+        .filter((item) => planningDomain(item, chains.data) === domain)
+        .filter((item) => !needle || item.product_name.toLowerCase().includes(needle))
+        .sort((a, b) => a.product_name.localeCompare(b.product_name))
+      return items.length ? [{ domain, items }] : []
+    })
+  }, [areaItems, chains.data, goodsSearch])
 
   if (areas.isLoading || inventory.isLoading) return <LoadingState />
   const error = areas.error || inventory.error
@@ -101,20 +159,17 @@ export function AreaDetailPage() {
       </section>
       <div className="area-detail-grid">
         <section className="panel span-two">
-          <SectionHeader title="Stock history" description="Complete snapshots from the active play-session authority epoch." action={<select aria-label="History product" value={effectiveProduct} onChange={(event) => setSelectedProduct(event.target.value)}>{areaItems.map((item) => <option value={item.product_guid} key={item.product_guid}>{item.product_name}</option>)}</select>} />
+          <SectionHeader title="Stock history" description="Choose any observed good; a pressure signal is selected first when available." action={<label className="history-product-picker"><span>Stock to chart</span><select aria-label="Stock to chart" value={effectiveProduct} onChange={(event) => setSelectedProduct(event.target.value)}>{areaItems.map((item) => <option value={item.product_guid} key={item.product_guid}>{item.product_name}</option>)}</select></label>} />
           {selected ? <><div className="history-summary"><span><small>Current</small><strong>{formatNumber(selected.stock)}</strong></span><span><small>Capacity</small><strong>{formatNumber(selected.capacity)}</strong></span><span><small>Net stock change</small><strong className={(selected.velocity?.net_stock_change_per_minute ?? 0) < 0 ? 'negative' : 'positive'}>{formatRate(selected.velocity?.net_stock_change_per_minute)}</strong></span></div><ReactEChartsCore echarts={echarts} option={chart} style={{ height: 260 }} /></> : <EmptyState title="No product selected" description="This area has no observed product rows." />}
         </section>
         <section className="panel">
           <SectionHeader title="Current-area workforce" description="Shown only when this was the camera area." />
-          {workforceItems.length ? <div className="workforce-list">{workforceItems.map((item) => <div key={item.workforce_guid}><span><strong>{item.name || item.workforce_guid}</strong><small>Supply {formatNumber(item.registered_production, 1)} · demand {formatNumber(Math.abs(item.registered_consumption ?? 0), 1)}</small></span><b className={(item.delta_without_buffs ?? 0) < 0 ? 'negative' : 'positive'}>{formatNumber(item.delta_without_buffs, 1)}</b></div>)}</div> : <EmptyState title="Workforce not observed here" description="Move the game camera to this island and wait for a complete snapshot." />}
+          {workforceItems.length ? <div className="workforce-list">{workforceItems.map((item) => <div key={item.workforce_guid}><WorkforceGlyph name={item.name} /><span><strong>{item.name || item.workforce_guid}</strong><small>Supply {formatNumber(item.registered_production, 1)} · demand {formatNumber(Math.abs(item.registered_consumption ?? 0), 1)}</small></span><b className={(item.delta_without_buffs ?? 0) < 0 ? 'negative' : 'positive'}>{formatNumber(item.delta_without_buffs, 1)}</b></div>)}</div> : <EmptyState title="Workforce not observed here" description="Move the game camera to this island and wait for a complete snapshot." />}
         </section>
       </div>
       <section className="panel">
-        <SectionHeader title="Goods and targets" description="Select a row to change companion-only management policy." />
-        {areaItems.length ? <div className="goods-target-grid">{areaItems.map((item) => <button key={item.product_guid} onClick={() => setEditing(item)}>
-          <div><span className="product-glyph"><Warehouse size={15} /></span><span><strong>{item.product_name}</strong><small>{item.passive_trade_mode.replaceAll('_', ' ')} · {item.policy_source.replaceAll('_', ' ')}</small></span><b>{formatNumber(item.stock)} / {formatNumber(item.capacity)}</b></div>
-          <FillBar value={item.fill_ratio} low={item.capacity ? (item.low_target ?? 0) / item.capacity : null} high={item.capacity ? (item.high_target ?? 0) / item.capacity : null} />
-        </button>)}</div> : <EmptyState title="No inventory observed" description="Wait for the next complete snapshot." />}
+        <SectionHeader title="Goods and targets" description="Planning domains are derived from verified recipe roles. Select a good to change companion-only targets." action={<label className="search-field goods-search"><Search size={15} /><input aria-label="Search city goods" value={goodsSearch} onChange={(event) => setGoodsSearch(event.target.value)} placeholder="Find a good" /></label>} />
+        {areaItems.length ? <div className="goods-domain-list">{goodsGroups.map((group, index) => <GoodsDomainSection key={group.domain} domain={group.domain} items={group.items} pressureProducts={pressureProducts} initiallyOpen={index === 0 || group.items.some((item) => pressureProducts.has(item.product_guid))} onEdit={setEditing} />)}</div> : <EmptyState title="No inventory observed" description="Wait for the next complete snapshot." />}
       </section>
       <PolicyEditor item={editing} onClose={() => setEditing(null)} />
     </div>

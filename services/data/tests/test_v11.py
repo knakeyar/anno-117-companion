@@ -15,12 +15,14 @@ from app.ingestion import PRODUCTION_PREFIX, TelemetryIngestor
 from app.main import create_app
 from app.models import (
     AdvisorMessage,
+    ActiveTradeRouteCurrent,
     AreaBuildingCurrent,
     AreaProductCurrent,
     Campaign,
     ManagementAction,
     PlaySession,
     SnapshotBatch,
+    TradeRouteIssueObservation,
 )
 
 from .helpers import seed_complete_snapshots
@@ -58,9 +60,39 @@ def test_estimated_base_maintenance_uses_city_factory_counts(session_factory) ->
         ))
         session.flush()
         analysis = finance_analysis(session, snapshot)
+        assert analysis["category_totals"] == {
+            "gross_income": 300.0,
+            "gross_expenses": 100.0,
+            "net_profit": 200.0,
+            "interpretation": "sum_of_observed_finance_categories",
+        }
         assert analysis["estimated_base_maintenance"]["total"] == 12
         assert analysis["estimated_base_maintenance"]["cities"][0]["area_name"] == "Juliana"
         assert analysis["estimated_base_maintenance"]["notice"].startswith("Estimated base maintenance")
+
+
+def test_legacy_engine_route_error_15_is_explained(session_factory, app_settings) -> None:
+    seed_complete_snapshots(session_factory)
+    with session_factory() as session:
+        snapshot = latest_complete_snapshot(session)
+        session.add(TradeRouteIssueObservation(
+            snapshot_id=snapshot.snapshot_id,
+            ordinal=2,
+            route_name="Bread Cud - Rhy",
+            issue_code="engine_error_15",
+            severity="warning",
+            active_error_count=1,
+            raw_flags_json='{"active_error_types":[15]}',
+        ))
+        session.commit()
+    app = create_app(app_settings, session_factory)
+    with TestClient(app) as client:
+        issues = client.get("/api/v1/dashboard/overview").json()["route_issues"]
+        issue = next(item for item in issues if item["route_name"] == "Bread Cud - Rhy")
+        assert issue["issue_code"] == "mismatching_good"
+        assert issue["engine_error_code"] == 15
+        assert issue["label"] == "Mismatching cargo"
+        assert "matching unload" in issue["guidance"]
 
 
 def _v2(event_type: str, sequence: int, snapshot: int | None, data: dict, *, ok: bool = True) -> str:
@@ -123,6 +155,84 @@ def test_v2_missing_chunk_never_becomes_current(session_factory) -> None:
         snapshot = session.scalar(select(SnapshotBatch))
         assert snapshot.is_complete is False
         assert session.scalar(select(func.count()).select_from(AreaProductCurrent)) == 0
+
+
+def test_ship_backed_routes_are_persisted_and_failed_scans_preserve_them(session_factory, app_settings) -> None:
+    ingestor = TelemetryIngestor(session_factory)
+    offset = 0
+    sequence = 0
+
+    def ingest(event: str, snapshot: int | None, data: dict) -> None:
+        nonlocal offset, sequence
+        sequence += 1
+        line = _v2(event, sequence, snapshot, data)
+        ingestor.ingest_line(
+            source_path="routes.log", source_fingerprint="routes:1", source_offset=offset, line=line
+        )
+        offset += len(line.encode())
+
+    ingest("telemetry_loaded", None, {})
+    ingest("snapshot_started", 1, {
+        "section_mode": "baseline",
+        "context": {
+            "participant_guid": "41", "game_seed": "951", "play_time": 30_000,
+            "game_session_guid": "3245", "region_guid": "3225",
+        },
+        "area_enumeration_scope": "all_controlled_areas", "area_count": 0,
+    })
+    ingest("participant_snapshot", 1, {
+        "finance": {"participant_guid": "41", "money": {}},
+        "route_issues": {"items": []},
+        "route_ships": {
+            "status": "success", "reported_count": 3, "assigned_count": 2,
+            "items": [
+                {"ship_id": "8121", "ship_guid": "37222", "game_session_guid": "3245", "area_id": "8513", "route_name": "Olives Rav - Jul", "is_paused": False, "on_regular_route": True, "loading_speed_factor": 1.0},
+                {"ship_id": "8122", "ship_guid": "37223", "game_session_guid": "3245", "area_id": "8513", "route_name": "Olives Rav - Jul", "is_paused": True, "on_regular_route": True, "loading_speed_factor": 1.2},
+            ],
+        },
+    })
+    ingest("snapshot_completed", 1, {"complete": True, "expected_area_count": 0, "emitted_area_count": 0})
+
+    # An unavailable later scan is explicitly not-observed and must not erase
+    # the prior route evidence.
+    ingest("snapshot_started", 2, {
+        "section_mode": "delta",
+        "context": {
+            "participant_guid": "41", "game_seed": "951", "play_time": 60_000,
+            "game_session_guid": "3245", "region_guid": "3225",
+        },
+        "area_enumeration_scope": "all_controlled_areas", "area_count": 0,
+    })
+    ingest("participant_snapshot", 2, {
+        "finance": {"participant_guid": "41", "money": {}},
+        "route_issues": {"items": []},
+        "route_ships": {"status": "not_observed", "items": [], "error": "binding unavailable"},
+    })
+    ingest("snapshot_completed", 2, {"complete": True, "expected_area_count": 0, "emitted_area_count": 0})
+    ingest("telemetry_unloaded", None, {})
+
+    with session_factory() as session:
+        route = session.scalar(select(ActiveTradeRouteCurrent))
+        assert route is not None
+        assert route.route_name == "Olives Rav - Jul"
+        assert route.assigned_ship_count == 2
+        assert route.paused_ship_count == 1
+        assert route.is_active is True
+
+    app = create_app(app_settings, session_factory)
+    with TestClient(app) as client:
+        response = client.get("/api/v1/trade/routes")
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["telemetry_status"] == "not_observed"
+        assert payload["counts"] == {
+            "ship_backed_routes": 1, "issue_only_routes": 0, "assigned_ships": 2,
+        }
+        route = payload["items"][0]
+        assert route["status"] == "partially_paused"
+        assert route["evidence_kind"] == "assigned_ships"
+        assert len(route["ships"]) == 2
+        assert payload["capabilities"]["stops"] is False
 
 
 def test_unload_and_restart_keep_campaign_areas_and_inventory(session_factory, app_settings) -> None:

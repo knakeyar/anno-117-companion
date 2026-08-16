@@ -15,6 +15,20 @@ describe('first-class management dashboard', () => {
     expect(screen.queryByText(/measured production rate/i)).not.toBeInTheDocument()
   })
 
+  it('keeps cities visible with schematic markers when coordinate telemetry is unavailable', async () => {
+    const fixtures = await import('./fixtures')
+    const areas = fixtures.apiFixtures['/api/v1/areas'] as { items: Array<Record<string, unknown>> }
+    installFetchMock({
+      '/api/v1/areas': {
+        ...areas,
+        items: areas.items.map((area) => ({ ...area, position: null, position_source: null, manual_placement: false, location_status: 'not_observed' })),
+      },
+    })
+    renderApp(<App />)
+    expect(await screen.findByRole('link', { name: /Juliana, .*schematic position/i })).toBeInTheDocument()
+    expect(screen.getByText(/schematic placement/i)).toBeInTheDocument()
+  })
+
   it('makes stale telemetry explicit without turning observations into zero', async () => {
     installFetchMock({
       '/api/v1/dashboard/overview': { ...overview, meta: { ...overview.meta, is_stale: true, freshness_seconds: 180 } },
@@ -25,17 +39,32 @@ describe('first-class management dashboard', () => {
     expect(screen.getByText(/nothing has been reset to zero/i)).toBeInTheDocument()
   })
 
-  it('accepts a ranked route suggestion into the companion workflow', async () => {
+  it('explains and saves a ranked route suggestion into the companion workflow', async () => {
     const fetchMock = installFetchMock()
     renderApp(<App />, '/trade')
     expect(await screen.findByRole('heading', { name: 'Turn shortages into route plans.' })).toBeInTheDocument()
     expect(screen.getByText(/route feasibility unknown/i)).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: /Accept plan/i }))
+    await userEvent.click(screen.getByRole('button', { name: /Explain plan/i }))
+    expect(screen.getByText('What saving this plan means')).toBeInTheDocument()
+    expect(screen.getByText(/Minimum ship estimate/i)).toBeInTheDocument()
+    expect(screen.getByText(/planning assumption only/i)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: /Save plan/i }))
     await waitFor(() => expect(fetchMock.mock.calls.some(([input, init]) => {
       const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url, 'http://localhost')
       const method = init?.method ?? (input instanceof Request ? input.method : 'GET')
       return url.pathname === '/api/v1/trade-plans' && method === 'POST'
     })).toBe(true))
+  })
+
+  it('lists ship-backed active routes separately from route suggestions', async () => {
+    installFetchMock()
+    renderApp(<App />, '/trade')
+    expect(await screen.findByRole('heading', { name: 'Known active routes' })).toBeInTheDocument()
+    expect(screen.getByText('Olives Rav - Jul')).toBeInTheDocument()
+    expect(screen.getByText(/2 assigned ships · 1 paused/i)).toBeInTheDocument()
+    await userEvent.click(screen.getByText(/Show 2 observed ships/i))
+    expect(screen.getByText('Ship 8121')).toBeInTheDocument()
+    expect(screen.getByText(/Stops, configured goods, and ship cargo are not exposed/i)).toBeInTheDocument()
   })
 
   it('shows factory presence and pressure by city', async () => {
@@ -45,6 +74,15 @@ describe('first-class management dashboard', () => {
     expect(screen.getAllByText('Juliana').length).toBeGreaterThan(0)
     expect(screen.getAllByText(/installed/i).length).toBeGreaterThan(0)
     expect(screen.getAllByText(/Net stock change/).length).toBeGreaterThan(0)
+    expect(document.querySelector('.presence-dot.healthy')).toBeInTheDocument()
+  })
+
+  it('makes the stock selector and planning domains explicit on city detail', async () => {
+    installFetchMock({ '/api/v1/inventory/latest': inventory })
+    renderApp(<App />, '/areas/1')
+    expect(await screen.findByRole('heading', { name: 'Juliana' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Stock to chart')).toBeInTheDocument()
+    expect(screen.getByText('Construction materials')).toBeInTheDocument()
   })
 
   it('can assign the current authority epoch to an existing campaign', async () => {

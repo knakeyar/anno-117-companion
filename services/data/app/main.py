@@ -17,6 +17,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session, sessionmaker
 
 from .analytics import (
+    active_trade_routes,
     current_play_session,
     deterministic_action_specs,
     finance_analysis,
@@ -270,6 +271,46 @@ class TradeOpportunitiesResponse(BaseModel):
     items: list[dict[str, Any]]
     suggested_routes: list[dict[str, Any]]
     notice: str
+
+
+class ActiveTradeRouteShipView(BaseModel):
+    ship_id: str
+    ship_guid: str | None
+    game_session_guid: str | None
+    area_id: str | None
+    is_paused: bool | None
+    on_regular_route: bool | None
+    loading_speed_factor: float | None
+
+
+class ActiveTradeRouteView(BaseModel):
+    route_key: str
+    route_name: str
+    identity_scope: Literal["mutable_route_name"]
+    evidence_kind: Literal["assigned_ships", "issue_only"]
+    status: Literal["running", "partially_paused", "paused", "issue_reported"]
+    is_active_last_observed: bool | None
+    assigned_ship_count: int | None
+    paused_ship_count: int | None
+    regular_ship_count: int | None
+    game_session_guid: str | None
+    region_guid: str | None
+    observed_at: str | None
+    freshness_seconds: float | None
+    is_stale: bool
+    issues: list[dict[str, Any]]
+    ships: list[ActiveTradeRouteShipView]
+
+
+class ActiveTradeRoutesResponse(BaseModel):
+    meta: dict[str, Any]
+    campaign_id: str | None
+    telemetry_status: Literal["success", "failed", "not_observed"]
+    scope: str
+    identity_notice: str
+    capabilities: dict[str, bool]
+    counts: dict[str, int]
+    items: list[ActiveTradeRouteView]
 
 
 class ProductionChainsResponse(BaseModel):
@@ -598,6 +639,19 @@ def create_app(
             "suggested_routes": [item for item in routes if (item["source_area_pk"], item["destination_area_pk"]) not in existing_pairs][:8],
             "notice": "Advisory transfer candidates; route feasibility is unknown.",
         }
+
+    @app.get("/api/v1/trade/routes", tags=["management"], response_model=ActiveTradeRoutesResponse)
+    def known_trade_routes(database: Database, campaign_id: str | None = None) -> dict:
+        effective = resolve_campaign_id(database, campaign_id)
+        snapshot = latest_complete_snapshot(database, effective)
+        result = active_trade_routes(
+            database,
+            effective,
+            snapshot,
+            stale_after_seconds=app_settings.stale_after_seconds,
+        )
+        result["meta"] = snapshot_meta(snapshot, stale_after_seconds=app_settings.stale_after_seconds)
+        return result
 
     @app.get("/api/v1/production/chains", tags=["management"], response_model=ProductionChainsResponse)
     def chains(database: Database, campaign_id: str | None = None) -> dict:
