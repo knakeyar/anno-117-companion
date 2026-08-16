@@ -66,7 +66,7 @@ Anno Companion uses Linux containers through Docker Desktop's WSL 2 backend. You
    - `C:\Users\YOUR_WINDOWS_USER\Documents\Anno 117 - Pax Romana\mods`
    - `C:\Program Files (x86)\Steam\steamapps\common\Anno 117 - Pax Romana\mods`
 
-   Confirm its manifest is version `1.1.3`. Disable the telemetry probe during ordinary use. Version 1.1.3 takes its first baseline after 10 advancing game seconds, then returns to the normal 30-second cadence.
+   Confirm its manifest is version `1.1.4`. Disable the telemetry probe during ordinary use. Version 1.1.4 takes its first baseline after 10 advancing game seconds, captures residence counts and the need-consumption setting for city planning, then returns to the normal 30-second cadence.
 3. Copy `.env.example` to `.env` and replace `YOUR_WINDOWS_USER`. The default `ANNO_LOG_DIR` points to `C:/Users/YOUR_WINDOWS_USER/Documents/Anno 117 - Pax Romana/log`, which must contain the game log where `ANNO_COMPANION_TELEMETRY_JSON` appears. Keep forward slashes in `.env` paths.
 4. Create the directory configured by `ANNO_DATA_DIR`. The default is `C:/Users/YOUR_WINDOWS_USER/Documents/Anno Companion/data`; any writable persistent directory is acceptable.
 5. Start Docker Desktop. Then, from PowerShell in the repository directory, run:
@@ -136,6 +136,7 @@ This repository imports structured catalog data from the calculator at the delib
 
 - identify 145 reference products and the 113 factory input/output goods queried by the telemetry mod;
 - model 144 factories and their recipe inputs, outputs, cycle times, regions, DLC markers, base maintenance, and workforce requirements;
+- calculate clearly labeled base population demand from 9 residence tiers and 125 pinned need relationships, combined with observed city population and residence counts;
 - generate the Lua product/building allowlists used by the production telemetry mod; and
 - provide catalog labels, coverage reporting, production-chain relationships, estimated base maintenance, workforce grouping, inferred pressure, and trade-planning context in the data service and dashboard.
 

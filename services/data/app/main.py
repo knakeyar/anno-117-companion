@@ -72,6 +72,7 @@ from .trade_network import (
     route_link_dict,
     sync_trade_plan_runtime,
 )
+from .stock_planning import city_stock_planning
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -411,6 +412,67 @@ class InventoryHistoryGroupResponse(BaseModel):
     area_pk: int
     product_guids: list[str]
     series: list[InventoryHistorySeriesView]
+
+
+class StockPlanningSourceView(BaseModel):
+    recipe_id: str
+    building_guid: str
+    building_name: str | None
+    building_count: int
+    rate_per_minute: float | None
+    evidence: Literal["catalog_cycle_and_observed_building_count"]
+
+
+class StockPlanningRowView(BaseModel):
+    product_guid: str
+    resource_name: str
+    icon: str | None
+    category: str | None
+    natural_order: int
+    stock: float | None
+    capacity: float | None
+    fill_ratio: float | None
+    population_demand_per_minute: float | None
+    production_input_demand_per_minute: float | None
+    demand_per_minute: float | None
+    per_1000: float | None
+    supply_per_minute: float | None
+    balance_per_minute: float | None
+    observed_net_stock_change_per_minute: float | None
+    velocity_confidence: str | None
+    velocity_is_historical: bool
+    status: Literal["deficit", "constrained", "healthy", "neutral", "unknown"]
+    demand_sources: list[StockPlanningSourceView]
+    supply_sources: list[StockPlanningSourceView]
+    calculation_completeness: Literal["modeled_base", "partial", "unknown_catalog_relationships"]
+
+
+class StockPlanningGroupView(BaseModel):
+    key: str
+    label: str
+    region_id: str
+    region_name: str
+    workforce_guid: str | None
+    population_guid: str | None
+    population_name: str | None
+    population: float | None
+    residence_count: float | None
+    residence_count_source: Literal["telemetry", "estimated_from_population", "not_observed", "area_total"]
+    consumption_factor: float
+    consumption_setting: str
+    consumption_setting_source: Literal["telemetry", "catalog_low_assumption"]
+    status_counts: dict[str, int]
+    items: list[StockPlanningRowView]
+
+
+class CityStockPlanningResponse(BaseModel):
+    meta: dict[str, Any]
+    catalog: dict[str, Any]
+    area: dict[str, Any]
+    groups: list[StockPlanningGroupView]
+    capabilities: dict[str, bool]
+    measurement_notice: str
+    planning_source: dict[str, Any]
 
 
 class TradeNetworkGraphsView(BaseModel):
@@ -783,6 +845,26 @@ def create_app(
     @app.get("/api/v1/inventory/latest", tags=["economy"])
     def latest_inventory(database: Database, campaign_id: str | None = None) -> dict:
         return _inventory(database, campaign_id, app_settings)
+
+    @app.get(
+        "/api/v1/areas/{area_pk}/stock-planning",
+        tags=["economy"],
+        response_model=CityStockPlanningResponse,
+    )
+    def stock_planning(area_pk: int, database: Database) -> dict:
+        area = database.get(Area, area_pk)
+        if area is None:
+            raise HTTPException(status_code=404, detail="area not found")
+        inventory = _inventory(database, area.campaign_id, app_settings)
+        result = city_stock_planning(
+            database,
+            inventory,
+            area_pk=area_pk,
+            planning_catalog_path=app_settings.planning_catalog_path,
+        )
+        if result is None:
+            raise HTTPException(status_code=404, detail="area not found")
+        return result
 
     @app.get("/api/v1/inventory/history", tags=["economy"])
     def history(

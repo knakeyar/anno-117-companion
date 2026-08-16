@@ -47,7 +47,19 @@ def validate(catalog: dict) -> None:
         # therefore need not appear in the product reference list.
 
 
-def render_lua(catalog: dict, source_hash: str) -> str:
+def validate_planning_catalog(catalog: dict, planning_catalog: dict) -> None:
+    if planning_catalog.get("release_id") != catalog["release_id"]:
+        raise ValueError("planning catalog release does not match the economy catalog")
+    factory_ids = {str(item["guid"]) for item in catalog["building_types"]}
+    residence_ids: set[str] = set()
+    for level in planning_catalog.get("population_levels", []):
+        residence_guid = str(level["residence_guid"])
+        if residence_guid in factory_ids or residence_guid in residence_ids:
+            raise ValueError(f"duplicate planning residence GUID: {residence_guid}")
+        residence_ids.add(residence_guid)
+
+
+def render_lua(catalog: dict, source_hash: str, planning_catalog: dict | None = None) -> str:
     enabled = [item for item in catalog["products"] if item.get("telemetry_enabled", True)]
     product_lines = [
         "        { guid = %s, name = %s }," % (int(item["guid"]), lua_string(item["name"]))
@@ -57,6 +69,12 @@ def render_lua(catalog: dict, source_hash: str) -> str:
         "        { guid = %s, name = %s }," % (int(item["guid"]), lua_string(item["name"]))
         for item in catalog["building_types"]
     ]
+    if planning_catalog is not None:
+        building_lines.extend(
+            "        { guid = %s, name = %s, kind = \"residence\" },"
+            % (int(item["residence_guid"]), lua_string(item["residence_name"]))
+            for item in planning_catalog.get("population_levels", [])
+        )
     region_lines = [
         "        { guid = %s, session_guid = %s, name = %s },"
         % (int(item["guid"]), int(item["session_guid"]), lua_string(item["name"]))
@@ -96,13 +114,20 @@ def main() -> None:
         type=Path,
         default=Path("mod/anno-companion-telemetry/anno-companion/catalog.lua"),
     )
+    parser.add_argument(
+        "--planning-catalog",
+        type=Path,
+        default=Path("catalog/anno117-community-2.1-c6a6e752-planning.json"),
+    )
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
 
     source = args.catalog.read_bytes()
     catalog = json.loads(source)
     validate(catalog)
-    rendered = render_lua(catalog, hashlib.sha256(source).hexdigest())
+    planning_catalog = json.loads(args.planning_catalog.read_text(encoding="utf-8"))
+    validate_planning_catalog(catalog, planning_catalog)
+    rendered = render_lua(catalog, hashlib.sha256(source).hexdigest(), planning_catalog)
 
     if args.check:
         if not args.output.exists() or args.output.read_text() != rendered:

@@ -905,6 +905,59 @@
         "title": "CampaignUpdate",
         "type": "object"
       },
+      "CityStockPlanningResponse": {
+        "properties": {
+          "area": {
+            "additionalProperties": true,
+            "title": "Area",
+            "type": "object"
+          },
+          "capabilities": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "title": "Capabilities",
+            "type": "object"
+          },
+          "catalog": {
+            "additionalProperties": true,
+            "title": "Catalog",
+            "type": "object"
+          },
+          "groups": {
+            "items": {
+              "$ref": "#/components/schemas/StockPlanningGroupView"
+            },
+            "title": "Groups",
+            "type": "array"
+          },
+          "measurement_notice": {
+            "title": "Measurement Notice",
+            "type": "string"
+          },
+          "meta": {
+            "additionalProperties": true,
+            "title": "Meta",
+            "type": "object"
+          },
+          "planning_source": {
+            "additionalProperties": true,
+            "title": "Planning Source",
+            "type": "object"
+          }
+        },
+        "required": [
+          "meta",
+          "catalog",
+          "area",
+          "groups",
+          "capabilities",
+          "measurement_notice",
+          "planning_source"
+        ],
+        "title": "CityStockPlanningResponse",
+        "type": "object"
+      },
       "DashboardOverviewResponse": {
         "properties": {
           "actions": {
@@ -1578,6 +1631,415 @@
           "destination_area_pk"
         ],
         "title": "RouteLinkWrite",
+        "type": "object"
+      },
+      "StockPlanningGroupView": {
+        "properties": {
+          "consumption_factor": {
+            "title": "Consumption Factor",
+            "type": "number"
+          },
+          "consumption_setting": {
+            "title": "Consumption Setting",
+            "type": "string"
+          },
+          "consumption_setting_source": {
+            "enum": [
+              "telemetry",
+              "catalog_low_assumption"
+            ],
+            "title": "Consumption Setting Source",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/StockPlanningRowView"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "population": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Population"
+          },
+          "population_guid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Population Guid"
+          },
+          "population_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Population Name"
+          },
+          "region_id": {
+            "title": "Region Id",
+            "type": "string"
+          },
+          "region_name": {
+            "title": "Region Name",
+            "type": "string"
+          },
+          "residence_count": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Residence Count"
+          },
+          "residence_count_source": {
+            "enum": [
+              "telemetry",
+              "estimated_from_population",
+              "not_observed",
+              "area_total"
+            ],
+            "title": "Residence Count Source",
+            "type": "string"
+          },
+          "status_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Status Counts",
+            "type": "object"
+          },
+          "workforce_guid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workforce Guid"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "region_id",
+          "region_name",
+          "workforce_guid",
+          "population_guid",
+          "population_name",
+          "population",
+          "residence_count",
+          "residence_count_source",
+          "consumption_factor",
+          "consumption_setting",
+          "consumption_setting_source",
+          "status_counts",
+          "items"
+        ],
+        "title": "StockPlanningGroupView",
+        "type": "object"
+      },
+      "StockPlanningRowView": {
+        "properties": {
+          "balance_per_minute": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Balance Per Minute"
+          },
+          "calculation_completeness": {
+            "enum": [
+              "modeled_base",
+              "partial",
+              "unknown_catalog_relationships"
+            ],
+            "title": "Calculation Completeness",
+            "type": "string"
+          },
+          "capacity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capacity"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "demand_per_minute": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Demand Per Minute"
+          },
+          "demand_sources": {
+            "items": {
+              "$ref": "#/components/schemas/StockPlanningSourceView"
+            },
+            "title": "Demand Sources",
+            "type": "array"
+          },
+          "fill_ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fill Ratio"
+          },
+          "icon": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Icon"
+          },
+          "natural_order": {
+            "title": "Natural Order",
+            "type": "integer"
+          },
+          "observed_net_stock_change_per_minute": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observed Net Stock Change Per Minute"
+          },
+          "per_1000": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Per 1000"
+          },
+          "population_demand_per_minute": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Population Demand Per Minute"
+          },
+          "product_guid": {
+            "title": "Product Guid",
+            "type": "string"
+          },
+          "production_input_demand_per_minute": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Production Input Demand Per Minute"
+          },
+          "resource_name": {
+            "title": "Resource Name",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "deficit",
+              "constrained",
+              "healthy",
+              "neutral",
+              "unknown"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "stock": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stock"
+          },
+          "supply_per_minute": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supply Per Minute"
+          },
+          "supply_sources": {
+            "items": {
+              "$ref": "#/components/schemas/StockPlanningSourceView"
+            },
+            "title": "Supply Sources",
+            "type": "array"
+          },
+          "velocity_confidence": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Velocity Confidence"
+          },
+          "velocity_is_historical": {
+            "title": "Velocity Is Historical",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "product_guid",
+          "resource_name",
+          "icon",
+          "category",
+          "natural_order",
+          "stock",
+          "capacity",
+          "fill_ratio",
+          "population_demand_per_minute",
+          "production_input_demand_per_minute",
+          "demand_per_minute",
+          "per_1000",
+          "supply_per_minute",
+          "balance_per_minute",
+          "observed_net_stock_change_per_minute",
+          "velocity_confidence",
+          "velocity_is_historical",
+          "status",
+          "demand_sources",
+          "supply_sources",
+          "calculation_completeness"
+        ],
+        "title": "StockPlanningRowView",
+        "type": "object"
+      },
+      "StockPlanningSourceView": {
+        "properties": {
+          "building_count": {
+            "title": "Building Count",
+            "type": "integer"
+          },
+          "building_guid": {
+            "title": "Building Guid",
+            "type": "string"
+          },
+          "building_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Building Name"
+          },
+          "evidence": {
+            "const": "catalog_cycle_and_observed_building_count",
+            "title": "Evidence",
+            "type": "string"
+          },
+          "rate_per_minute": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rate Per Minute"
+          },
+          "recipe_id": {
+            "title": "Recipe Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "recipe_id",
+          "building_guid",
+          "building_name",
+          "building_count",
+          "rate_per_minute",
+          "evidence"
+        ],
+        "title": "StockPlanningSourceView",
         "type": "object"
       },
       "TradeNetworkEdgeSummaryView": {
@@ -2972,6 +3434,48 @@
           }
         },
         "summary": "Put Map Position",
+        "tags": [
+          "economy"
+        ]
+      }
+    },
+    "/api/v1/areas/{area_pk}/stock-planning": {
+      "get": {
+        "operationId": "stock_planning_api_v1_areas__area_pk__stock_planning_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "area_pk",
+            "required": true,
+            "schema": {
+              "title": "Area Pk",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CityStockPlanningResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Stock Planning",
         "tags": [
           "economy"
         ]

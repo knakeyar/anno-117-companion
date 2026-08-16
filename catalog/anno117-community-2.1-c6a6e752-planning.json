@@ -1,0 +1,881 @@
+{
+  "release_id": "anno117-community-2.1-c6a6e752",
+  "source_url": "https://github.com/anno-mods/anno-117-calculator/tree/c6a6e7525d16927f74d4f554dde5831b84fa287c",
+  "source_revision": "c6a6e7525d16927f74d4f554dde5831b84fa287c",
+  "attribution": "Population need rates derived from anno-mods/anno-117-calculator; no icon binaries are bundled.",
+  "measurement_notice": "Catalog base demand per residence. Runtime modifiers and individual need activation are not observed.",
+  "consumption_factors": {
+    "Low": 1.0,
+    "Medium": 1.25,
+    "High": 1.5
+  },
+  "population_levels": [
+    {
+      "population_guid": "1499",
+      "name": "Liberti",
+      "workforce_guid": "2181",
+      "associated_regions": [
+        "Roman"
+      ],
+      "residence_guid": "3087",
+      "residence_name": "Libertus Residence",
+      "maximum_population_per_residence": 6.0,
+      "needs": [
+        {
+          "need_guid": "2665",
+          "product_guid": "2088",
+          "product_name": "Sardines",
+          "base_consumption_per_residence_minute": 0.01785
+        },
+        {
+          "need_guid": "2668",
+          "product_guid": "2136",
+          "product_name": "Porridge",
+          "base_consumption_per_residence_minute": 0.01388
+        },
+        {
+          "need_guid": "2768",
+          "product_guid": "2141",
+          "product_name": "Tunics",
+          "base_consumption_per_residence_minute": 0.01785
+        },
+        {
+          "need_guid": "2769",
+          "product_guid": "2142",
+          "product_name": "Pileus",
+          "base_consumption_per_residence_minute": 0.01666
+        },
+        {
+          "need_guid": "71188",
+          "product_guid": "2154",
+          "product_name": "Beer",
+          "base_consumption_per_residence_minute": 0.01428
+        }
+      ]
+    },
+    {
+      "population_guid": "1496",
+      "name": "Plebeians",
+      "workforce_guid": "2184",
+      "associated_regions": [
+        "Roman"
+      ],
+      "residence_guid": "3141",
+      "residence_name": "Plebeian Residence",
+      "maximum_population_per_residence": 13.0,
+      "needs": [
+        {
+          "need_guid": "2665",
+          "product_guid": "2088",
+          "product_name": "Sardines",
+          "base_consumption_per_residence_minute": 0.01376
+        },
+        {
+          "need_guid": "2668",
+          "product_guid": "2136",
+          "product_name": "Porridge",
+          "base_consumption_per_residence_minute": 0.01136
+        },
+        {
+          "need_guid": "2768",
+          "product_guid": "2141",
+          "product_name": "Tunics",
+          "base_consumption_per_residence_minute": 0.01376
+        },
+        {
+          "need_guid": "2769",
+          "product_guid": "2142",
+          "product_name": "Pileus",
+          "base_consumption_per_residence_minute": 0.01303
+        },
+        {
+          "need_guid": "71188",
+          "product_guid": "2154",
+          "product_name": "Beer",
+          "base_consumption_per_residence_minute": 0.01154
+        },
+        {
+          "need_guid": "2689",
+          "product_guid": "2137",
+          "product_name": "Bread",
+          "base_consumption_per_residence_minute": 0.01079
+        },
+        {
+          "need_guid": "2746",
+          "product_guid": "2139",
+          "product_name": "Garum",
+          "base_consumption_per_residence_minute": 0.0087
+        },
+        {
+          "need_guid": "2771",
+          "product_guid": "2144",
+          "product_name": "Sandals",
+          "base_consumption_per_residence_minute": 0.006504
+        },
+        {
+          "need_guid": "2770",
+          "product_guid": "2143",
+          "product_name": "Soap",
+          "base_consumption_per_residence_minute": 0.01425
+        },
+        {
+          "need_guid": "2777",
+          "product_guid": "31700",
+          "product_name": "Amphorae",
+          "base_consumption_per_residence_minute": 0.012
+        },
+        {
+          "need_guid": "2778",
+          "product_guid": "2149",
+          "product_name": "Olive Oil",
+          "base_consumption_per_residence_minute": 0.007353
+        }
+      ]
+    },
+    {
+      "population_guid": "1497",
+      "name": "Equites",
+      "workforce_guid": "2185",
+      "associated_regions": [
+        "Roman"
+      ],
+      "residence_guid": "3142",
+      "residence_name": "Eques Residence",
+      "maximum_population_per_residence": 24.0,
+      "needs": [
+        {
+          "need_guid": "2665",
+          "product_guid": "2088",
+          "product_name": "Sardines",
+          "base_consumption_per_residence_minute": 0.0112
+        },
+        {
+          "need_guid": "2668",
+          "product_guid": "2136",
+          "product_name": "Porridge",
+          "base_consumption_per_residence_minute": 0.00962
+        },
+        {
+          "need_guid": "2768",
+          "product_guid": "2141",
+          "product_name": "Tunics",
+          "base_consumption_per_residence_minute": 0.01119
+        },
+        {
+          "need_guid": "2769",
+          "product_guid": "2142",
+          "product_name": "Pileus",
+          "base_consumption_per_residence_minute": 0.01072
+        },
+        {
+          "need_guid": "71188",
+          "product_guid": "2154",
+          "product_name": "Beer",
+          "base_consumption_per_residence_minute": 0.00968
+        },
+        {
+          "need_guid": "2689",
+          "product_guid": "2137",
+          "product_name": "Bread",
+          "base_consumption_per_residence_minute": 0.00915
+        },
+        {
+          "need_guid": "2746",
+          "product_guid": "2139",
+          "product_name": "Garum",
+          "base_consumption_per_residence_minute": 0.00714
+        },
+        {
+          "need_guid": "2771",
+          "product_guid": "2144",
+          "product_name": "Sandals",
+          "base_consumption_per_residence_minute": 0.005343
+        },
+        {
+          "need_guid": "2770",
+          "product_guid": "2143",
+          "product_name": "Soap",
+          "base_consumption_per_residence_minute": 0.01151
+        },
+        {
+          "need_guid": "2777",
+          "product_guid": "31700",
+          "product_name": "Amphorae",
+          "base_consumption_per_residence_minute": 0.00994
+        },
+        {
+          "need_guid": "2778",
+          "product_guid": "2149",
+          "product_name": "Olive Oil",
+          "base_consumption_per_residence_minute": 0.006215
+        },
+        {
+          "need_guid": "2690",
+          "product_guid": "2138",
+          "product_name": "Wine",
+          "base_consumption_per_residence_minute": 0.012902
+        },
+        {
+          "need_guid": "2747",
+          "product_guid": "2153",
+          "product_name": "Cheese",
+          "base_consumption_per_residence_minute": 0.005725
+        },
+        {
+          "need_guid": "2772",
+          "product_guid": "2145",
+          "product_name": "Togas",
+          "base_consumption_per_residence_minute": 0.01
+        },
+        {
+          "need_guid": "2773",
+          "product_guid": "2156",
+          "product_name": "Brooches",
+          "base_consumption_per_residence_minute": 0.005669
+        },
+        {
+          "need_guid": "2779",
+          "product_guid": "2150",
+          "product_name": "Writing Tablets",
+          "base_consumption_per_residence_minute": 0.005001
+        },
+        {
+          "need_guid": "2780",
+          "product_guid": "2151",
+          "product_name": "Fine Glass",
+          "base_consumption_per_residence_minute": 0.004922
+        },
+        {
+          "need_guid": "145223",
+          "product_guid": "145220",
+          "product_name": "Statuettes",
+          "base_consumption_per_residence_minute": 0.003529
+        }
+      ]
+    },
+    {
+      "population_guid": "1498",
+      "name": "Patricians",
+      "workforce_guid": "2186",
+      "associated_regions": [
+        "Roman"
+      ],
+      "residence_guid": "3145",
+      "residence_name": "Patrician Residence",
+      "maximum_population_per_residence": 35.0,
+      "needs": [
+        {
+          "need_guid": "2665",
+          "product_guid": "2088",
+          "product_name": "Sardines",
+          "base_consumption_per_residence_minute": 0.00943
+        },
+        {
+          "need_guid": "2668",
+          "product_guid": "2136",
+          "product_name": "Porridge",
+          "base_consumption_per_residence_minute": 0.00833
+        },
+        {
+          "need_guid": "2768",
+          "product_guid": "2141",
+          "product_name": "Tunics",
+          "base_consumption_per_residence_minute": 0.009433
+        },
+        {
+          "need_guid": "2769",
+          "product_guid": "2142",
+          "product_name": "Pileus",
+          "base_consumption_per_residence_minute": 0.00909
+        },
+        {
+          "need_guid": "71188",
+          "product_guid": "2154",
+          "product_name": "Beer",
+          "base_consumption_per_residence_minute": 0.00833
+        },
+        {
+          "need_guid": "2689",
+          "product_guid": "2137",
+          "product_name": "Bread",
+          "base_consumption_per_residence_minute": 0.007935
+        },
+        {
+          "need_guid": "2746",
+          "product_guid": "2139",
+          "product_name": "Garum",
+          "base_consumption_per_residence_minute": 0.00606
+        },
+        {
+          "need_guid": "2771",
+          "product_guid": "2144",
+          "product_name": "Sandals",
+          "base_consumption_per_residence_minute": 0.004535
+        },
+        {
+          "need_guid": "2770",
+          "product_guid": "2143",
+          "product_name": "Soap",
+          "base_consumption_per_residence_minute": 0.00966
+        },
+        {
+          "need_guid": "2777",
+          "product_guid": "31700",
+          "product_name": "Amphorae",
+          "base_consumption_per_residence_minute": 0.00848
+        },
+        {
+          "need_guid": "2778",
+          "product_guid": "2149",
+          "product_name": "Olive Oil",
+          "base_consumption_per_residence_minute": 0.005375
+        },
+        {
+          "need_guid": "2690",
+          "product_guid": "2138",
+          "product_name": "Wine",
+          "base_consumption_per_residence_minute": 0.01111
+        },
+        {
+          "need_guid": "2747",
+          "product_guid": "2153",
+          "product_name": "Cheese",
+          "base_consumption_per_residence_minute": 0.004808
+        },
+        {
+          "need_guid": "2772",
+          "product_guid": "2145",
+          "product_name": "Togas",
+          "base_consumption_per_residence_minute": 0.0085
+        },
+        {
+          "need_guid": "2773",
+          "product_guid": "2156",
+          "product_name": "Brooches",
+          "base_consumption_per_residence_minute": 0.004768
+        },
+        {
+          "need_guid": "2779",
+          "product_guid": "2150",
+          "product_name": "Writing Tablets",
+          "base_consumption_per_residence_minute": 0.004288
+        },
+        {
+          "need_guid": "2780",
+          "product_guid": "2151",
+          "product_name": "Fine Glass",
+          "base_consumption_per_residence_minute": 0.004228
+        },
+        {
+          "need_guid": "145223",
+          "product_guid": "145220",
+          "product_name": "Statuettes",
+          "base_consumption_per_residence_minute": 0.003
+        },
+        {
+          "need_guid": "2748",
+          "product_guid": "2140",
+          "product_name": "Oysters with Caviar",
+          "base_consumption_per_residence_minute": 0.007528
+        },
+        {
+          "need_guid": "2749",
+          "product_guid": "2155",
+          "product_name": "Bird Tongues in Aspic",
+          "base_consumption_per_residence_minute": 0.006012
+        },
+        {
+          "need_guid": "2774",
+          "product_guid": "2146",
+          "product_name": "Necklaces",
+          "base_consumption_per_residence_minute": 0.0054645
+        },
+        {
+          "need_guid": "2775",
+          "product_guid": "2161",
+          "product_name": "Cloaks",
+          "base_consumption_per_residence_minute": 0.008658
+        },
+        {
+          "need_guid": "2776",
+          "product_guid": "2147",
+          "product_name": "Loungers",
+          "base_consumption_per_residence_minute": 0.0043745
+        },
+        {
+          "need_guid": "2784",
+          "product_guid": "2162",
+          "product_name": "Handmirrors",
+          "base_consumption_per_residence_minute": 0.004474
+        },
+        {
+          "need_guid": "2785",
+          "product_guid": "2166",
+          "product_name": "Standing Lyres",
+          "base_consumption_per_residence_minute": 0.006814
+        },
+        {
+          "need_guid": "2781",
+          "product_guid": "2163",
+          "product_name": "Chariots",
+          "base_consumption_per_residence_minute": 0.004596
+        },
+        {
+          "need_guid": "145225",
+          "product_guid": "145221",
+          "product_name": "Latrunculi Sets",
+          "base_consumption_per_residence_minute": 0.005333
+        }
+      ]
+    },
+    {
+      "population_guid": "1503",
+      "name": "Mercators",
+      "workforce_guid": "2198",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "residence_guid": "6475",
+      "residence_name": "Mercator Residence",
+      "maximum_population_per_residence": 13.0,
+      "needs": [
+        {
+          "need_guid": "6429",
+          "product_guid": "2097",
+          "product_name": "Cockles",
+          "base_consumption_per_residence_minute": 0.0158
+        },
+        {
+          "need_guid": "6424",
+          "product_guid": "2108",
+          "product_name": "Eels",
+          "base_consumption_per_residence_minute": 0.013756
+        },
+        {
+          "need_guid": "6437",
+          "product_guid": "2159",
+          "product_name": "Reed Shoes",
+          "base_consumption_per_residence_minute": 0.006601
+        },
+        {
+          "need_guid": "6438",
+          "product_guid": "2141",
+          "product_name": "Tunics",
+          "base_consumption_per_residence_minute": 0.01376
+        },
+        {
+          "need_guid": "71187",
+          "product_guid": "2139",
+          "product_name": "Garum",
+          "base_consumption_per_residence_minute": 0.0087
+        },
+        {
+          "need_guid": "6434",
+          "product_guid": "2137",
+          "product_name": "Bread",
+          "base_consumption_per_residence_minute": 0.01034
+        },
+        {
+          "need_guid": "6435",
+          "product_guid": "8405",
+          "product_name": "Sausages",
+          "base_consumption_per_residence_minute": 0.0105
+        },
+        {
+          "need_guid": "6443",
+          "product_guid": "2156",
+          "product_name": "Brooches",
+          "base_consumption_per_residence_minute": 0.006543
+        },
+        {
+          "need_guid": "6444",
+          "product_guid": "2143",
+          "product_name": "Soap",
+          "base_consumption_per_residence_minute": 0.01425
+        },
+        {
+          "need_guid": "55960",
+          "product_guid": "31700",
+          "product_name": "Amphorae",
+          "base_consumption_per_residence_minute": 0.012
+        },
+        {
+          "need_guid": "55961",
+          "product_guid": "2149",
+          "product_name": "Olive Oil",
+          "base_consumption_per_residence_minute": 0.00893
+        },
+        {
+          "need_guid": "145224",
+          "product_guid": "145220",
+          "product_name": "Statuettes",
+          "base_consumption_per_residence_minute": 0.003529
+        }
+      ]
+    },
+    {
+      "population_guid": "1504",
+      "name": "Nobles",
+      "workforce_guid": "2199",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "residence_guid": "6514",
+      "residence_name": "Noble Residence",
+      "maximum_population_per_residence": 21.0,
+      "needs": [
+        {
+          "need_guid": "6429",
+          "product_guid": "2097",
+          "product_name": "Cockles",
+          "base_consumption_per_residence_minute": 0.0132
+        },
+        {
+          "need_guid": "6424",
+          "product_guid": "2108",
+          "product_name": "Eels",
+          "base_consumption_per_residence_minute": 0.0112
+        },
+        {
+          "need_guid": "6437",
+          "product_guid": "2159",
+          "product_name": "Reed Shoes",
+          "base_consumption_per_residence_minute": 0.00542
+        },
+        {
+          "need_guid": "6438",
+          "product_guid": "2141",
+          "product_name": "Tunics",
+          "base_consumption_per_residence_minute": 0.01119
+        },
+        {
+          "need_guid": "71187",
+          "product_guid": "2139",
+          "product_name": "Garum",
+          "base_consumption_per_residence_minute": 0.00606
+        },
+        {
+          "need_guid": "6434",
+          "product_guid": "2137",
+          "product_name": "Bread",
+          "base_consumption_per_residence_minute": 0.00883
+        },
+        {
+          "need_guid": "6435",
+          "product_guid": "8405",
+          "product_name": "Sausages",
+          "base_consumption_per_residence_minute": 0.0089
+        },
+        {
+          "need_guid": "6443",
+          "product_guid": "2156",
+          "product_name": "Brooches",
+          "base_consumption_per_residence_minute": 0.00537
+        },
+        {
+          "need_guid": "6444",
+          "product_guid": "2143",
+          "product_name": "Soap",
+          "base_consumption_per_residence_minute": 0.01151
+        },
+        {
+          "need_guid": "55960",
+          "product_guid": "31700",
+          "product_name": "Amphorae",
+          "base_consumption_per_residence_minute": 0.00994
+        },
+        {
+          "need_guid": "55961",
+          "product_guid": "2149",
+          "product_name": "Olive Oil",
+          "base_consumption_per_residence_minute": 0.0073
+        },
+        {
+          "need_guid": "145224",
+          "product_guid": "145220",
+          "product_name": "Statuettes",
+          "base_consumption_per_residence_minute": 0.003
+        },
+        {
+          "need_guid": "6436",
+          "product_guid": "2155",
+          "product_name": "Bird Tongues in Aspic",
+          "base_consumption_per_residence_minute": 0.00669
+        },
+        {
+          "need_guid": "8423",
+          "product_guid": "2138",
+          "product_name": "Wine",
+          "base_consumption_per_residence_minute": 0.012902
+        },
+        {
+          "need_guid": "6449",
+          "product_guid": "31708",
+          "product_name": "Wigs",
+          "base_consumption_per_residence_minute": 0.00637
+        },
+        {
+          "need_guid": "6446",
+          "product_guid": "2145",
+          "product_name": "Togas",
+          "base_consumption_per_residence_minute": 0.01
+        },
+        {
+          "need_guid": "6445",
+          "product_guid": "2162",
+          "product_name": "Handmirrors",
+          "base_consumption_per_residence_minute": 0.00468
+        },
+        {
+          "need_guid": "6452",
+          "product_guid": "2151",
+          "product_name": "Fine Glass",
+          "base_consumption_per_residence_minute": 0.005303
+        }
+      ]
+    },
+    {
+      "population_guid": "1500",
+      "name": "Waders",
+      "workforce_guid": "2192",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "residence_guid": "6414",
+      "residence_name": "Wader Residence",
+      "maximum_population_per_residence": 4.0,
+      "needs": [
+        {
+          "need_guid": "6429",
+          "product_guid": "2097",
+          "product_name": "Cockles",
+          "base_consumption_per_residence_minute": 0.02
+        },
+        {
+          "need_guid": "6424",
+          "product_guid": "2108",
+          "product_name": "Eels",
+          "base_consumption_per_residence_minute": 0.01785
+        },
+        {
+          "need_guid": "6437",
+          "product_guid": "2159",
+          "product_name": "Reed Shoes",
+          "base_consumption_per_residence_minute": 0.00847
+        },
+        {
+          "need_guid": "6438",
+          "product_guid": "2141",
+          "product_name": "Tunics",
+          "base_consumption_per_residence_minute": 0.01785
+        },
+        {
+          "need_guid": "71187",
+          "product_guid": "2139",
+          "product_name": "Garum",
+          "base_consumption_per_residence_minute": 0.01111
+        }
+      ]
+    },
+    {
+      "population_guid": "1501",
+      "name": "Smiths",
+      "workforce_guid": "2196",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "residence_guid": "6471",
+      "residence_name": "Smith Residence",
+      "maximum_population_per_residence": 9.0,
+      "needs": [
+        {
+          "need_guid": "6429",
+          "product_guid": "2097",
+          "product_name": "Cockles",
+          "base_consumption_per_residence_minute": 0.0158
+        },
+        {
+          "need_guid": "6424",
+          "product_guid": "2108",
+          "product_name": "Eels",
+          "base_consumption_per_residence_minute": 0.013756
+        },
+        {
+          "need_guid": "6437",
+          "product_guid": "2159",
+          "product_name": "Reed Shoes",
+          "base_consumption_per_residence_minute": 0.006601
+        },
+        {
+          "need_guid": "6438",
+          "product_guid": "2141",
+          "product_name": "Tunics",
+          "base_consumption_per_residence_minute": 0.01376
+        },
+        {
+          "need_guid": "71187",
+          "product_guid": "2139",
+          "product_name": "Garum",
+          "base_consumption_per_residence_minute": 0.0087
+        },
+        {
+          "need_guid": "6430",
+          "product_guid": "2153",
+          "product_name": "Cheese",
+          "base_consumption_per_residence_minute": 0.00635
+        },
+        {
+          "need_guid": "6431",
+          "product_guid": "2154",
+          "product_name": "Beer",
+          "base_consumption_per_residence_minute": 0.01153
+        },
+        {
+          "need_guid": "6439",
+          "product_guid": "2158",
+          "product_name": "Trousers",
+          "base_consumption_per_residence_minute": 0.00905
+        },
+        {
+          "need_guid": "6442",
+          "product_guid": "2157",
+          "product_name": "Torcs",
+          "base_consumption_per_residence_minute": 0.00909
+        },
+        {
+          "need_guid": "55946",
+          "product_guid": "55954",
+          "product_name": "Drinking Horns",
+          "base_consumption_per_residence_minute": 0.006
+        },
+        {
+          "need_guid": "6453",
+          "product_guid": "31706",
+          "product_name": "Clan Shields",
+          "base_consumption_per_residence_minute": 0.00695
+        }
+      ]
+    },
+    {
+      "population_guid": "1502",
+      "name": "Aldermen",
+      "workforce_guid": "2197",
+      "associated_regions": [
+        "Celtic"
+      ],
+      "residence_guid": "6472",
+      "residence_name": "Alderman Residence",
+      "maximum_population_per_residence": 18.0,
+      "needs": [
+        {
+          "need_guid": "6429",
+          "product_guid": "2097",
+          "product_name": "Cockles",
+          "base_consumption_per_residence_minute": 0.0132
+        },
+        {
+          "need_guid": "6424",
+          "product_guid": "2108",
+          "product_name": "Eels",
+          "base_consumption_per_residence_minute": 0.0112
+        },
+        {
+          "need_guid": "6437",
+          "product_guid": "2159",
+          "product_name": "Reed Shoes",
+          "base_consumption_per_residence_minute": 0.00542
+        },
+        {
+          "need_guid": "6438",
+          "product_guid": "2141",
+          "product_name": "Tunics",
+          "base_consumption_per_residence_minute": 0.01119
+        },
+        {
+          "need_guid": "71187",
+          "product_guid": "2139",
+          "product_name": "Garum",
+          "base_consumption_per_residence_minute": 0.00606
+        },
+        {
+          "need_guid": "6430",
+          "product_guid": "2153",
+          "product_name": "Cheese",
+          "base_consumption_per_residence_minute": 0.005245
+        },
+        {
+          "need_guid": "6431",
+          "product_guid": "2154",
+          "product_name": "Beer",
+          "base_consumption_per_residence_minute": 0.00968
+        },
+        {
+          "need_guid": "6439",
+          "product_guid": "2158",
+          "product_name": "Trousers",
+          "base_consumption_per_residence_minute": 0.00738
+        },
+        {
+          "need_guid": "6442",
+          "product_guid": "2157",
+          "product_name": "Torcs",
+          "base_consumption_per_residence_minute": 0.007405
+        },
+        {
+          "need_guid": "55946",
+          "product_guid": "55954",
+          "product_name": "Drinking Horns",
+          "base_consumption_per_residence_minute": 0.005
+        },
+        {
+          "need_guid": "6453",
+          "product_guid": "31706",
+          "product_name": "Clan Shields",
+          "base_consumption_per_residence_minute": 0.0059
+        },
+        {
+          "need_guid": "6432",
+          "product_guid": "31768",
+          "product_name": "Roast Beef",
+          "base_consumption_per_residence_minute": 0.00519
+        },
+        {
+          "need_guid": "8423",
+          "product_guid": "2138",
+          "product_name": "Wine",
+          "base_consumption_per_residence_minute": 0.012902
+        },
+        {
+          "need_guid": "6441",
+          "product_guid": "2161",
+          "product_name": "Cloaks",
+          "base_consumption_per_residence_minute": 0.008745
+        },
+        {
+          "need_guid": "6440",
+          "product_guid": "31707",
+          "product_name": "Fur Hats",
+          "base_consumption_per_residence_minute": 0.00532
+        },
+        {
+          "need_guid": "6454",
+          "product_guid": "2163",
+          "product_name": "Chariots",
+          "base_consumption_per_residence_minute": 0.005102
+        },
+        {
+          "need_guid": "6452",
+          "product_guid": "2151",
+          "product_name": "Fine Glass",
+          "base_consumption_per_residence_minute": 0.005303
+        },
+        {
+          "need_guid": "145226",
+          "product_guid": "145221",
+          "product_name": "Latrunculi Sets",
+          "base_consumption_per_residence_minute": 0.005333
+        }
+      ]
+    }
+  ]
+}

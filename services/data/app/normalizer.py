@@ -722,6 +722,7 @@ def _production_event(session: Session, raw: TelemetryRaw, envelope: dict) -> No
         snapshot.current_region_guid = _text(context.get("region_guid"))
         snapshot.current_area_id_raw = _text(context.get("current_area_id"))
         snapshot.participant_guid = _text(context.get("participant_guid"))
+        snapshot.need_consumption_setting = _int(context.get("need_consumption_setting"))
         snapshot.area_enumeration_scope = _text(data.get("area_enumeration_scope")) or "unknown"
         snapshot.expected_area_count = _int(data.get("area_count")) or 0
         snapshot.section_mode = _text(data.get("section_mode")) or "full"

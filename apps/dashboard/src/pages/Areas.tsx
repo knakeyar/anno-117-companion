@@ -3,17 +3,16 @@ import ReactEChartsCoreImport from 'echarts-for-react/lib/core'
 import type { ComponentType, CSSProperties } from 'react'
 import * as echarts from 'echarts/core'
 import { LineChart } from 'echarts/charts'
-import { GridComponent, LegendComponent, TooltipComponent } from 'echarts/components'
+import { GridComponent, TooltipComponent } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
-import { Boxes, ChevronRight, CircleDollarSign, Crown, Hammer, MapPinned, Pickaxe, Scale, Search, UsersRound, Warehouse, Waves, Wheat } from 'lucide-react'
+import { AlertTriangle, Boxes, ChevronRight, CircleDollarSign, Crown, Hammer, History, MapPinned, Pickaxe, Scale, UsersRound, Warehouse, Waves, Wheat } from 'lucide-react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { useAreas, useChains, useFinance, useHistoryGroup, useInventory, useWorkforce } from '../api'
-import { EmptyState, ErrorState, FillBar, FreshnessBanner, LoadingState, MetricCard, PageHeader, SectionHeader } from '../components/Common'
-import { PolicyEditor } from '../components/PolicyEditor'
-import type { InventoryItem, ProductionChain } from '../types'
-import { formatMoney, formatNumber, formatRate, velocityStatusLabel } from '../utils'
+import { useAreas, useFinance, useHistory, useInventory, useStockPlanning, useWorkforce } from '../api'
+import { EmptyState, ErrorState, FreshnessBanner, LoadingState, MetricCard, PageHeader, SectionHeader } from '../components/Common'
+import type { StockPlanningRow } from '../types'
+import { formatMoney, formatNumber, formatRate } from '../utils'
 
-echarts.use([LineChart, GridComponent, LegendComponent, TooltipComponent, CanvasRenderer])
+echarts.use([LineChart, GridComponent, TooltipComponent, CanvasRenderer])
 
 // echarts-for-react publishes this entry point as CommonJS. Vite can expose
 // that default export as a module object in a production build even though the
@@ -25,87 +24,6 @@ const ReactEChartsCore = (
     ? (ReactEChartsCoreImport as { default: unknown }).default
     : ReactEChartsCoreImport
 ) as ComponentType<{ echarts: typeof echarts; option: object; style?: CSSProperties }>
-
-const planningDomainOrder = [
-  'Construction materials',
-  'Raw & agricultural materials',
-  'Intermediate goods',
-  'Consumer & finished goods',
-]
-
-const resourceRegions: Record<string, { name: string; guid: string }> = {
-  Roman: { name: 'Latium', guid: '3225' },
-  Celtic: { name: 'Albion', guid: '6626' },
-}
-
-const workforceOrder = ['2181', '2184', '2185', '2186', '2192', '2196', '2197', '2198', '2199']
-
-interface StockPickerGroup {
-  key: string
-  label: string
-  regionGuid: string | null
-  workforceGuid: string | null
-  items: InventoryItem[]
-}
-
-function stockPickerGroups(items: InventoryItem[], chains: ProductionChain[] | undefined, areaRegionGuid: string | null): StockPickerGroup[] {
-  const origins = new Map<string, Array<{ regionId: string; workforceGuid: string | null; workforceName: string }>>()
-  for (const chain of chains ?? []) {
-    const outputs = chain.items.filter((item) => item.role === 'output')
-    for (const output of outputs) {
-      const productOrigins = origins.get(output.product_guid) ?? []
-      for (const regionId of chain.associated_regions.length ? chain.associated_regions : ['Unknown']) {
-        const workforceName = chain.workforce_name ?? (chain.workforce_guid ? `Workforce ${chain.workforce_guid}` : 'Workforce not classified')
-        if (!productOrigins.some((origin) => origin.regionId === regionId && origin.workforceGuid === chain.workforce_guid)) {
-          productOrigins.push({ regionId, workforceGuid: chain.workforce_guid, workforceName })
-        }
-      }
-      origins.set(output.product_guid, productOrigins)
-    }
-  }
-
-  const groups = new Map<string, StockPickerGroup>()
-  for (const item of items) {
-    const productOrigins = origins.get(item.product_guid) ?? [{ regionId: 'Unknown', workforceGuid: null, workforceName: 'Workforce not classified' }]
-    for (const origin of productOrigins) {
-      const region = resourceRegions[origin.regionId]
-      const regionName = region?.name ?? 'Other resources'
-      const key = `${origin.regionId}:${origin.workforceGuid ?? 'unknown'}`
-      const group = groups.get(key) ?? {
-        key,
-        label: `${regionName} · ${origin.workforceName}`,
-        regionGuid: region?.guid ?? null,
-        workforceGuid: origin.workforceGuid,
-        items: [],
-      }
-      if (!group.items.some((candidate) => candidate.product_guid === item.product_guid)) group.items.push(item)
-      groups.set(key, group)
-    }
-  }
-
-  return [...groups.values()]
-    .map((group) => ({ ...group, items: [...group.items].sort((a, b) => a.product_name.localeCompare(b.product_name)) }))
-    .sort((a, b) => {
-      const regionRank = (group: StockPickerGroup) => group.regionGuid === areaRegionGuid ? 0 : group.regionGuid ? 1 : 2
-      const regionDifference = regionRank(a) - regionRank(b)
-      if (regionDifference) return regionDifference
-      if (a.regionGuid !== b.regionGuid) return a.label.localeCompare(b.label)
-      const workforceRank = (guid: string | null) => {
-        const index = guid ? workforceOrder.indexOf(guid) : -1
-        return index >= 0 ? index : workforceOrder.length
-      }
-      return workforceRank(a.workforceGuid) - workforceRank(b.workforceGuid) || a.label.localeCompare(b.label)
-    })
-}
-
-function planningDomain(item: InventoryItem, chains: ReturnType<typeof useChains>['data']): string {
-  if (item.category === 'construction_material') return 'Construction materials'
-  const recipes = chains?.chains ?? []
-  const producers = recipes.filter((chain) => chain.items.some((part) => part.role === 'output' && part.product_guid === item.product_guid))
-  if (producers.some((chain) => !chain.items.some((part) => part.role === 'input'))) return 'Raw & agricultural materials'
-  if (recipes.some((chain) => chain.items.some((part) => part.role === 'input' && part.product_guid === item.product_guid))) return 'Intermediate goods'
-  return 'Consumer & finished goods'
-}
 
 function WorkforceGlyph({ name }: { name: string | null }) {
   const value = (name ?? '').toLowerCase()
@@ -119,18 +37,28 @@ function WorkforceGlyph({ name }: { name: string | null }) {
   return <span className="workforce-glyph" aria-hidden="true"><Icon size={18} /></span>
 }
 
-function GoodsDomainSection({ domain, items, pressureProducts, initiallyOpen, onEdit }: {
-  domain: string
-  items: InventoryItem[]
-  pressureProducts: Set<string>
-  initiallyOpen: boolean
-  onEdit: (item: InventoryItem) => void
-}) {
-  const [isOpen, setIsOpen] = useState(initiallyOpen)
-  return <details open={isOpen} onToggle={(event) => setIsOpen(event.currentTarget.open)}><summary><span>{domain}</span><small>{items.length} goods</small></summary><div className="goods-target-grid">{items.map((item) => <button className={pressureProducts.has(item.product_guid) ? 'has-pressure' : ''} key={item.product_guid} onClick={() => onEdit(item)}>
-    <div><span className="product-glyph"><Warehouse size={15} /></span><span><strong>{item.product_name}</strong><small>{item.passive_trade_mode.replaceAll('_', ' ')} · {item.policy_source.replaceAll('_', ' ')}</small></span><b>{formatNumber(item.stock)} / {formatNumber(item.capacity)}</b></div>
-    <FillBar value={item.fill_ratio} low={item.capacity ? (item.low_target ?? 0) / item.capacity : null} high={item.capacity ? (item.high_target ?? 0) / item.capacity : null} />
-  </button>)}</div></details>
+type StockSortKey = 'attention' | 'resource' | 'stock' | 'demand' | 'supply' | 'balance'
+
+const stockStatusRank: Record<StockPlanningRow['status'], number> = {
+  deficit: 0,
+  constrained: 1,
+  neutral: 2,
+  healthy: 3,
+  unknown: 4,
+}
+
+function planningValue(value: number | null, signed = false): string {
+  if (value === null) return '—'
+  const rendered = formatNumber(Math.abs(value), Math.abs(value) < 10 ? 2 : 1)
+  if (!signed || value === 0) return rendered
+  return `${value > 0 ? '+' : '−'}${rendered}`
+}
+
+function planningVelocityLabel(confidence: string | null): string {
+  if (confidence === 'previous_session') return 'Previous session'
+  if (confidence === 'provisional') return 'Provisional'
+  if (confidence) return 'Stable'
+  return 'Awaiting current data'
 }
 
 export function AreasPage() {
@@ -165,62 +93,86 @@ export function AreaDetailPage() {
   const areaId = Number(areaPk)
   const areas = useAreas()
   const inventory = useInventory()
+  const planning = useStockPlanning(areaId)
   const workforce = useWorkforce()
   const finance = useFinance()
-  const chains = useChains()
   const area = areas.data?.items.find((item) => item.area_pk === areaId)
   const areaItems = useMemo(() => inventory.data?.items.filter((item) => item.area_pk === areaId) ?? [], [inventory.data?.items, areaId])
   const requestedProduct = searchParams.get('product') ?? ''
   const [selectedStockGroup, setSelectedStockGroup] = useState('')
-  const [goodsSearch, setGoodsSearch] = useState('')
-  const [editing, setEditing] = useState<InventoryItem | null>(null)
+  const [selectedHistoryProduct, setSelectedHistoryProduct] = useState(requestedProduct)
+  const [sortKey, setSortKey] = useState<StockSortKey>('attention')
+  const [sortDescending, setSortDescending] = useState(false)
   const workforceItems = workforce.data?.items.filter((item) => item.area_pk === areaId) ?? []
-  const pressureProducts = useMemo(() => new Set(inventory.data?.signals.filter((signal) => signal.area_pk === areaId).map((signal) => signal.product_guid) ?? []), [inventory.data?.signals, areaId])
-  const goodsGroups = useMemo(() => {
-    const needle = goodsSearch.trim().toLowerCase()
-    return planningDomainOrder.flatMap((domain) => {
-      const items = areaItems
-        .filter((item) => planningDomain(item, chains.data) === domain)
-        .filter((item) => !needle || item.product_name.toLowerCase().includes(needle))
-        .sort((a, b) => a.product_name.localeCompare(b.product_name))
-      return items.length ? [{ domain, items }] : []
-    })
-  }, [areaItems, chains.data, goodsSearch])
-  const stockGroups = useMemo(
-    () => stockPickerGroups(areaItems, chains.data?.chains, area?.region_guid ?? null),
-    [areaItems, chains.data?.chains, area?.region_guid],
-  )
+  const stockGroups = planning.data?.groups ?? []
   const effectiveStockGroup = stockGroups.find((group) => group.key === selectedStockGroup)
     ?? stockGroups.find((group) => group.items.some((item) => item.product_guid === requestedProduct))
     ?? stockGroups[0]
-  const groupProductGuids = useMemo(
-    () => effectiveStockGroup?.items.map((item) => item.product_guid) ?? [],
-    [effectiveStockGroup],
-  )
-  const history = useHistoryGroup(areaId, groupProductGuids)
+  const selectedHistoryRow = effectiveStockGroup?.items.find((item) => item.product_guid === selectedHistoryProduct)
+    ?? effectiveStockGroup?.items.find((item) => item.product_guid === requestedProduct)
+  const history = useHistory(areaId, selectedHistoryRow?.product_guid ?? '')
+
+  const sortedRows = useMemo(() => {
+    const rows = [...(effectiveStockGroup?.items ?? [])]
+    const numberValue = (row: StockPlanningRow): number | null => {
+      if (sortKey === 'stock') return row.stock
+      if (sortKey === 'demand') return row.demand_per_minute
+      if (sortKey === 'supply') return row.supply_per_minute
+      if (sortKey === 'balance') return row.balance_per_minute
+      return null
+    }
+    rows.sort((left, right) => {
+      let result = 0
+      if (sortKey === 'attention') {
+        result = stockStatusRank[left.status] - stockStatusRank[right.status]
+          || (left.balance_per_minute ?? Number.POSITIVE_INFINITY) - (right.balance_per_minute ?? Number.POSITIVE_INFINITY)
+          || left.natural_order - right.natural_order
+      } else if (sortKey === 'resource') {
+        result = left.resource_name.localeCompare(right.resource_name)
+      } else {
+        const leftValue = numberValue(left)
+        const rightValue = numberValue(right)
+        result = leftValue === null ? 1 : rightValue === null ? -1 : leftValue - rightValue
+      }
+      return (sortDescending ? -result : result) || left.resource_name.localeCompare(right.resource_name)
+    })
+    return rows
+  }, [effectiveStockGroup, sortDescending, sortKey])
 
   if (areas.isLoading || inventory.isLoading) return <LoadingState />
   const error = areas.error || inventory.error
   if (error) return <ErrorState error={error} retry={() => { void areas.refetch(); void inventory.refetch() }} />
   if (!area || !inventory.data) return <EmptyState title="Area not found" description="This area may belong to a different campaign or has not been observed yet." action={<Link className="button ghost" to="/areas">Back to areas</Link>} />
 
-  const chart = {
+  const historyChart = {
     backgroundColor: 'transparent',
-    legend: { type: 'scroll', top: 0, left: 0, right: 0, textStyle: { color: '#a8babc', fontSize: 10 }, pageTextStyle: { color: '#a8babc' }, pageIconColor: '#d9a64e', pageIconInactiveColor: '#52676a' },
-    grid: { left: 48, right: 24, top: 62, bottom: 38 },
+    grid: { left: 44, right: 18, top: 18, bottom: 30 },
     tooltip: { trigger: 'axis' },
     xAxis: { type: 'time', axisLabel: { color: '#789094' }, axisLine: { lineStyle: { color: '#2b3d40' } } },
     yAxis: { type: 'value', axisLabel: { color: '#789094' }, splitLine: { lineStyle: { color: '#213235' } } },
-    series: (history.data?.series ?? []).map((series) => ({
-      name: effectiveStockGroup?.items.find((item) => item.product_guid === series.product_guid)?.product_name ?? series.product_guid,
+    series: [{
+      name: selectedHistoryRow?.resource_name ?? 'Stock',
       type: 'line',
       smooth: true,
       showSymbol: false,
-      lineStyle: { width: 2 },
-      data: series.items.map((point) => [point.observed_at, point.stock]),
+      lineStyle: { width: 2, color: '#d9a64e' },
+      areaStyle: { color: 'rgba(217,166,78,.08)' },
+      data: (history.data?.items ?? []).map((point) => [point.observed_at, point.stock]),
       connectNulls: false,
-    })),
+    }],
   }
+
+  const changeSort = (next: StockSortKey) => {
+    if (sortKey === next) setSortDescending((value) => !value)
+    else {
+      setSortKey(next)
+      setSortDescending(false)
+    }
+  }
+
+  const sortButton = (label: string, key: StockSortKey) => <button type="button" onClick={() => changeSort(key)} className={sortKey === key ? 'active' : ''} aria-label={`Sort by ${label}`}>
+    {label}<span aria-hidden="true">{sortKey === key ? sortDescending ? ' ↓' : ' ↑' : ''}</span>
+  </button>
 
   return (
     <div className="page">
@@ -231,19 +183,66 @@ export function AreaDetailPage() {
         <MetricCard label="Participant balance" value={formatMoney(finance.data?.finance?.total_balance_raw)} supporting="Participant scope" icon={<CircleDollarSign size={16} />} />
         <MetricCard label="Workforce groups" value={workforceItems.length || 'Not observed'} supporting="Current-camera scope" icon={<UsersRound size={16} />} />
       </section>
-      <section className="panel stock-history-panel">
-          <SectionHeader title="Stock history by workforce" description="Every resource produced by the selected regional workforce is plotted together. Click legend items to show or hide individual resources." action={<label className="history-product-picker"><span>Resource workforce</span><select aria-label="Resource workforce" value={effectiveStockGroup?.key ?? ''} onChange={(event) => setSelectedStockGroup(event.target.value)}>{stockGroups.map((group) => <option value={group.key} key={group.key}>{group.label} · {group.items.length} goods</option>)}</select></label>} />
-          {effectiveStockGroup ? <>{history.isLoading ? <LoadingState label="Loading resource histories…" /> : <><div className="history-series-summary">{effectiveStockGroup.items.map((item) => <span key={item.product_guid}><small>{item.product_name}</small><strong>{formatNumber(item.stock)}</strong><em className={(item.velocity?.net_stock_change_per_minute ?? 0) < 0 ? 'negative' : 'positive'}>{formatRate(item.velocity?.net_stock_change_per_minute)}</em><i className={`velocity-confidence ${item.velocity?.confidence ?? 'awaiting'}`}>{velocityStatusLabel(item.velocity)}</i></span>)}</div><ReactEChartsCore echarts={echarts} option={chart} style={{ height: 430 }} /></>}</> : <EmptyState title="No resource group available" description="This area has no observed product rows." />}
+      <section className="panel city-stock-planning">
+        <SectionHeader title="City stock planning" description="Scan stock and modeled capacity by workforce. Deficits are ranked first; select a resource for its observed history and calculation evidence." action={<label className="history-product-picker"><span>Workforce / population</span><select aria-label="Resource workforce" value={effectiveStockGroup?.key ?? ''} onChange={(event) => { setSelectedStockGroup(event.target.value); setSelectedHistoryProduct('') }}>{stockGroups.map((group) => <option value={group.key} key={group.key}>{group.label} · {group.items.length} goods</option>)}</select></label>} />
+        {planning.isLoading ? <LoadingState label="Calculating city requirements…" /> : planning.error ? <ErrorState error={planning.error} retry={() => { void planning.refetch() }} /> : effectiveStockGroup ? <>
+          <div className="stock-planning-context">
+            <div><WorkforceGlyph name={effectiveStockGroup.population_name} /><span><strong>{effectiveStockGroup.population_name ?? effectiveStockGroup.label}</strong><small>{effectiveStockGroup.population === null ? 'Population not observed' : `${formatNumber(effectiveStockGroup.population, 0)} population`} · {effectiveStockGroup.residence_count === null ? 'residences not observed' : `${formatNumber(effectiveStockGroup.residence_count, 1)} residences`} {effectiveStockGroup.residence_count_source === 'estimated_from_population' ? '(estimated)' : ''}</small></span></div>
+            <div className="stock-status-summary" aria-label="Resource status summary">
+              <span className="deficit"><b>{effectiveStockGroup.status_counts.deficit}</b> deficits</span>
+              <span className="constrained"><b>{effectiveStockGroup.status_counts.constrained + effectiveStockGroup.status_counts.neutral}</b> constrained</span>
+              <span className="healthy"><b>{effectiveStockGroup.status_counts.healthy}</b> healthy</span>
+              <span className="unknown"><b>{effectiveStockGroup.status_counts.unknown}</b> unknown</span>
+            </div>
+          </div>
+          <div className="stock-status-graph" aria-hidden="true">
+            {(['deficit', 'constrained', 'neutral', 'healthy', 'unknown'] as const).map((status) => effectiveStockGroup.status_counts[status] ? <span className={status} style={{ flexGrow: effectiveStockGroup.status_counts[status] }} key={status} /> : null)}
+          </div>
+          {effectiveStockGroup.consumption_setting_source !== 'telemetry' ? <p className="planning-assumption"><AlertTriangle size={13} />Need-consumption setting was not observed in this snapshot; population demand uses the catalog’s Low baseline. Telemetry mod 1.1.4 captures it automatically.</p> : null}
+          <div className="stock-planning-table-wrap">
+            <table className="stock-planning-table">
+              <thead><tr>
+                <th className="resource-column">{sortButton('Resource', 'resource')}</th>
+                <th className="numeric stock-column">{sortButton('Stock', 'stock')}</th>
+                <th className="numeric secondary-column">{sortButton('Demand/min', 'demand')}</th>
+                <th className="numeric secondary-column">Per 1k</th>
+                <th className="numeric secondary-column">{sortButton('Supply/min', 'supply')}</th>
+                <th className="numeric balance-column">{sortButton('Balance/min', 'balance')}</th>
+              </tr></thead>
+              <tbody>{sortedRows.map((row) => <tr className={`${row.status}${selectedHistoryRow?.product_guid === row.product_guid ? ' selected' : ''}`} key={row.product_guid} onClick={() => setSelectedHistoryProduct(row.product_guid)}>
+                <td className="resource-column"><button type="button" className="stock-resource-button" onClick={() => setSelectedHistoryProduct(row.product_guid)} aria-label={`View ${row.resource_name} stock history`}>
+                  {row.icon ? <img src={row.icon} alt="" /> : <span className="product-glyph"><Warehouse size={15} /></span>}
+                  <span><strong>{row.resource_name}</strong><small>{row.calculation_completeness === 'modeled_base' ? 'Base model' : 'Partial evidence'}</small></span>
+                  {row.status === 'deficit' ? <AlertTriangle className="row-warning" size={14} aria-label="Deficit" /> : null}
+                </button></td>
+                <td className="numeric stock-column"><strong>{planningValue(row.stock)}</strong><small>{row.capacity === null ? 'capacity —' : `of ${planningValue(row.capacity)}`}</small></td>
+                <td className="numeric secondary-column"><strong>{planningValue(row.demand_per_minute)}</strong><small>{row.population_demand_per_minute === null ? 'population —' : `${planningValue(row.population_demand_per_minute)} population`} · {row.production_input_demand_per_minute === null ? 'chains —' : `${planningValue(row.production_input_demand_per_minute)} chains`}</small></td>
+                <td className="numeric secondary-column"><strong>{planningValue(row.per_1000)}</strong><small>population demand</small></td>
+                <td className="numeric secondary-column"><strong>{planningValue(row.supply_per_minute)}</strong><small>base capacity</small></td>
+                <td className={`numeric balance-column ${row.status}`}><strong>{planningValue(row.balance_per_minute, true)}</strong><small className={(row.observed_net_stock_change_per_minute ?? 0) < 0 ? 'negative' : row.observed_net_stock_change_per_minute === null ? '' : 'positive'}>Observed stock {formatRate(row.observed_net_stock_change_per_minute)}</small></td>
+              </tr>)}</tbody>
+            </table>
+          </div>
+          <p className="planning-measurement-notice">{planning.data?.measurement_notice}</p>
+          {selectedHistoryRow ? <div className="stock-history-detail">
+            <header><span className="product-glyph"><History size={15} /></span><div><strong>{selectedHistoryRow.resource_name} history</strong><small>One resource at a time · {planningVelocityLabel(selectedHistoryRow.velocity_confidence)}</small></div><button type="button" className="button ghost small" onClick={() => setSelectedHistoryProduct('')}>Close</button></header>
+            <div className="stock-history-detail-grid">
+              <div>{history.isLoading ? <LoadingState label="Loading stock history…" /> : <ReactEChartsCore echarts={echarts} option={historyChart} style={{ height: 230 }} />}</div>
+              <aside>
+                <span><small>Current stock</small><strong>{planningValue(selectedHistoryRow.stock)}</strong></span>
+                <span><small>Observed net change</small><strong className={(selectedHistoryRow.observed_net_stock_change_per_minute ?? 0) < 0 ? 'negative' : 'positive'}>{formatRate(selectedHistoryRow.observed_net_stock_change_per_minute)}</strong></span>
+                <span><small>Modeled demand</small><strong>{planningValue(selectedHistoryRow.demand_per_minute)}/min</strong></span>
+                <span><small>Base supply</small><strong>{planningValue(selectedHistoryRow.supply_per_minute)}/min</strong></span>
+                <details><summary>Calculation evidence</summary><p>Population: {planningValue(selectedHistoryRow.population_demand_per_minute)}/min. Production inputs: {planningValue(selectedHistoryRow.production_input_demand_per_minute)}/min.</p>{selectedHistoryRow.supply_sources.map((source) => <p key={`out:${source.recipe_id}`}>{source.building_count} × {source.building_name}: +{planningValue(source.rate_per_minute)}/min base capacity.</p>)}{selectedHistoryRow.demand_sources.map((source) => <p key={`in:${source.recipe_id}`}>{source.building_count} × {source.building_name}: {planningValue(source.rate_per_minute)}/min base input demand.</p>)}</details>
+              </aside>
+            </div>
+          </div> : null}
+        </> : <EmptyState title="No planning group available" description="This city has no observed stock rows for the selected catalog." />}
       </section>
       <section className="panel workforce-panel">
           <SectionHeader title="Current-area workforce" description="Shown only when this was the camera area." />
           {workforceItems.length ? <div className="workforce-list">{workforceItems.map((item) => <div key={item.workforce_guid}><WorkforceGlyph name={item.name} /><span><strong>{item.name || item.workforce_guid}</strong><small>Supply {formatNumber(item.registered_production, 1)} · demand {formatNumber(Math.abs(item.registered_consumption ?? 0), 1)}</small></span><b className={(item.delta_without_buffs ?? 0) < 0 ? 'negative' : 'positive'}>{formatNumber(item.delta_without_buffs, 1)}</b></div>)}</div> : <EmptyState title="Workforce not observed here" description="Move the game camera to this island and wait for a complete snapshot." />}
       </section>
-      <section className="panel">
-        <SectionHeader title="Goods and targets" description="Planning domains are derived from verified recipe roles. Select a good to change companion-only targets." action={<label className="search-field goods-search"><Search size={15} /><input aria-label="Search city goods" value={goodsSearch} onChange={(event) => setGoodsSearch(event.target.value)} placeholder="Find a good" /></label>} />
-        {areaItems.length ? <div className="goods-domain-list">{goodsGroups.map((group, index) => <GoodsDomainSection key={group.domain} domain={group.domain} items={group.items} pressureProducts={pressureProducts} initiallyOpen={index === 0 || group.items.some((item) => pressureProducts.has(item.product_guid))} onEdit={setEditing} />)}</div> : <EmptyState title="No inventory observed" description="Wait for the next complete snapshot." />}
-      </section>
-      <PolicyEditor item={editing} onClose={() => setEditing(null)} />
     </div>
   )
 }

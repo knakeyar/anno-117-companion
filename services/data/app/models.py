@@ -239,6 +239,7 @@ class SnapshotBatch(Base):
     current_region_guid: Mapped[str | None] = mapped_column(String)
     current_area_id_raw: Mapped[str | None] = mapped_column(String)
     participant_guid: Mapped[str | None] = mapped_column(String)
+    need_consumption_setting: Mapped[int | None] = mapped_column(Integer)
     area_enumeration_scope: Mapped[str] = mapped_column(String, default="unknown", nullable=False)
     expected_area_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     emitted_area_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)

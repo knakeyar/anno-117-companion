@@ -13,6 +13,14 @@ def _repo_catalog() -> Path:
     return Path("/app/catalog/anno117-community-2.1-c6a6e752.json")
 
 
+def _repo_planning_catalog() -> Path:
+    for parent in Path(__file__).resolve().parents:
+        candidate = parent / "catalog" / "anno117-community-2.1-c6a6e752-planning.json"
+        if candidate.is_file():
+            return candidate
+    return Path("/app/catalog/anno117-community-2.1-c6a6e752-planning.json")
+
+
 @dataclass(frozen=True, slots=True)
 class Settings:
     database_path: Path
@@ -23,6 +31,7 @@ class Settings:
     expected_snapshot_interval_seconds: int
     stale_after_seconds: int
     enable_tailer: bool
+    planning_catalog_path: Path = _repo_planning_catalog()
     openai_api_key: str | None = None
     openai_model: str = "gpt-5.6-luna"
     openai_reasoning_effort: str = "low"
@@ -39,6 +48,9 @@ class Settings:
             expected_snapshot_interval_seconds=int(os.getenv("ANNO_SNAPSHOT_INTERVAL_SECONDS", "30")),
             stale_after_seconds=int(os.getenv("ANNO_STALE_AFTER_SECONDS", "75")),
             enable_tailer=os.getenv("ANNO_ENABLE_TAILER", "true").lower() not in {"0", "false", "no"},
+            planning_catalog_path=Path(
+                os.getenv("ANNO_PLANNING_CATALOG_PATH", str(_repo_planning_catalog()))
+            ),
             openai_api_key=os.getenv("OPENAI_API_KEY") or None,
             openai_model=os.getenv("OPENAI_MODEL", "gpt-5.6-luna"),
             openai_reasoning_effort=os.getenv("OPENAI_REASONING_EFFORT", "low"),

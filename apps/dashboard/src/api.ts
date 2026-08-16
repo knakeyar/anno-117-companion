@@ -5,6 +5,7 @@ import type { paths } from './generated/openapi'
 import type {
   Area,
   Campaign,
+  CityStockPlanningResponse,
   AdvisorConversation,
   ActiveTradeRoutesResponse,
   Finance,
@@ -58,6 +59,10 @@ export const api = {
   setMapPosition: (areaPk: number, body: { region_guid?: string; x?: number; y?: number; clear?: boolean }) =>
     unwrap<Area>(client.PUT('/api/v1/areas/{area_pk}/map-position', { params: { path: { area_pk: areaPk } }, body: { ...body, clear: body.clear ?? false } })),
   inventory: () => unwrap<InventoryResponse>(client.GET('/api/v1/inventory/latest')),
+  stockPlanning: (areaPk: number) =>
+    unwrap<CityStockPlanningResponse>(client.GET('/api/v1/areas/{area_pk}/stock-planning', {
+      params: { path: { area_pk: areaPk } },
+    })),
   history: (areaPk: number, productGuid: string) =>
     unwrap<{ items: HistoryPoint[] }>(client.GET('/api/v1/inventory/history', {
       params: { query: { area_pk: areaPk, product_guid: productGuid } },
@@ -109,6 +114,7 @@ export const queryKeys = {
   campaigns: ['campaigns'] as const,
   areas: ['areas'] as const,
   inventory: ['inventory'] as const,
+  stockPlanning: (areaPk: number) => ['stock-planning', areaPk] as const,
   overview: ['overview'] as const,
   trade: ['trade'] as const,
   activeTradeRoutes: ['active-trade-routes'] as const,
@@ -131,6 +137,13 @@ export const useCampaigns = () => useQuery({ queryKey: queryKeys.campaigns, quer
 export const useAreas = () => useQuery({ queryKey: queryKeys.areas, queryFn: api.areas, ...queryOptions })
 export const useInventory = () =>
   useQuery({ queryKey: queryKeys.inventory, queryFn: api.inventory, ...queryOptions })
+export const useStockPlanning = (areaPk: number) =>
+  useQuery({
+    queryKey: queryKeys.stockPlanning(areaPk),
+    queryFn: () => api.stockPlanning(areaPk),
+    enabled: Boolean(areaPk),
+    ...queryOptions,
+  })
 export const useOverview = () =>
   useQuery({ queryKey: queryKeys.overview, queryFn: api.overview, ...queryOptions })
 export const useTrade = () => useQuery({ queryKey: queryKeys.trade, queryFn: api.trade, ...queryOptions })

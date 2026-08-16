@@ -12,7 +12,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     ANNO_DATABASE_PATH=/data/anno-companion.sqlite3 \
     ANNO_TELEMETRY_DIR=/telemetry \
-    ANNO_CATALOG_PATH=/app/catalog/anno117-community-2.1-c6a6e752.json
+    ANNO_CATALOG_PATH=/app/catalog/anno117-community-2.1-c6a6e752.json \
+    ANNO_PLANNING_CATALOG_PATH=/app/catalog/anno117-community-2.1-c6a6e752-planning.json
 
 RUN groupadd --gid 10001 companion \
     && useradd --uid 10001 --gid companion --create-home --shell /usr/sbin/nologin companion \

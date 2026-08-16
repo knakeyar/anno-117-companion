@@ -2,7 +2,7 @@ local Telemetry = {}
 local json = require("json")
 local catalog = require("catalog")
 
-local VERSION = "1.1.3"
+local VERSION = "1.1.4"
 local SCHEMA_VERSION = 2
 local PREFIX = "ANNO_COMPANION_TELEMETRY_JSON "
 
@@ -616,6 +616,12 @@ local function get_identity_context()
         local game_setup = capture_fields(setup, { "GameSeed", "DifficultyLevel", "IsCampaignEnabled" })
         context.game_seed = safe_value(game_setup.GameSeed)
         context.difficulty_level = safe_value(game_setup.DifficultyLevel)
+        local need_setting_ok, need_setting = pcall(function()
+            return setup:GetDifficultyCategoryValue(8)
+        end)
+        if need_setting_ok then
+            context.need_consumption_setting = safe_value(need_setting)
+        end
     end
     return context, current_area_id
 end

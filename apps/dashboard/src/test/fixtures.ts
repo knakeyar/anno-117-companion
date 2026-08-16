@@ -1,4 +1,4 @@
-import type { ActiveTradeRoutesResponse, InventoryResponse, OverviewResponse, StatusResponse, TradeNetworkResponse, TradePlan, TradeResponse } from '../types'
+import type { ActiveTradeRoutesResponse, CityStockPlanningResponse, InventoryResponse, OverviewResponse, StatusResponse, TradeNetworkResponse, TradePlan, TradeResponse } from '../types'
 
 export const meta = {
   snapshot_id: 44,
@@ -109,6 +109,48 @@ export const tradeNetwork: TradeNetworkResponse = {
   evidence_notice: 'Endpoints require a companion plan, validated telemetry, or a confirmed manual link. Planned goods are not configured goods or cargo.',
 }
 
+export const stockPlanning: CityStockPlanningResponse = {
+  meta: { ...meta },
+  catalog,
+  area: { area_pk: 1, area_name: 'Juliana', region_guid: '3225', population_total: 10_768, residence_count: 520 },
+  groups: [{
+    key: 'Roman:2181',
+    label: 'Latium · Liberti',
+    region_id: 'Roman',
+    region_name: 'Latium',
+    workforce_guid: '2181',
+    population_guid: '1499',
+    population_name: 'Liberti',
+    population: 10_768,
+    residence_count: 520,
+    residence_count_source: 'telemetry',
+    consumption_factor: 1.25,
+    consumption_setting: 'Medium',
+    consumption_setting_source: 'telemetry',
+    status_counts: { deficit: 1, constrained: 0, healthy: 1, neutral: 0, unknown: 0 },
+    items: [
+      {
+        product_guid: '2174', resource_name: 'Timber', icon: null, category: 'construction_material', natural_order: 1,
+        stock: 8, capacity: 100, fill_ratio: .08, population_demand_per_minute: 0, production_input_demand_per_minute: 3.7,
+        demand_per_minute: 3.7, per_1000: 0, supply_per_minute: 3.2, balance_per_minute: -.5,
+        observed_net_stock_change_per_minute: -3.5, velocity_confidence: 'measured_history', velocity_is_historical: false,
+        status: 'deficit', demand_sources: [{ recipe_id: 'factory:100', building_guid: '100', building_name: 'Sawmill consumer', building_count: 2, rate_per_minute: 3.7, evidence: 'catalog_cycle_and_observed_building_count' }],
+        supply_sources: [{ recipe_id: 'factory:101', building_guid: '101', building_name: 'Lumberjack hut', building_count: 2, rate_per_minute: 3.2, evidence: 'catalog_cycle_and_observed_building_count' }], calculation_completeness: 'modeled_base',
+      },
+      {
+        product_guid: '2175', resource_name: 'Bread', icon: null, category: 'food', natural_order: 2,
+        stock: 735, capacity: 800, fill_ratio: .919, population_demand_per_minute: 2.2, production_input_demand_per_minute: 0,
+        demand_per_minute: 2.2, per_1000: .204, supply_per_minute: 2.4, balance_per_minute: .2,
+        observed_net_stock_change_per_minute: 0, velocity_confidence: 'stable', velocity_is_historical: false,
+        status: 'healthy', demand_sources: [], supply_sources: [{ recipe_id: 'factory:102', building_guid: '102', building_name: 'Bakery', building_count: 2, rate_per_minute: 2.4, evidence: 'catalog_cycle_and_observed_building_count' }], calculation_completeness: 'modeled_base',
+      },
+    ],
+  }],
+  capabilities: { stock: true, observed_net_stock_change: true, population_demand: true, factory_base_capacity: true, construction_demand: false, active_project_demand: false, trade_flow_decomposition: false, runtime_modifiers: false },
+  measurement_notice: 'Demand and supply are base planning estimates. Observed net stock change is shown separately.',
+  planning_source: { source_url: 'https://github.com/anno-mods/anno-117-calculator', source_revision: 'c6a6e752', residence_counts: 'telemetry where available' },
+}
+
 export const overview: OverviewResponse = {
   meta: { ...meta }, catalog,
   finance: { participant_guid: '41', treasury: 3_756_154, total_balance_raw: 200, trade_balance_period_raw: 50, passive_trade_balance_period_raw: 20, active_trade_balance_period_raw: 30, categories: [] },
@@ -139,6 +181,9 @@ export const apiFixtures: Record<string, unknown> = {
   '/api/v1/campaigns': [{ campaign_id: 'campaign-1', display_name: 'Marcia’s campaign', game_seed: '951', participant_guid: '41', identity_method: 'game_seed_participant', identity_confidence: 'user_confirmed', created_at: new Date().toISOString(), archived_at: null }],
   '/api/v1/areas': { campaign_id: 'campaign-1', items: [{ ...areaBase, area_pk: 1, area_id: '8513', name: 'Juliana', region_guid: '3225', game_session_guid: '3245', region_evidence: 'current_camera_area_same_snapshot', first_seen_at: new Date().toISOString(), last_seen_at: new Date().toISOString(), position: { x: .3, y: .4 } }, { ...areaBase, area_pk: 2, area_id: '8961', name: 'Naissus', region_guid: '3225', game_session_guid: '3245', region_evidence: 'current_camera_area_same_snapshot', first_seen_at: new Date().toISOString(), last_seen_at: new Date().toISOString(), position: { x: .7, y: .6 } }, { ...areaBase, area_pk: 3, area_id: '8451', name: 'Cudslip', region_guid: '6626', game_session_guid: '6569', region_evidence: 'current_camera_area_same_snapshot', first_seen_at: new Date().toISOString(), last_seen_at: new Date().toISOString(), position: null, position_source: null, manual_placement: false }] },
   '/api/v1/inventory/latest': inventory,
+  '/api/v1/areas/1/stock-planning': stockPlanning,
+  '/api/v1/areas/2/stock-planning': { ...stockPlanning, area: { ...stockPlanning.area, area_pk: 2, area_name: 'Naissus' } },
+  '/api/v1/areas/3/stock-planning': { ...stockPlanning, area: { ...stockPlanning.area, area_pk: 3, area_name: 'Cudslip', region_guid: '6626' } },
   '/api/v1/dashboard/overview': overview,
   '/api/v1/trade/opportunities': trade,
   '/api/v1/trade/routes': activeTradeRoutes,

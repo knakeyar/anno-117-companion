@@ -2,7 +2,7 @@ import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { App } from '../App'
 import { calculateTradeLayout, selectTradeHub } from '../components/tradeNetworkLayout'
-import { inventory, overview, tradeNetwork } from './fixtures'
+import { inventory, overview, stockPlanning, tradeNetwork } from './fixtures'
 import { installFetchMock, renderApp } from './render'
 
 describe('first-class management dashboard', () => {
@@ -71,28 +71,50 @@ describe('first-class management dashboard', () => {
 
   it('opens a persisted city from the regional list', async () => {
     installFetchMock()
-    renderApp(<App />, '/areas')
-    await userEvent.click(await screen.findByRole('link', { name: /Naissus/i }))
-    expect(await screen.findByRole('heading', { name: 'Naissus' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Stock history by workforce' })).toBeInTheDocument()
+    renderApp(<App />, '/areas/2')
+    expect(await screen.findByRole('heading', { name: 'Naissus' }, { timeout: 5_000 })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'City stock planning' }, { timeout: 5_000 })).toBeInTheDocument()
+    expect(await screen.findByRole('columnheader', { name: /Stock/i }, { timeout: 5_000 })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: /Demand\/min/i })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: /Supply\/min/i })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: /Balance\/min/i })).toBeInTheDocument()
+    expect(screen.queryByText('Goods and targets')).not.toBeInTheDocument()
   })
 
   it('labels a carried historical rate instead of leaving the resource learning', async () => {
     installFetchMock({
-      '/api/v1/inventory/latest': {
-        ...inventory,
-        items: inventory.items.map((item) => item.area_pk === 2 ? {
-          ...item,
-          velocity: {
-            ...item.velocity!, confidence: 'previous_session' as const,
-            source_confidence: 'stable' as const, is_historical: true,
-          },
-        } : item),
+      '/api/v1/areas/2/stock-planning': {
+        ...stockPlanning,
+        area: { ...stockPlanning.area, area_pk: 2, area_name: 'Naissus' },
+        groups: stockPlanning.groups.map((group) => ({
+          ...group,
+          items: group.items.map((item) => item.product_guid === '2174' ? {
+            ...item,
+            velocity_confidence: 'previous_session',
+            velocity_is_historical: true,
+          } : item),
+        })),
       },
     })
-    renderApp(<App />, '/areas/2')
-    expect(await screen.findByText('Previous session')).toBeInTheDocument()
+    renderApp(<App />, '/areas/2?product=2174')
+    expect(await screen.findByText(/Previous session/, {}, { timeout: 5_000 })).toBeInTheDocument()
     expect(screen.queryByText(/Learning/i)).not.toBeInTheDocument()
+  })
+
+  it('ranks deficits in a dense planning table and keeps one-resource history secondary', async () => {
+    installFetchMock()
+    renderApp(<App />, '/areas/1')
+    expect(await screen.findByText(/10,768 population/, {}, { timeout: 5_000 })).toBeInTheDocument()
+    const rows = screen.getAllByRole('row')
+    expect(rows[1]).toHaveTextContent('Timber')
+    expect(rows[1]).toHaveTextContent('−0.5')
+    expect(rows[1]).toHaveTextContent('Observed stock -3.5/min')
+    expect(screen.queryByRole('heading', { name: /history/i })).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'View Timber stock history' }))
+    expect(screen.getByText('Timber history')).toBeInTheDocument()
+    expect(screen.getByText('Calculation evidence')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Sort by Resource' }))
+    expect(screen.getAllByRole('row')[1]).toHaveTextContent('Bread')
   })
 
   it('makes stale telemetry explicit without turning observations into zero', async () => {
@@ -149,36 +171,24 @@ describe('first-class management dashboard', () => {
   })
 
   it('groups the stock selector by producing region and workforce on city detail', async () => {
-    const fixtures = await import('./fixtures')
-    const chainResponse = fixtures.apiFixtures['/api/v1/production/chains'] as { chains: Array<Record<string, unknown>> }
-    const foreignGood = {
-      ...inventory.items[0],
-      product_guid: '2093',
-      product_name: 'Barley',
-      stock: 17,
-      available_stock: 17,
-    }
-    const albionChain = {
-      ...chainResponse.chains[0],
-      recipe_id: 'factory:2799',
-      name: 'Barley Farm',
-      building_guid: '2799',
-      building_name: 'Barley Farm',
-      workforce_guid: '2192',
-      workforce_name: 'Wader Workforce',
-      associated_regions: ['Celtic'],
-      items: [{ role: 'output', ordinal: 1, product_guid: '2093', product_name: 'Barley', amount: 1 }],
+    const latium = stockPlanning.groups[0]
+    const albion = {
+      ...latium,
+      key: 'Celtic:2192', label: 'Albion · Waders', region_id: 'Celtic', region_name: 'Albion',
+      workforce_guid: '2192', population_guid: '1504', population_name: 'Waders', population: 850,
+      items: [{ ...latium.items[0], product_guid: '2093', resource_name: 'Barley', stock: 17 }],
     }
     installFetchMock({
-      '/api/v1/inventory/latest': { ...inventory, items: [...inventory.items, foreignGood] },
-      '/api/v1/production/chains': { ...chainResponse, chains: [...chainResponse.chains, albionChain] },
+      '/api/v1/areas/1/stock-planning': { ...stockPlanning, groups: [latium, albion] },
     })
     renderApp(<App />, '/areas/1')
-    expect(await screen.findByRole('heading', { name: 'Juliana' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Juliana' }, { timeout: 5_000 })).toBeInTheDocument()
     expect(screen.getByLabelText('Resource workforce')).toBeInTheDocument()
-    expect(screen.getByRole('option', { name: 'Latium · Libertus Workforce · 1 goods' })).toBeInTheDocument()
-    expect(screen.getByRole('option', { name: 'Albion · Wader Workforce · 1 goods' })).toBeInTheDocument()
-    expect(screen.getByText('Construction materials')).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'Latium · Liberti · 2 goods' })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'Albion · Waders · 1 goods' })).toBeInTheDocument()
+    await userEvent.selectOptions(screen.getByLabelText('Resource workforce'), 'Celtic:2192')
+    expect(screen.getByText(/850 population/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'View Barley stock history' })).toBeInTheDocument()
   })
 
   it('can assign the current authority epoch to an existing campaign', async () => {

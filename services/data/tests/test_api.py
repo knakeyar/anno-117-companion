@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from dataclasses import replace
+import json
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import func, select
@@ -8,6 +11,7 @@ from app.ingestion import TelemetryIngestor
 from app.main import create_app
 from app.models import (
     Area,
+    AreaBuildingCurrent,
     AreaPopulationObservation,
     AreaProductObservation,
     BuildingType,
@@ -237,6 +241,94 @@ def test_recipe_signals_distinguish_input_pressure_from_output_blockage(
         assert "no measured factory rate" in chain["measurement_notice"].lower()
 
 
+def test_city_stock_planning_uses_population_and_observed_factory_counts(
+    session_factory, app_settings, tmp_path
+) -> None:
+    seed_complete_snapshots(session_factory)
+    with session_factory() as session:
+        latest = session.scalar(select(SnapshotBatch).order_by(SnapshotBatch.snapshot_sequence.desc()))
+        juliana = session.scalar(select(Area).where(Area.latest_name == "Juliana"))
+        assert latest is not None and juliana is not None
+        latest.need_consumption_setting = 1
+        session.add_all(
+            [
+                BuildingType(
+                    release_id="anno117-v1-starter",
+                    building_guid="building-bakery",
+                    name="Fixture bakery",
+                    workforce_guid="2181",
+                    associated_regions_json='["Roman"]',
+                ),
+                ProductionRecipe(
+                    release_id="anno117-v1-starter",
+                    recipe_id="recipe-bakery",
+                    building_guid="building-bakery",
+                    name="Fixture bakery",
+                    cycle_seconds=60,
+                ),
+                ProductionRecipeItem(
+                    release_id="anno117-v1-starter",
+                    recipe_id="recipe-bakery",
+                    role="output",
+                    ordinal=1,
+                    product_guid="2174",
+                    amount=1,
+                ),
+                AreaBuildingCurrent(
+                    area_pk=juliana.area_pk,
+                    building_guid="building-bakery",
+                    campaign_id=juliana.campaign_id,
+                    play_session_id=latest.play_session_id,
+                    snapshot_id=latest.snapshot_id,
+                    building_count=3,
+                    presence_status="installed",
+                    observed_at=latest.completed_at,
+                ),
+            ]
+        )
+        session.commit()
+
+    planning_path = tmp_path / "planning.json"
+    planning_path.write_text(json.dumps({
+        "release_id": "anno117-v1-starter",
+        "source_url": "https://example.test/pinned",
+        "source_revision": "fixture",
+        "consumption_factors": {"Low": 1.0, "Medium": 1.25, "High": 1.5},
+        "population_levels": [{
+            "population_guid": "27081",
+            "name": "Liberti",
+            "workforce_guid": "2181",
+            "associated_regions": ["Roman"],
+            "residence_guid": "residence-liberti",
+            "residence_name": "Libertus Residence",
+            "maximum_population_per_residence": 10,
+            "needs": [{
+                "need_guid": "need-timber",
+                "product_guid": "2174",
+                "product_name": "Timber",
+                "base_consumption_per_residence_minute": 0.1,
+            }],
+        }],
+    }), encoding="utf-8")
+    app = create_app(replace(app_settings, planning_catalog_path=planning_path), session_factory)
+    with TestClient(app) as client:
+        juliana = next(item for item in client.get("/api/v1/areas").json()["items"] if item["name"] == "Juliana")
+        response = client.get(f"/api/v1/areas/{juliana['area_pk']}/stock-planning")
+        assert response.status_code == 200
+        group = response.json()["groups"][0]
+        row = group["items"][0]
+        assert group["population"] == 100.5
+        assert group["residence_count_source"] == "estimated_from_population"
+        assert group["consumption_setting"] == "Medium"
+        assert row["stock"] == 85
+        assert row["population_demand_per_minute"] == 1.256
+        assert row["demand_per_minute"] == 1.256
+        assert row["per_1000"] == 12.5
+        assert row["supply_per_minute"] == 3
+        assert row["balance_per_minute"] == 1.744
+        assert row["observed_net_stock_change_per_minute"] == -10
+
+
 def test_api_contract_and_observed_types(session_factory, app_settings) -> None:
     seed_complete_snapshots(session_factory)
     app = create_app(app_settings, session_factory)
@@ -251,6 +343,7 @@ def test_api_contract_and_observed_types(session_factory, app_settings) -> None:
             "/api/v1/inventory/latest",
             "/api/v1/inventory/history",
             "/api/v1/inventory/history/group",
+            "/api/v1/areas/{area_pk}/stock-planning",
             "/api/v1/trade/opportunities",
             "/api/v1/production/chains",
             "/api/v1/finance",
@@ -268,6 +361,7 @@ def test_api_contract_and_observed_types(session_factory, app_settings) -> None:
             client.get("/api/v1/areas").json(),
             client.get("/api/v1/products").json(),
             client.get("/api/v1/inventory/latest").json(),
+            client.get(f"/api/v1/areas/{area['area_pk']}/stock-planning").json(),
             client.get(
                 "/api/v1/inventory/history",
                 params={"area_pk": area["area_pk"], "product_guid": "2174"},
@@ -287,7 +381,7 @@ def test_api_contract_and_observed_types(session_factory, app_settings) -> None:
             assert response["meta"]["play_session_id"] is not None
             assert response["meta"]["scope"] == "all_controlled_areas"
             assert response["catalog"]["release_id"] == "anno117-v1-starter"
-        grouped = economy_responses[4]
+        grouped = economy_responses[5]
         assert grouped["scope"] == "area_product_group"
         assert grouped["series"][0]["product_guid"] == "2174"
         assert len(grouped["series"][0]["items"]) == 4

@@ -43,6 +43,27 @@ def test_pinned_catalog_has_exact_community_coverage(session_factory) -> None:
         assert summary["source_revision"] == "c6a6e7525d16927f74d4f554dde5831b84fa287c"
 
 
+def test_pinned_population_planning_catalog_is_complete_and_referenced() -> None:
+    root = Path(__file__).resolve().parents[3]
+    economy = json.loads((root / "catalog" / "anno117-community-2.1-c6a6e752.json").read_text())
+    planning = json.loads((root / "catalog" / "anno117-community-2.1-c6a6e752-planning.json").read_text())
+    product_ids = {str(item["guid"]) for item in economy["products"]}
+    levels = planning["population_levels"]
+    needs = [need for level in levels for need in level["needs"]]
+
+    assert planning["release_id"] == economy["release_id"]
+    assert planning["source_revision"] == "c6a6e7525d16927f74d4f554dde5831b84fa287c"
+    assert planning["consumption_factors"] == {"Low": 1.0, "Medium": 1.25, "High": 1.5}
+    assert len(levels) == 9
+    assert len({str(level["residence_guid"]) for level in levels}) == 9
+    assert len(needs) == 125
+    assert all(str(need["product_guid"]) in product_ids for need in needs)
+    assert all(float(need["base_consumption_per_residence_minute"]) >= 0 for need in needs)
+
+    generated_lua = (root / "mod" / "anno-companion-telemetry" / "anno-companion" / "catalog.lua").read_text()
+    assert generated_lua.count('kind = "residence"') == 9
+
+
 def test_estimated_base_maintenance_uses_city_factory_counts(session_factory) -> None:
     seed_complete_snapshots(session_factory)
     path = Path(__file__).resolve().parents[3] / "catalog" / "anno117-community-2.1-c6a6e752.json"
@@ -122,7 +143,7 @@ def test_v2_baseline_delta_and_incomplete_batch_are_atomic(session_factory) -> N
     ingest("telemetry_loaded", None, {})
 
     def batch(snapshot: int, stock: float, *, mode: str, complete: bool = True) -> None:
-        ingest("snapshot_started", snapshot, {"section_mode": mode, "context": {"participant_guid": "41", "game_seed": "951", "play_time": snapshot * 30_000}, "area_enumeration_scope": "all_controlled_areas", "area_count": 1})
+        ingest("snapshot_started", snapshot, {"section_mode": mode, "context": {"participant_guid": "41", "game_seed": "951", "play_time": snapshot * 30_000, "need_consumption_setting": 1}, "area_enumeration_scope": "all_controlled_areas", "area_count": 1})
         ingest("area_core", snapshot, {"area_id": "100", "CityName": "Roma", "location": {"status": "success", "x": 1200, "y": 400, "session_guid": "3245", "region_guid": "3225"}})
         ingest("area_inventory_chunk", snapshot, {"area_id": "100", "chunk_index": 1, "chunk_count": 1, "attempted_count": 1, "products": [{"product_guid": "2174", "stock": stock, "available": stock, "capacity": 100, "reserved": 0}]})
         ingest("area_building_chunk", snapshot, {"area_id": "100", "chunk_index": 1, "chunk_count": 1, "attempted_count": 1, "buildings": [{"building_guid": "fixture-building", "count": 2 if snapshot == 1 else 0}]})
@@ -134,6 +155,8 @@ def test_v2_baseline_delta_and_incomplete_batch_are_atomic(session_factory) -> N
     with session_factory() as session:
         current = session.get(AreaProductCurrent, (1, "2174"))
         assert current is not None and current.stock == 50
+        complete = session.scalar(select(SnapshotBatch).where(SnapshotBatch.is_complete))
+        assert complete is not None and complete.need_consumption_setting == 1
         assert session.scalar(select(func.count()).select_from(SnapshotBatch).where(SnapshotBatch.is_complete)) == 1
         building = session.get(AreaBuildingCurrent, (1, "fixture-building"))
         assert building is not None and building.building_count == 2

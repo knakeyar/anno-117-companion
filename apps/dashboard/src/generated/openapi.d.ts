@@ -107,6 +107,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/areas/{area_pk}/stock-planning": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Stock Planning */
+        get: operations["stock_planning_api_v1_areas__area_pk__stock_planning_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/campaigns": {
         parameters: {
             query?: never;
@@ -772,6 +789,33 @@ export interface components {
             /** Play Session Id */
             play_session_id?: string | null;
         };
+        /** CityStockPlanningResponse */
+        CityStockPlanningResponse: {
+            /** Area */
+            area: {
+                [key: string]: unknown;
+            };
+            /** Capabilities */
+            capabilities: {
+                [key: string]: boolean;
+            };
+            /** Catalog */
+            catalog: {
+                [key: string]: unknown;
+            };
+            /** Groups */
+            groups: components["schemas"]["StockPlanningGroupView"][];
+            /** Measurement Notice */
+            measurement_notice: string;
+            /** Meta */
+            meta: {
+                [key: string]: unknown;
+            };
+            /** Planning Source */
+            planning_source: {
+                [key: string]: unknown;
+            };
+        };
         /** DashboardOverviewResponse */
         DashboardOverviewResponse: {
             /** Actions */
@@ -1020,6 +1064,116 @@ export interface components {
             source_area_pk: number;
             /** Trade Plan Id */
             trade_plan_id?: string | null;
+        };
+        /** StockPlanningGroupView */
+        StockPlanningGroupView: {
+            /** Consumption Factor */
+            consumption_factor: number;
+            /** Consumption Setting */
+            consumption_setting: string;
+            /**
+             * Consumption Setting Source
+             * @enum {string}
+             */
+            consumption_setting_source: "telemetry" | "catalog_low_assumption";
+            /** Items */
+            items: components["schemas"]["StockPlanningRowView"][];
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Population */
+            population: number | null;
+            /** Population Guid */
+            population_guid: string | null;
+            /** Population Name */
+            population_name: string | null;
+            /** Region Id */
+            region_id: string;
+            /** Region Name */
+            region_name: string;
+            /** Residence Count */
+            residence_count: number | null;
+            /**
+             * Residence Count Source
+             * @enum {string}
+             */
+            residence_count_source: "telemetry" | "estimated_from_population" | "not_observed" | "area_total";
+            /** Status Counts */
+            status_counts: {
+                [key: string]: number;
+            };
+            /** Workforce Guid */
+            workforce_guid: string | null;
+        };
+        /** StockPlanningRowView */
+        StockPlanningRowView: {
+            /** Balance Per Minute */
+            balance_per_minute: number | null;
+            /**
+             * Calculation Completeness
+             * @enum {string}
+             */
+            calculation_completeness: "modeled_base" | "partial" | "unknown_catalog_relationships";
+            /** Capacity */
+            capacity: number | null;
+            /** Category */
+            category: string | null;
+            /** Demand Per Minute */
+            demand_per_minute: number | null;
+            /** Demand Sources */
+            demand_sources: components["schemas"]["StockPlanningSourceView"][];
+            /** Fill Ratio */
+            fill_ratio: number | null;
+            /** Icon */
+            icon: string | null;
+            /** Natural Order */
+            natural_order: number;
+            /** Observed Net Stock Change Per Minute */
+            observed_net_stock_change_per_minute: number | null;
+            /** Per 1000 */
+            per_1000: number | null;
+            /** Population Demand Per Minute */
+            population_demand_per_minute: number | null;
+            /** Product Guid */
+            product_guid: string;
+            /** Production Input Demand Per Minute */
+            production_input_demand_per_minute: number | null;
+            /** Resource Name */
+            resource_name: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "deficit" | "constrained" | "healthy" | "neutral" | "unknown";
+            /** Stock */
+            stock: number | null;
+            /** Supply Per Minute */
+            supply_per_minute: number | null;
+            /** Supply Sources */
+            supply_sources: components["schemas"]["StockPlanningSourceView"][];
+            /** Velocity Confidence */
+            velocity_confidence: string | null;
+            /** Velocity Is Historical */
+            velocity_is_historical: boolean;
+        };
+        /** StockPlanningSourceView */
+        StockPlanningSourceView: {
+            /** Building Count */
+            building_count: number;
+            /** Building Guid */
+            building_guid: string;
+            /** Building Name */
+            building_name: string | null;
+            /**
+             * Evidence
+             * @constant
+             */
+            evidence: "catalog_cycle_and_observed_building_count";
+            /** Rate Per Minute */
+            rate_per_minute: number | null;
+            /** Recipe Id */
+            recipe_id: string;
         };
         /** TradeNetworkEdgeSummaryView */
         TradeNetworkEdgeSummaryView: {
@@ -1584,6 +1738,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AreaView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    stock_planning_api_v1_areas__area_pk__stock_planning_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                area_pk: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CityStockPlanningResponse"];
                 };
             };
             /** @description Validation Error */

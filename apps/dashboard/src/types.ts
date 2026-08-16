@@ -78,6 +78,77 @@ export interface InventoryResponse {
   signals: ManagementSignal[]
 }
 
+export interface StockPlanningSource {
+  recipe_id: string
+  building_guid: string
+  building_name: string | null
+  building_count: number
+  rate_per_minute: number | null
+  evidence: 'catalog_cycle_and_observed_building_count'
+}
+
+export interface StockPlanningRow {
+  product_guid: string
+  resource_name: string
+  icon: string | null
+  category: string | null
+  natural_order: number
+  stock: number | null
+  capacity: number | null
+  fill_ratio: number | null
+  population_demand_per_minute: number | null
+  production_input_demand_per_minute: number | null
+  demand_per_minute: number | null
+  per_1000: number | null
+  supply_per_minute: number | null
+  balance_per_minute: number | null
+  observed_net_stock_change_per_minute: number | null
+  velocity_confidence: string | null
+  velocity_is_historical: boolean
+  status: 'deficit' | 'constrained' | 'healthy' | 'neutral' | 'unknown'
+  demand_sources: StockPlanningSource[]
+  supply_sources: StockPlanningSource[]
+  calculation_completeness: 'modeled_base' | 'partial' | 'unknown_catalog_relationships'
+}
+
+export interface StockPlanningGroup {
+  key: string
+  label: string
+  region_id: string
+  region_name: string
+  workforce_guid: string | null
+  population_guid: string | null
+  population_name: string | null
+  population: number | null
+  residence_count: number | null
+  residence_count_source: 'telemetry' | 'estimated_from_population' | 'not_observed' | 'area_total'
+  consumption_factor: number
+  consumption_setting: string
+  consumption_setting_source: 'telemetry' | 'catalog_low_assumption'
+  status_counts: Record<'deficit' | 'constrained' | 'healthy' | 'neutral' | 'unknown', number>
+  items: StockPlanningRow[]
+}
+
+export interface CityStockPlanningResponse {
+  meta: ObservationMeta
+  catalog: CatalogSummary
+  area: {
+    area_pk: number
+    area_name: string
+    region_guid: string | null
+    population_total: number | null
+    residence_count: number | null
+  }
+  groups: StockPlanningGroup[]
+  capabilities: Record<string, boolean>
+  measurement_notice: string
+  planning_source: {
+    source_url: string | null
+    source_revision: string | null
+    residence_counts: string
+  }
+}
+
 export interface TransferCandidate {
   product_guid: string
   product_name: string
