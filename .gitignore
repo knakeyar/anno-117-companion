@@ -12,3 +12,6 @@ test-results/
 playwright-report/
 runtime-data/
 
+# Local Anno 117 extraction and reverse-engineering notes; never publish or commit.
+/data/script/
+/research/
