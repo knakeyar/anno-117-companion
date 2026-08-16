@@ -1,6 +1,6 @@
 {
   "Anno": 8,
-  "Version": "0.1.1",
+  "Version": "0.2.0",
   "ModID": "anno-companion-telemetry-probe-local",
   "Difficulty": "unchanged",
   "Category": {
@@ -10,7 +10,7 @@
     "English": "Anno Companion Telemetry Probe"
   },
   "Description": {
-    "English": "Read-only diagnostic probe for Anno 117 Lua telemetry bindings. Writes uniquely prefixed JSON records to the game log and, when permitted, logs/anno-companion-probe.jsonl."
+    "English": "Read-only focused scope probe for Anno 117. Samples area identity, selected-area statistics, workforce, history, inventory, and passive trade every 10 seconds."
   },
   "CreatorName": "Local research",
   "GameSetup": {
@@ -21,9 +21,9 @@
   },
   "Scripts": {
     "Modules": [
-      "anno-companion/telemetry-probe.lua"
+      "anno-companion/scope-probe.lua"
     ],
-    "Init": "AnnoCompanionTelemetryProbe = require(\"telemetry-probe\"); AnnoCompanionTelemetryProbe:Init()",
+    "Init": "AnnoCompanionTelemetryProbe = require(\"scope-probe\"); AnnoCompanionTelemetryProbe:Init()",
     "Load": "AnnoCompanionTelemetryProbe:Load()",
     "Unload": "AnnoCompanionTelemetryProbe:Unload()",
     "Tick": "AnnoCompanionTelemetryProbe:Tick()"

@@ -1,26 +1,40 @@
-# Anno Companion Telemetry Probe 0.1.1
+# Anno Companion Focused Scope Probe 0.2.0
 
-This is a read-only diagnostic mod. It does not change game state. It runs the first-pass runtime probes together, catches each probe failure independently, and emits one-line JSON records prefixed with:
+This is the second, smaller read-only runtime test. The first broad run established that log transport, controlled-area enumeration, inventory, population, finance, trade-route issues, ships, and factories are reachable. This version focuses on the remaining scope questions that affect the stable v1 data model.
+
+It does not modify game state. Normal UI actions performed by the player are the only changes used during the test.
+
+## What it records
+
+Every sample emits a small group of JSON records with this prefix:
 
 ```text
 ANNO_COMPANION_PROBE_JSON 
 ```
 
-## Install
+The records cover:
 
-Copy the entire `anno-companion-telemetry-probe` folder into either supported Anno 117 mods directory:
+- campaign/session/region identity evidence and game clocks;
+- all controlled-area IDs and names for cross-region comparison;
+- current area, UI-selected area, and statistics selected-area count;
+- stock and passive-trade settings for timber, tiles, and concrete on one controlled target area;
+- production/consumption statistics for those products;
+- workforce supply, demand, and balance candidates;
+- four statistics-history indices.
 
-```text
-<user documents>/Anno 117 - Pax Romana/mods/
-```
+The target area is chosen in this order:
 
-or:
+1. UI-selected area, if it is controlled by the player;
+2. current camera area, if it is controlled by the player;
+3. the first controlled area as an explicit fallback.
 
-```text
-<Anno 117 installation>/mods/
-```
+The `target_area_reason` field states which rule was used.
 
-The result must be:
+## Install/update
+
+Copy the entire `anno-companion-telemetry-probe` folder into the Anno 117 `mods` directory. Confirm that the installed manifest is version `0.2.0` and keep only one copy of this ModID enabled.
+
+The final layout must be:
 
 ```text
 mods/
@@ -28,88 +42,34 @@ mods/
     ├── modinfo.json
     ├── README.md
     └── anno-companion/
-        └── telemetry-probe.lua
+        ├── scope-probe.lua
+        └── telemetry-probe.lua  # retained broad probe; not loaded by 0.2.0
 ```
 
-Start Anno 117 and load a save. The probe waits 30 meta-game ticks after the loader's `Load` callback, then runs once.
+Fully restart Anno 117 after updating the files.
 
-## Find the output
+## Test procedure
 
-First check that the mod loaded in:
+The probe takes one sample shortly after loading, then samples every 10 seconds for up to 24 samples (about four minutes). Keep the game unpaused during each waiting period.
 
-```text
-<user documents>/Anno 117 - Pax Romana/mods/mod-loader.log
-```
+1. Load the same save used for the first probe.
+2. On owned island A, open Production Statistics and select exactly that island. Leave it selected for at least 30 seconds.
+3. Move to owned island B in the same region. Select only island B in Production Statistics and wait at least 30 seconds.
+4. Switch to the other region. Select one owned island there in Production Statistics and wait at least 30 seconds.
+5. On one tested island, use the normal UI to set a recognizable minimum stock or buy/sell offer for timber, tiles, or concrete. Wait for two more samples.
+6. If time remains, close the statistics UI or clear its area selection and wait for two samples. This gives us a negative control.
 
-Search the game's log files for `ANNO_COMPANION_PROBE_JSON`. The normal game log is commonly under the Anno 117 documents `log/` directory. The probe also attempts to append the same records to this game-relative path:
+The probe is complete when it emits `scope_probe_completed`. Reloading the save starts a fresh 24-sample test with a new `load_epoch`.
 
-```text
-logs/anno-companion-probe.jsonl
-```
+## Return the output
 
-Direct file output is itself one of the experiments. If the Lua sandbox rejects `io.open`, the failure is caught and emitted to the normal game log as `file_output_error`.
+Search the game log for `ANNO_COMPANION_PROBE_JSON` and send all version `0.2.0` lines from `scope_probe_loaded` through `scope_probe_completed` (or `scope_probe_unloaded` if you stop early).
 
-PowerShell search example:
+Also tell us which island was used in each step and which passive-trade setting you changed. That manual UI evidence is needed to determine whether the statistics and workforce globals follow the current camera area, the statistics UI selection, or another hidden context.
 
-```powershell
-Get-ChildItem "$env:USERPROFILE\Documents\Anno 117 - Pax Romana" -Recurse -File |
-  Select-String "ANNO_COMPANION_PROBE_JSON"
-```
+## Expected limitations
 
-The useful records begin with `probe_run_started` and end with `probe_run_finished`. Please preserve every line between them, including records where `ok` is `false`.
-
-## Disable probes and retry one by one
-
-Open `anno-companion/telemetry-probe.lua` and find the `CONFIG.probes` block near the top. Set every probe to `false`, then enable one at a time:
-
-```lua
-probes = {
-    transport = true,
-    context = false,
-    products = false,
-    areas = false,
-    storage = false,
-    population = false,
-    workforce = false,
-    passive_trade = false,
-    statistics = false,
-    history = false,
-    finance = false,
-    trade_routes = false,
-    ships = false,
-    factories = false,
-}
-```
-
-Recommended isolation order:
-
-1. `transport`
-2. `context`
-3. `products`
-4. `areas`
-5. `storage`
-6. `population`
-7. `workforce`
-8. `passive_trade`
-9. `statistics`
-10. `history`
-11. `finance`
-12. `trade_routes`
-13. `ships`
-14. `factories`
-
-Restart the game after editing the mod. Lua script support is experimental and hot reload is not assumed.
-
-## Safe limits
-
-The telemetry probes use only four initial product GUIDs, while the product-metadata probe adds one deliberately invalid control value. Issue routes, ships, factories, population levels, workforce types, and finance categories are capped. These limits are in `CONFIG` and prevent a mature save from generating excessive output.
-
-The product GUIDs are taken from the extracted game's `specialguids.lua`:
-
-- `2174` — Roman timber
-- `2176` — tiles
-- `2178` — Roman concrete
-- `1010017` — money (included to test product classification/meta storage)
-- `-1` — deliberately invalid control value (used only by the product metadata probe)
-
-Invalid or region-inapplicable products are expected to produce useful error/null evidence rather than being treated as zero.
+- Direct `io.open` output is not attempted; the first probe proved that `io` is unavailable.
+- Factories, ships, population details, and full finance categories are intentionally omitted from this test.
+- History may remain empty until the Production Statistics UI has an active area selection.
+- Localized names are diagnostic labels only. Stable identifiers in the eventual data model will use numeric GUIDs/IDs.
