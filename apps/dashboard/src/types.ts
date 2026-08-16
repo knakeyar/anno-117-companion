@@ -1,0 +1,240 @@
+export interface ObservationMeta {
+  snapshot_id: number | null
+  play_session_id: string | null
+  observed_at: string | null
+  scope: string | null
+  freshness_seconds: number | null
+  is_stale: boolean
+}
+
+export interface CatalogSummary {
+  release_id: string | null
+  label?: string
+  source_hash?: string
+  products: number
+  recipes: number
+  coverage: 'missing' | 'starter' | 'partial' | 'complete'
+  coverage_note?: string | null
+}
+
+export interface Velocity {
+  net_stock_change_per_minute: number
+  interval_count: number
+  window_minutes: number
+  confidence: string
+}
+
+export interface InventoryItem {
+  area_pk: number
+  area_id: string
+  area_name: string
+  region_guid: string | null
+  product_guid: string
+  product_name: string
+  category: string | null
+  stock: number | null
+  available_stock: number | null
+  capacity: number | null
+  reserved: number | null
+  fill_ratio: number | null
+  free_space_raw: number | null
+  engine_trend_raw: number | null
+  passive_trade_minimum: number | null
+  passive_trade_mode: 'none' | 'buy' | 'sell' | 'buy_or_sell' | 'unknown'
+  passive_trade_flags: Record<string, boolean | null>
+  low_target: number | null
+  high_target: number | null
+  policy_source: 'explicit' | 'passive_trade' | 'capacity_default'
+  priority: number
+  excluded: boolean
+  velocity: Velocity | null
+  estimated_stockout_minutes: number | null
+}
+
+export interface ManagementSignal {
+  code: 'low_stock' | 'near_full' | 'falling_stock' | 'estimated_stockout'
+  severity: 'critical' | 'warning' | 'info'
+  label: string
+  area_pk: number
+  area_name: string
+  product_guid: string
+  product_name: string
+  priority: number
+  evidence: Record<string, number | null>
+  interpretation: 'inferred_pressure'
+  chain_role?: 'input' | 'output'
+  chain_issue?: 'input_pressure' | 'output_blockage'
+}
+
+export interface InventoryResponse {
+  meta: ObservationMeta
+  catalog: CatalogSummary
+  items: InventoryItem[]
+  signals: ManagementSignal[]
+}
+
+export interface TransferCandidate {
+  product_guid: string
+  product_name: string
+  source_area_pk: number
+  source_area_name: string
+  destination_area_pk: number
+  destination_area_name: string
+  advisory_amount: number
+  destination_priority: number
+  route_feasibility: 'unknown'
+  interpretation: 'transfer_candidate'
+}
+
+export interface TradeResponse {
+  meta: ObservationMeta
+  items: TransferCandidate[]
+  notice: string
+}
+
+export interface Finance {
+  participant_guid: string
+  treasury: number | null
+  total_balance_raw: number | null
+  trade_balance_period_raw: number | null
+  passive_trade_balance_period_raw: number | null
+  active_trade_balance_period_raw: number | null
+  categories: Array<{
+    kind: string
+    ordinal: number
+    category_guid_raw: string | null
+    localized_label: string | null
+    value: number | null
+  }>
+}
+
+export interface WorkforceItem {
+  area_pk: number
+  area_name: string
+  scope: 'current_camera_area'
+  workforce_guid: string
+  name: string | null
+  population_count: number | null
+  resulting_from_population: number | null
+  registered_production: number | null
+  registered_consumption: number | null
+  delta_without_buffs: number | null
+  delta_with_buffs: number | null
+}
+
+export interface RouteIssue {
+  route_name: string | null
+  issue_code: string
+  severity: 'critical' | 'warning'
+  active_error_count: number | null
+  identity_scope: 'ephemeral_route_name'
+}
+
+export interface OverviewResponse {
+  meta: ObservationMeta
+  catalog: CatalogSummary
+  finance: Finance | null
+  signals: ManagementSignal[]
+  transfer_candidates: TransferCandidate[]
+  route_issues: RouteIssue[]
+  workforce_shortages: WorkforceItem[]
+  counts: {
+    inventory_items: number
+    signals: number
+    transfer_candidates: number
+  }
+  language: {
+    rate_label: 'Net stock change'
+    pressure_label: 'Inferred pressure'
+  }
+}
+
+export interface Area {
+  area_pk: number
+  area_id: string
+  name: string
+  region_guid: string | null
+  game_session_guid: string | null
+  region_evidence: string | null
+  first_seen_at: string
+  last_seen_at: string
+}
+
+export interface Campaign {
+  campaign_id: string
+  display_name: string
+  game_seed: string | null
+  participant_guid: string | null
+  identity_method: string
+  identity_confidence: string
+  created_at: string
+  archived_at: string | null
+}
+
+export interface Policy {
+  campaign_id: string
+  area_pk: number
+  product_guid: string
+  low_target: number | null
+  high_target: number | null
+  priority: number
+  excluded: boolean
+  updated_at?: string
+}
+
+export interface HistoryPoint {
+  snapshot_id: number
+  observed_at: string
+  play_time: number | null
+  stock: number | null
+  available_stock: number | null
+  capacity: number | null
+}
+
+export interface RecipeItem {
+  role: 'input' | 'output'
+  ordinal: number
+  product_guid: string
+  product_name: string | null
+  amount: number
+}
+
+export interface ProductionChain {
+  recipe_id: string
+  name: string
+  building_guid: string
+  building_name: string | null
+  cycle_seconds: number | null
+  items: RecipeItem[]
+  inferred_pressures: ManagementSignal[]
+  measurement_notice: string
+}
+
+export interface StatusResponse {
+  service: string
+  status: string
+  database: { path: string; exists: boolean; size_bytes: number; journal_mode: string }
+  telemetry: {
+    directory: string
+    glob: string
+    parse_error_count: number
+    sources: Array<{
+      path: string
+      fingerprint: string
+      byte_offset: number
+      file_size: number
+      last_read_at: string | null
+      last_error: string | null
+    }>
+  }
+  play_session: null | {
+    play_session_id: string
+    campaign_id: string | null
+    load_epoch: number
+    mod_version: string | null
+    game_seed: string | null
+    started_at: string
+  }
+  latest_snapshot: ObservationMeta
+  catalog: CatalogSummary
+}

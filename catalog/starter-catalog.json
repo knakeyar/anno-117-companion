@@ -1,0 +1,32 @@
+{
+  "release_id": "anno117-v1-starter",
+  "label": "Anno 117 verified starter catalog",
+  "game_version": null,
+  "coverage_note": "Runtime-verified construction products. Recipe coverage is intentionally empty until input and output GUIDs are exported without userdata loss.",
+  "products": [
+    {
+      "guid": "2174",
+      "name": "Timber",
+      "category": "construction_material",
+      "icon": null,
+      "telemetry_enabled": true
+    },
+    {
+      "guid": "2176",
+      "name": "Tiles",
+      "category": "construction_material",
+      "icon": null,
+      "telemetry_enabled": true
+    },
+    {
+      "guid": "2178",
+      "name": "Roman Concrete",
+      "category": "construction_material",
+      "icon": null,
+      "telemetry_enabled": true
+    }
+  ],
+  "building_types": [],
+  "recipes": []
+}
+

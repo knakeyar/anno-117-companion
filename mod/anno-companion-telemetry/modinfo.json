@@ -1,0 +1,33 @@
+{
+  "Anno": 8,
+  "Version": "1.0.0",
+  "ModID": "anno-companion-telemetry-local",
+  "Difficulty": "unchanged",
+  "Category": {
+    "English": "Utility"
+  },
+  "ModName": {
+    "English": "Anno Companion Telemetry"
+  },
+  "Description": {
+    "English": "Read-only economy telemetry for Anno Companion. Emits bounded JSON records to the game log every 30 seconds of play time."
+  },
+  "CreatorName": "Anno Companion",
+  "GameSetup": {
+    "RequiresNewGame": false,
+    "SafeToRemove": true,
+    "Campaign": true,
+    "Multiplayer": false
+  },
+  "Scripts": {
+    "Modules": [
+      "anno-companion/telemetry.lua",
+      "anno-companion/catalog.lua"
+    ],
+    "Init": "AnnoCompanionTelemetry = require(\"telemetry\"); AnnoCompanionTelemetry:Init()",
+    "Load": "AnnoCompanionTelemetry:Load()",
+    "Unload": "AnnoCompanionTelemetry:Unload()",
+    "Tick": "AnnoCompanionTelemetry:Tick()"
+  }
+}
+
