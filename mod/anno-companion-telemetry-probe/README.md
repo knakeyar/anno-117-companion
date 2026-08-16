@@ -1,4 +1,4 @@
-# Anno Companion Focused Scope Probe 0.2.0
+# Anno Companion Focused Scope Probe 0.2.1
 
 This is the second, smaller read-only runtime test. The first broad run established that log transport, controlled-area enumeration, inventory, population, finance, trade-route issues, ships, and factories are reachable. This version focuses on the remaining scope questions that affect the stable v1 data model.
 
@@ -32,7 +32,7 @@ The `target_area_reason` field states which rule was used.
 
 ## Install/update
 
-Copy the entire `anno-companion-telemetry-probe` folder into the Anno 117 `mods` directory. Confirm that the installed manifest is version `0.2.0` and keep only one copy of this ModID enabled.
+Copy the entire `anno-companion-telemetry-probe` folder into the Anno 117 `mods` directory. Confirm that the installed manifest is version `0.2.1` and keep only one copy of this ModID enabled.
 
 The final layout must be:
 
@@ -50,7 +50,7 @@ Fully restart Anno 117 after updating the files.
 
 ## Test procedure
 
-The probe takes one sample shortly after loading, then samples every 10 seconds for up to 24 samples (about four minutes). Keep the game unpaused during each waiting period.
+The probe takes one sample shortly after loading, then samples approximately every 10 seconds for up to 24 samples (about four minutes). It re-registers the event after each save load and also has an independent 12-second game-clock watchdog. Keep the game unpaused during each waiting period.
 
 1. Load the same save used for the first probe.
 2. On owned island A, open Production Statistics and select exactly that island. Leave it selected for at least 30 seconds.
@@ -63,7 +63,7 @@ The probe is complete when it emits `scope_probe_completed`. Reloading the save 
 
 ## Return the output
 
-Search the game log for `ANNO_COMPANION_PROBE_JSON` and send all version `0.2.0` lines from `scope_probe_loaded` through `scope_probe_completed` (or `scope_probe_unloaded` if you stop early).
+Search the game log for `ANNO_COMPANION_PROBE_JSON` and send all version `0.2.1` lines from `scope_probe_loaded` through `scope_probe_completed` (or `scope_probe_unloaded` if you stop early).
 
 Also tell us which island was used in each step and which passive-trade setting you changed. That manual UI evidence is needed to determine whether the statistics and workforce globals follow the current camera area, the statistics UI selection, or another hidden context.
 

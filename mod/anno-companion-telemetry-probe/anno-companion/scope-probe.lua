@@ -1,13 +1,15 @@
 local Probe = {}
 local json = require("json")
 
-local VERSION = "0.2.0"
+local VERSION = "0.2.1"
 local EVENT_GROUP = "anno-companion-telemetry-probe"
 
 local CONFIG = {
     output_prefix = "ANNO_COMPANION_PROBE_JSON ",
     delay_ticks_after_load = 30,
     sample_interval_ms = 10000,
+    watchdog_interval_ms = 12000,
+    event_min_spacing_ms = 8000,
     max_samples_per_load = 24,
     product_guids = { 2174, 2176, 2178 },
     history_indices = { 0, 1, 2, 3 },
@@ -211,7 +213,7 @@ local function capture_area(area)
     end
 
     local validity_ok, validity_or_error = pcall(function()
-        return area.isValid()
+        return area:isValid()
     end)
     if validity_ok then
         result.is_valid = safe_value(validity_or_error)
@@ -752,6 +754,11 @@ function Probe:Sample(trigger)
 end
 
 function Probe:OnEvery10s()
+    local play_time = current_play_time()
+    if play_time ~= nil and state.last_sample_play_time ~= nil
+        and play_time - state.last_sample_play_time < CONFIG.event_min_spacing_ms then
+        return
+    end
     self:Sample("Scripts.OnEvery10s")
 end
 
@@ -759,9 +766,7 @@ local every_10s_listener = function()
     Probe:OnEvery10s()
 end
 
-function Probe:Init()
-    state.initialized = true
-
+local function register_periodic_event()
     local event_ok, event_error = pcall(function()
         Scripts.OnEvery10s:RemoveByName(EVENT_GROUP)
         Scripts.OnEvery10s:Add(every_10s_listener, EVENT_GROUP)
@@ -772,11 +777,17 @@ function Probe:Init()
     else
         state.event_registration_error = tostring(event_error)
     end
+    return event_ok
+end
+
+function Probe:Init()
+    state.initialized = true
+    local event_ok = register_periodic_event()
 
     emit("scope_probe_initialized", event_ok, {
         event_registered = state.event_registered,
         event_registration_error = state.event_registration_error or "",
-        fallback = event_ok and "none" or "GameClock.PlayTime via Tick",
+        fallback = "GameClock.PlayTime watchdog via Tick",
         max_samples_per_load = CONFIG.max_samples_per_load,
         expected_interval_ms = CONFIG.sample_interval_ms,
     }, state.event_registration_error)
@@ -791,12 +802,15 @@ function Probe:Load()
     state.sample_number = 0
     state.last_sample_play_time = nil
     state.delay_ticks_remaining = CONFIG.delay_ticks_after_load
+    local event_ok = register_periodic_event()
 
-    emit("scope_probe_loaded", true, {
+    emit("scope_probe_loaded", event_ok, {
         delay_ticks_before_first_sample = CONFIG.delay_ticks_after_load,
         event_registered = state.event_registered,
+        event_registration_error = state.event_registration_error or "",
+        watchdog_interval_ms = CONFIG.watchdog_interval_ms,
         instructions = "Keep the game unpaused; sample owned islands with the Production Statistics UI open.",
-    })
+    }, state.event_registration_error)
 end
 
 function Probe:Unload()
@@ -809,6 +823,7 @@ function Probe:Unload()
     state.sampling = false
     state.delay_ticks_remaining = nil
     state.last_sample_play_time = nil
+    state.event_registered = false
 end
 
 function Probe:Tick()
@@ -826,12 +841,10 @@ function Probe:Tick()
         return
     end
 
-    if not state.event_registered then
-        local play_time = current_play_time()
-        if play_time ~= nil and state.last_sample_play_time ~= nil
-            and play_time - state.last_sample_play_time >= CONFIG.sample_interval_ms then
-            self:Sample("tick_play_time_fallback")
-        end
+    local play_time = current_play_time()
+    if play_time ~= nil and state.last_sample_play_time ~= nil
+        and play_time - state.last_sample_play_time >= CONFIG.watchdog_interval_ms then
+        self:Sample("tick_play_time_watchdog")
     end
 end
 
