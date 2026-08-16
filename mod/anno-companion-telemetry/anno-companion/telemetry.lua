@@ -2,7 +2,7 @@ local Telemetry = {}
 local json = require("json")
 local catalog = require("catalog")
 
-local VERSION = "1.1.1"
+local VERSION = "1.1.2"
 local SCHEMA_VERSION = 2
 local PREFIX = "ANNO_COMPANION_TELEMETRY_JSON "
 
@@ -426,6 +426,14 @@ local function capture_route_ships()
                 local route_fields = capture_fields(route_vehicle, {
                     "RouteName", "IsPaused", "OnRegularRoute", "LoadingSpeedFactor",
                 })
+                local ship_name = nil
+                local nameable_ok, nameable = safe_get(ship, "Nameable")
+                if nameable_ok and nameable ~= nil then
+                    local name_ok, name = safe_get(nameable, "Name")
+                    if name_ok and name ~= nil and tostring(name) ~= "" then
+                        ship_name = name
+                    end
+                end
                 local ship_id = ship_fields.ID
                 local route_name = route_fields.RouteName
                 if ship_id == nil or route_name == nil or tostring(route_name) == "" then
@@ -445,6 +453,7 @@ local function capture_route_ships()
                     local ship_area_id = area_ok and ship_area ~= nil and area_id(ship_area) or nil
                     result.items[#result.items + 1] = {
                         ship_id = safe_value(ship_id),
+                        ship_name = safe_value(ship_name),
                         ship_guid = safe_value(ship_fields.GUID),
                         owner_guid = safe_value(ship_fields.Owner),
                         game_session_guid = safe_value(ship_fields.SessionGuid),
@@ -473,7 +482,7 @@ local function capture_location(area)
     if not kontor_ok or kontor_id == nil then
         return { status = "not_observed", error = tostring(kontor_error or "KontorID unavailable") }
     end
-    local object_ok, object = pcall(function() return GetGameObject.GetGameObject(kontor_id) end)
+    local object_ok, object = pcall(function() return GetGameObject(kontor_id) end)
     if not object_ok or object == nil then
         return { status = "not_observed", kontor_id = safe_value(kontor_id), error = tostring(object or "Kontor game object unavailable") }
     end

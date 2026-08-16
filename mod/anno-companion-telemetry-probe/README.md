@@ -1,4 +1,4 @@
-# Anno Companion Focused Scope Probe 0.4.0
+# Anno Companion Focused Scope Probe 0.4.1
 
 This is the second, smaller read-only runtime test. The first broad run established that log transport, controlled-area enumeration, inventory, population, finance, trade-route issues, ships, and factories are reachable. This version focuses on the remaining scope questions that affect the stable v1 data model.
 
@@ -21,8 +21,8 @@ The records cover:
 - production/consumption statistics for those products;
 - workforce supply, demand, and balance candidates;
 - four statistics-history indices.
-- Kontor `Position2D`/session identity and building-count bindings for every controlled area.
-- current-session island IDs, template filenames, bounding rectangles, and active rectangles for the real regional map layout.
+- Kontor `Position2D`/session identity, the island found at each position, and building-count bindings for every controlled area.
+- current-session island IDs, template filenames, bounding rectangles, active rectangles, and opaque-value diagnostics for the real regional map layout.
 
 The target area is chosen in this order:
 
@@ -34,7 +34,7 @@ The `target_area_reason` field states which rule was used.
 
 ## Install/update
 
-Copy the entire `anno-companion-telemetry-probe` folder into the Anno 117 `mods` directory. Confirm that the installed manifest is version `0.4.0` and keep only one copy of this ModID enabled.
+Copy the entire `anno-companion-telemetry-probe` folder into the Anno 117 `mods` directory. Confirm that the installed manifest is version `0.4.1` and keep only one copy of this ModID enabled.
 
 The final layout must be:
 
@@ -65,7 +65,7 @@ The probe is complete when it emits `scope_probe_completed`. Reloading the save 
 
 ## Return the output
 
-For the real-map test, search the game log for `scope_island_layout`. Capture one complete version `0.4.0` record while the camera is in Latium and one after moving to Albion. Also capture the matching `scope_runtime_capabilities` records. Together, these prove whether island rectangles and city Kontor coordinates share a usable world-coordinate system.
+For the real-map test, search the game log for `scope_island_layout`. Capture one complete version `0.4.1` record while the camera is in Latium and one after moving to Albion. Also capture the matching `scope_runtime_capabilities` records. Together, these prove whether island rectangles and city Kontor coordinates share a usable world-coordinate system and associate each city with its island template.
 
 Also tell us which island was used in each step and which passive-trade setting you changed. That manual UI evidence is needed to determine whether the statistics and workforce globals follow the current camera area, the statistics UI selection, or another hidden context.
 

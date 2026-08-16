@@ -104,6 +104,7 @@ export interface TradeResponse {
 
 export interface ActiveTradeRouteShip {
   ship_id: string
+  ship_name: string | null
   ship_guid: string | null
   game_session_guid: string | null
   area_id: string | null
@@ -313,6 +314,8 @@ export interface ProductionChain {
   name: string
   building_guid: string
   building_name: string | null
+  workforce_guid: string | null
+  workforce_name: string | null
   cycle_seconds: number | null
   items: RecipeItem[]
   inferred_pressures: ManagementSignal[]

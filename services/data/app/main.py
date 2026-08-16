@@ -275,6 +275,7 @@ class TradeOpportunitiesResponse(BaseModel):
 
 class ActiveTradeRouteShipView(BaseModel):
     ship_id: str
+    ship_name: str | None
     ship_guid: str | None
     game_session_guid: str | None
     area_id: str | None

@@ -1,7 +1,7 @@
 local Probe = {}
 local json = require("json")
 
-local VERSION = "0.4.0"
+local VERSION = "0.4.1"
 local EVENT_GROUP = "anno-companion-telemetry-probe"
 
 local CONFIG = {
@@ -667,8 +667,15 @@ local function current_play_time()
 end
 
 local function capture_rect(rect)
-    if rect == nil then return { status = "not_observed" } end
-    local result = { status = "opaque", rendered = safe_value(rect), fields = {}, points = {} }
+    if rect == nil then return { status = "not_observed", value_type = "nil" } end
+    local result = {
+        status = "opaque",
+        value_type = type(rect),
+        rendered = safe_value(rect),
+        fields = {},
+        points = {},
+        methods = {},
+    }
     local scalar_fields = {
         "x", "y", "width", "height", "left", "top", "right", "bottom",
         "X", "Y", "Width", "Height", "Left", "Top", "Right", "Bottom",
@@ -682,7 +689,10 @@ local function capture_rect(rect)
             result.status = "success"
         end
     end
-    local point_fields = { "min", "max", "Min", "Max", "topLeft", "bottomRight", "Position", "Size" }
+    local point_fields = {
+        "min", "max", "Min", "Max", "m_Min", "m_Max",
+        "topLeft", "bottomRight", "TopLeft", "BottomRight", "Position", "Size",
+    }
     for _, field_name in ipairs(point_fields) do
         local point_ok, point = safe_get(rect, field_name)
         if point_ok and point ~= nil then
@@ -697,6 +707,41 @@ local function capture_rect(rect)
             end
         end
     end
+    local method_names = {
+        "GetLeft", "GetTop", "GetRight", "GetBottom",
+        "GetMin", "GetMax", "GetWidth", "GetHeight",
+    }
+    for _, method_name in ipairs(method_names) do
+        local method_ok, method = safe_get(rect, method_name)
+        if method_ok and type(method) == "function" then
+            local call_ok, value = pcall(function() return method(rect) end)
+            if call_ok and (type(value) == "number" or type(value) == "string") then
+                result.methods[method_name] = safe_value(value)
+                result.status = "success"
+            elseif call_ok and value ~= nil then
+                local captured = {}
+                for _, axis in ipairs({ "x", "y", "X", "Y" }) do
+                    local axis_ok, axis_value = safe_get(value, axis)
+                    if axis_ok and type(axis_value) == "number" then
+                        captured[axis] = safe_value(axis_value)
+                    end
+                end
+                if next(captured) ~= nil then
+                    result.methods[method_name] = captured
+                    result.status = "success"
+                end
+            end
+        end
+    end
+    return result
+end
+
+local function capture_island_identity(island)
+    if island == nil then return { status = "not_observed" } end
+    local result = capture_fields(island, {
+        "IslandLabel", "IslandFilename", "IsPirateIsland", "IsStarterIsland", "IsReservedForPlayer",
+    })
+    result.status = "success"
     return result
 end
 
@@ -726,14 +771,14 @@ local function build_island_layout_capabilities()
         local island_ok, island_or_error = pcall(function() return Island:GetIsland(island_id) end)
         if island_ok and island_or_error ~= nil then
             local island = island_or_error
-            local fields = capture_fields(island, {
-                "IslandLabel", "IslandFilename", "IsPirateIsland", "IsStarterIsland", "IsReservedForPlayer",
-            })
+            local fields = capture_island_identity(island)
             for key, value in pairs(fields) do item[key] = value end
-            local bounding_ok, bounding_rect = safe_get(island, "BoundingRect")
-            local active_ok, active_rect = safe_get(island, "ActiveRect")
-            item.bounding_rect = bounding_ok and capture_rect(bounding_rect) or { status = "not_observed" }
-            item.active_rect = active_ok and capture_rect(active_rect) or { status = "not_observed" }
+            local bounding_ok, bounding_rect, bounding_error = safe_get(island, "BoundingRect")
+            local active_ok, active_rect, active_error = safe_get(island, "ActiveRect")
+            item.bounding_rect = bounding_ok and capture_rect(bounding_rect)
+                or { status = "not_observed", access_error = tostring(bounding_error) }
+            item.active_rect = active_ok and capture_rect(active_rect)
+                or { status = "not_observed", access_error = tostring(active_error) }
             item.status = "success"
         else
             item.error = tostring(island_or_error or "Island.GetIsland returned nil")
@@ -759,18 +804,55 @@ local function build_runtime_capabilities()
         local id_ok, raw_id = safe_get(area, "ID")
         local kontor_ok, kontor_id = safe_get(area, "KontorID")
         if kontor_ok and kontor_id ~= nil then
-            local object_ok, object = pcall(function() return GetGameObject.GetGameObject(kontor_id) end)
+            local object_ok, object = pcall(function() return GetGameObject(kontor_id) end)
             if object_ok and object ~= nil then
-                local position_ok, position = safe_get(object, "Position2D")
+                local position_ok, position, position_error = safe_get(object, "Position2D")
                 local session_ok, session_guid = safe_get(object, "SessionGuid")
                 if position_ok and position ~= nil then
                     local x_ok, x = safe_get(position, "x")
                     local y_ok, y = safe_get(position, "y")
-                    if x_ok and y_ok then
-                        item.position = { status = "success", x = safe_value(x), y = safe_value(y), session_guid = session_ok and safe_value(session_guid) or nil }
+                    if x_ok and y_ok and type(x) == "number" and type(y) == "number" then
+                        item.position = {
+                            status = "success",
+                            x = safe_value(x),
+                            y = safe_value(y),
+                            session_guid = session_ok and safe_value(session_guid) or nil,
+                        }
+                        local world_x = math.floor(x + 0.5)
+                        local world_y = math.floor(y + 0.5)
+                        local island_ok, island_or_error = pcall(function()
+                            return Island:GetIsland(world_x, world_y)
+                        end)
+                        if island_ok and island_or_error ~= nil then
+                            item.island_at_position = capture_island_identity(island_or_error)
+                        else
+                            item.island_at_position = {
+                                status = "not_observed",
+                                error = tostring(island_or_error or "Island.GetIsland(x, y) returned nil"),
+                            }
+                        end
+                        local nearest_ok, nearest_or_error = pcall(function()
+                            return Island:GetNearestIsland(world_x, world_y)
+                        end)
+                        if nearest_ok and nearest_or_error ~= nil then
+                            item.nearest_island = capture_island_identity(nearest_or_error)
+                        else
+                            item.nearest_island = {
+                                status = "not_observed",
+                                error = tostring(nearest_or_error or "Island.GetNearestIsland(x, y) returned nil"),
+                            }
+                        end
+                    else
+                        item.position.error = "Position2D axes were unreadable or non-numeric"
                     end
+                else
+                    item.position.error = tostring(position_error or "Position2D unavailable")
                 end
+            else
+                item.position.error = tostring(object or "GetGameObject returned nil")
             end
+        else
+            item.position.error = "KontorID unavailable"
         end
         if id_ok and raw_id ~= nil then
             local manager_ok, manager = pcall(function() return GetAreaManagerByID(raw_id) end)
@@ -786,10 +868,12 @@ local function build_runtime_capabilities()
                 item.building_counts.status = "success"
                 for _, guid in ipairs(CONFIG.building_guids) do
                     local count_ok, count = pcall(function() return lists:GetBuildingsWithGameLogicCount(guid) end)
-                    item.building_counts.items[#item.building_counts.items + 1] = {
+                    local count_item = {
                         building_guid = tostring(guid), status = count_ok and "success" or "failed",
-                        count = count_ok and safe_value(count) or nil, error = count_ok and nil or tostring(count),
+                        count = count_ok and safe_value(count) or nil,
                     }
+                    if not count_ok then count_item.error = tostring(count) end
+                    item.building_counts.items[#item.building_counts.items + 1] = count_item
                 end
             end
         end

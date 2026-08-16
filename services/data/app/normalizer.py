@@ -355,6 +355,7 @@ def _materialize_current_state(session: Session, play: PlaySession, snapshot: Sn
             session.add(ActiveTradeRouteShipCurrent(
                 route_key=route.route_key,
                 ship_id_raw=ship.ship_id_raw,
+                ship_name=ship.ship_name,
                 ship_guid=ship.ship_guid,
                 owner_guid=ship.owner_guid,
                 game_session_guid=ship.game_session_guid,
@@ -683,6 +684,7 @@ def _normalise_participant(session: Session, snapshot: SnapshotBatch, data: dict
         session.add(TradeRouteShipObservation(
             snapshot_id=snapshot.snapshot_id,
             ship_id_raw=ship_id,
+            ship_name=_text(_pick(item.get("ship_name"), item.get("ShipName"))),
             route_name=route_name,
             ship_guid=_text(_pick(item.get("ship_guid"), item.get("GUID"))),
             owner_guid=_text(_pick(item.get("owner_guid"), item.get("Owner"))),

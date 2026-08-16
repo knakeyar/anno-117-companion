@@ -63,8 +63,8 @@ export const activeTradeRoutes: ActiveTradeRoutesResponse = {
     route_key: 'route-olives', route_name: 'Olives Rav - Jul', identity_scope: 'mutable_route_name', evidence_kind: 'assigned_ships', status: 'partially_paused', is_active_last_observed: true,
     assigned_ship_count: 2, paused_ship_count: 1, regular_ship_count: 2, game_session_guid: '3245', region_guid: '3225', observed_at: meta.observed_at, freshness_seconds: 12, is_stale: false, issues: [],
     ships: [
-      { ship_id: '8121', ship_guid: '37222', game_session_guid: '3245', area_id: '8513', is_paused: false, on_regular_route: true, loading_speed_factor: 1 },
-      { ship_id: '8122', ship_guid: '37223', game_session_guid: '3245', area_id: '8513', is_paused: true, on_regular_route: true, loading_speed_factor: 1.2 },
+      { ship_id: '8121', ship_name: 'Mercury', ship_guid: '37222', game_session_guid: '3245', area_id: '8513', is_paused: false, on_regular_route: true, loading_speed_factor: 1 },
+      { ship_id: '8122', ship_name: null, ship_guid: '37223', game_session_guid: '3245', area_id: '8513', is_paused: true, on_regular_route: true, loading_speed_factor: 1.2 },
     ],
   }],
 }
@@ -102,7 +102,7 @@ export const apiFixtures: Record<string, unknown> = {
   '/api/v1/dashboard/overview': overview,
   '/api/v1/trade/opportunities': trade,
   '/api/v1/trade/routes': activeTradeRoutes,
-  '/api/v1/production/chains': { meta, catalog: { ...catalog, recipes: 1 }, chains: [{ recipe_id: 'factory:2955', name: 'Fishing Hut', building_guid: '2955', building_name: 'Fishing Hut', cycle_seconds: 60, items: [{ role: 'output', ordinal: 1, product_guid: '2174', product_name: 'Timber', amount: 1 }], inferred_pressures: [], associated_regions: ['Roman'], base_maintenance: 6, city_states: [{ area_pk: 1, area_name: 'Juliana', region_guid: '3225', building_count: 2, presence_status: 'installed', observed_at: meta.observed_at, inferred_pressures: [], stocks: [{ role: 'output', ordinal: 1, product_guid: '2174', product_name: 'Timber', amount: 1, stock: 92, capacity: 100, fill_ratio: .92, net_stock_change: { net_stock_change_per_minute: 4, interval_count: 5, window_minutes: 5, confidence: 'measured_history' } }] }], measurement_notice: 'Stock-based inferred pressure; no measured factory rate.' }] },
+  '/api/v1/production/chains': { meta, catalog: { ...catalog, recipes: 1 }, chains: [{ recipe_id: 'factory:2955', name: 'Fishing Hut', building_guid: '2955', building_name: 'Fishing Hut', workforce_guid: '2181', workforce_name: 'Libertus Workforce', cycle_seconds: 60, items: [{ role: 'output', ordinal: 1, product_guid: '2174', product_name: 'Timber', amount: 1 }], inferred_pressures: [], associated_regions: ['Roman'], base_maintenance: 6, city_states: [{ area_pk: 1, area_name: 'Juliana', region_guid: '3225', building_count: 2, presence_status: 'installed', observed_at: meta.observed_at, inferred_pressures: [], stocks: [{ role: 'output', ordinal: 1, product_guid: '2174', product_name: 'Timber', amount: 1, stock: 92, capacity: 100, fill_ratio: .92, net_stock_change: { net_stock_change_per_minute: 4, interval_count: 5, window_minutes: 5, confidence: 'measured_history' } }] }], measurement_notice: 'Stock-based inferred pressure; no measured factory rate.' }] },
   '/api/v1/finance': { meta, finance: overview.finance, balance_analysis: overview.balance_analysis },
   '/api/v1/finance/history': { meta, items: [{ observed_at: meta.observed_at, treasury: 3_756_154, reported_balance: 200 }] },
   '/api/v1/trade-plans': { campaign_id: 'campaign-1', items: [] },

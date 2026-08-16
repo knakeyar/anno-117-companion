@@ -63,7 +63,9 @@ describe('first-class management dashboard', () => {
     expect(screen.getByText('Olives Rav - Jul')).toBeInTheDocument()
     expect(screen.getByText(/2 assigned ships · 1 paused/i)).toBeInTheDocument()
     await userEvent.click(screen.getByText(/Show 2 observed ships/i))
-    expect(screen.getByText('Ship 8121')).toBeInTheDocument()
+    expect(screen.getByText('Mercury')).toBeInTheDocument()
+    expect(screen.getByText('Ship 8122')).toBeInTheDocument()
+    expect(screen.getByText(/ID 8121/)).toBeInTheDocument()
     expect(screen.getByText(/Stops, configured goods, and ship cargo are not exposed/i)).toBeInTheDocument()
   })
 
@@ -77,11 +79,37 @@ describe('first-class management dashboard', () => {
     expect(document.querySelector('.presence-dot.healthy')).toBeInTheDocument()
   })
 
-  it('makes the stock selector and planning domains explicit on city detail', async () => {
-    installFetchMock({ '/api/v1/inventory/latest': inventory })
+  it('groups the stock selector by producing region and workforce on city detail', async () => {
+    const fixtures = await import('./fixtures')
+    const chainResponse = fixtures.apiFixtures['/api/v1/production/chains'] as { chains: Array<Record<string, unknown>> }
+    const foreignGood = {
+      ...inventory.items[0],
+      product_guid: '2093',
+      product_name: 'Barley',
+      stock: 17,
+      available_stock: 17,
+    }
+    const albionChain = {
+      ...chainResponse.chains[0],
+      recipe_id: 'factory:2799',
+      name: 'Barley Farm',
+      building_guid: '2799',
+      building_name: 'Barley Farm',
+      workforce_guid: '2192',
+      workforce_name: 'Wader Workforce',
+      associated_regions: ['Celtic'],
+      items: [{ role: 'output', ordinal: 1, product_guid: '2093', product_name: 'Barley', amount: 1 }],
+    }
+    installFetchMock({
+      '/api/v1/inventory/latest': { ...inventory, items: [...inventory.items, foreignGood] },
+      '/api/v1/production/chains': { ...chainResponse, chains: [...chainResponse.chains, albionChain] },
+    })
     renderApp(<App />, '/areas/1')
     expect(await screen.findByRole('heading', { name: 'Juliana' })).toBeInTheDocument()
     expect(screen.getByLabelText('Stock to chart')).toBeInTheDocument()
+    expect(screen.getByRole('group', { name: 'Latium · Libertus Workforce' })).toBeInTheDocument()
+    expect(screen.getByRole('group', { name: 'Albion · Wader Workforce' })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'Barley · 17 stock' })).toBeInTheDocument()
     expect(screen.getByText('Construction materials')).toBeInTheDocument()
   })
 

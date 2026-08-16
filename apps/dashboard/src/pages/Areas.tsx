@@ -11,7 +11,7 @@ import { useAreas, useChains, useCompanionMutations, useFinance, useHistory, use
 import { EmptyState, ErrorState, FillBar, FreshnessBanner, LoadingState, MetricCard, PageHeader, SectionHeader } from '../components/Common'
 import { PolicyEditor } from '../components/PolicyEditor'
 import { areaRegion, RegionMap } from '../components/RegionMap'
-import type { InventoryItem } from '../types'
+import type { InventoryItem, ProductionChain } from '../types'
 import { formatMoney, formatNumber, formatRate } from '../utils'
 
 echarts.use([LineChart, GridComponent, TooltipComponent, CanvasRenderer])
@@ -33,6 +33,71 @@ const planningDomainOrder = [
   'Intermediate goods',
   'Consumer & finished goods',
 ]
+
+const resourceRegions: Record<string, { name: string; guid: string }> = {
+  Roman: { name: 'Latium', guid: '3225' },
+  Celtic: { name: 'Albion', guid: '6626' },
+}
+
+const workforceOrder = ['2181', '2184', '2185', '2186', '2192', '2196', '2197', '2198', '2199']
+
+interface StockPickerGroup {
+  key: string
+  label: string
+  regionGuid: string | null
+  workforceGuid: string | null
+  items: InventoryItem[]
+}
+
+function stockPickerGroups(items: InventoryItem[], chains: ProductionChain[] | undefined, areaRegionGuid: string | null): StockPickerGroup[] {
+  const origins = new Map<string, Array<{ regionId: string; workforceGuid: string | null; workforceName: string }>>()
+  for (const chain of chains ?? []) {
+    const outputs = chain.items.filter((item) => item.role === 'output')
+    for (const output of outputs) {
+      const productOrigins = origins.get(output.product_guid) ?? []
+      for (const regionId of chain.associated_regions.length ? chain.associated_regions : ['Unknown']) {
+        const workforceName = chain.workforce_name ?? (chain.workforce_guid ? `Workforce ${chain.workforce_guid}` : 'Workforce not classified')
+        if (!productOrigins.some((origin) => origin.regionId === regionId && origin.workforceGuid === chain.workforce_guid)) {
+          productOrigins.push({ regionId, workforceGuid: chain.workforce_guid, workforceName })
+        }
+      }
+      origins.set(output.product_guid, productOrigins)
+    }
+  }
+
+  const groups = new Map<string, StockPickerGroup>()
+  for (const item of items) {
+    const productOrigins = origins.get(item.product_guid) ?? [{ regionId: 'Unknown', workforceGuid: null, workforceName: 'Workforce not classified' }]
+    for (const origin of productOrigins) {
+      const region = resourceRegions[origin.regionId]
+      const regionName = region?.name ?? 'Other resources'
+      const key = `${origin.regionId}:${origin.workforceGuid ?? 'unknown'}`
+      const group = groups.get(key) ?? {
+        key,
+        label: `${regionName} · ${origin.workforceName}`,
+        regionGuid: region?.guid ?? null,
+        workforceGuid: origin.workforceGuid,
+        items: [],
+      }
+      if (!group.items.some((candidate) => candidate.product_guid === item.product_guid)) group.items.push(item)
+      groups.set(key, group)
+    }
+  }
+
+  return [...groups.values()]
+    .map((group) => ({ ...group, items: [...group.items].sort((a, b) => a.product_name.localeCompare(b.product_name)) }))
+    .sort((a, b) => {
+      const regionRank = (group: StockPickerGroup) => group.regionGuid === areaRegionGuid ? 0 : group.regionGuid ? 1 : 2
+      const regionDifference = regionRank(a) - regionRank(b)
+      if (regionDifference) return regionDifference
+      if (a.regionGuid !== b.regionGuid) return a.label.localeCompare(b.label)
+      const workforceRank = (guid: string | null) => {
+        const index = guid ? workforceOrder.indexOf(guid) : -1
+        return index >= 0 ? index : workforceOrder.length
+      }
+      return workforceRank(a.workforceGuid) - workforceRank(b.workforceGuid) || a.label.localeCompare(b.label)
+    })
+}
 
 function planningDomain(item: InventoryItem, chains: ReturnType<typeof useChains>['data']): string {
   if (item.category === 'construction_material') return 'Construction materials'
@@ -133,6 +198,10 @@ export function AreaDetailPage() {
       return items.length ? [{ domain, items }] : []
     })
   }, [areaItems, chains.data, goodsSearch])
+  const stockGroups = useMemo(
+    () => stockPickerGroups(areaItems, chains.data?.chains, area?.region_guid ?? null),
+    [areaItems, chains.data?.chains, area?.region_guid],
+  )
 
   if (areas.isLoading || inventory.isLoading) return <LoadingState />
   const error = areas.error || inventory.error
@@ -159,7 +228,7 @@ export function AreaDetailPage() {
       </section>
       <div className="area-detail-grid">
         <section className="panel span-two">
-          <SectionHeader title="Stock history" description="Choose any observed good; a pressure signal is selected first when available." action={<label className="history-product-picker"><span>Stock to chart</span><select aria-label="Stock to chart" value={effectiveProduct} onChange={(event) => setSelectedProduct(event.target.value)}>{areaItems.map((item) => <option value={item.product_guid} key={item.product_guid}>{item.product_name}</option>)}</select></label>} />
+          <SectionHeader title="Stock history" description="Resources are grouped by producing region and workforce. The city’s own region appears first." action={<label className="history-product-picker"><span>Stock to chart</span><select aria-label="Stock to chart" value={effectiveProduct} onChange={(event) => setSelectedProduct(event.target.value)}>{stockGroups.map((group) => <optgroup label={group.label} key={group.key}>{group.items.map((item) => <option value={item.product_guid} key={`${group.key}:${item.product_guid}`}>{item.product_name} · {item.stock == null ? 'not observed' : `${formatNumber(item.stock)} stock`}</option>)}</optgroup>)}</select></label>} />
           {selected ? <><div className="history-summary"><span><small>Current</small><strong>{formatNumber(selected.stock)}</strong></span><span><small>Capacity</small><strong>{formatNumber(selected.capacity)}</strong></span><span><small>Net stock change</small><strong className={(selected.velocity?.net_stock_change_per_minute ?? 0) < 0 ? 'negative' : 'positive'}>{formatRate(selected.velocity?.net_stock_change_per_minute)}</strong></span></div><ReactEChartsCore echarts={echarts} option={chart} style={{ height: 260 }} /></> : <EmptyState title="No product selected" description="This area has no observed product rows." />}
         </section>
         <section className="panel">

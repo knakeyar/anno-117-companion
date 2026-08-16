@@ -182,6 +182,8 @@ def test_recipe_signals_distinguish_input_pressure_from_output_blockage(
                     release_id="anno117-v1-starter",
                     building_guid="building-fixture",
                     name="Fixture workshop",
+                    workforce_guid="2184",
+                    associated_regions_json='["Roman"]',
                 ),
                 ProductionRecipe(
                     release_id="anno117-v1-starter",
@@ -229,6 +231,9 @@ def test_recipe_signals_distinguish_input_pressure_from_output_blockage(
         }
         assert ("input_pressure", "2174", "Naissus") in issues
         assert ("output_blockage", "2176", "Juliana") in issues
+        assert chain["workforce_guid"] == "2184"
+        assert chain["workforce_name"] == "Plebeian Workforce"
+        assert chain["associated_regions"] == ["Roman"]
         assert "no measured factory rate" in chain["measurement_notice"].lower()
 
 

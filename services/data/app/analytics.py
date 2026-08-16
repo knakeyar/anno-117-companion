@@ -36,6 +36,24 @@ from .models import (
 )
 
 
+WORKFORCE_NAMES = {
+    "2181": "Libertus Workforce",
+    "2184": "Plebeian Workforce",
+    "2185": "Equites Workforce",
+    "2186": "Patrician Workforce",
+    "2192": "Wader Workforce",
+    "2196": "Smith Workforce",
+    "2198": "Mercators Workforce",
+    "2199": "Nobles Workforce",
+}
+
+
+def workforce_name(workforce_guid: str | None) -> str | None:
+    if workforce_guid is None:
+        return None
+    return WORKFORCE_NAMES.get(workforce_guid, f"Workforce {workforce_guid}")
+
+
 def _iso(value: datetime | None) -> str | None:
     if value is None:
         return None
@@ -642,6 +660,7 @@ def active_trade_routes(
             "issues": issues_by_name.get(route.route_name, []),
             "ships": [{
                 "ship_id": ship.ship_id_raw,
+                "ship_name": ship.ship_name,
                 "ship_guid": ship.ship_guid,
                 "game_session_guid": ship.game_session_guid,
                 "area_id": ship.area_id_raw,
@@ -824,6 +843,8 @@ def production_chains(session: Session, inventory: dict) -> dict:
                 "name": recipe.name or (building.name if building else recipe.recipe_id),
                 "building_guid": recipe.building_guid,
                 "building_name": building.name if building else None,
+                "workforce_guid": building.workforce_guid if building else None,
+                "workforce_name": workforce_name(building.workforce_guid if building else None),
                 "cycle_seconds": recipe.cycle_seconds,
                 "items": chain_items,
                 "inferred_pressures": pressures,

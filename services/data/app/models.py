@@ -409,6 +409,7 @@ class TradeRouteShipObservation(Base):
 
     snapshot_id: Mapped[int] = mapped_column(ForeignKey("snapshot_batch.snapshot_id"), primary_key=True)
     ship_id_raw: Mapped[str] = mapped_column(String, primary_key=True)
+    ship_name: Mapped[str | None] = mapped_column(String)
     route_name: Mapped[str] = mapped_column(String, nullable=False)
     ship_guid: Mapped[str | None] = mapped_column(String)
     owner_guid: Mapped[str | None] = mapped_column(String)
@@ -453,6 +454,7 @@ class ActiveTradeRouteShipCurrent(Base):
         ForeignKey("active_trade_route_current.route_key", ondelete="CASCADE"), primary_key=True
     )
     ship_id_raw: Mapped[str] = mapped_column(String, primary_key=True)
+    ship_name: Mapped[str | None] = mapped_column(String)
     ship_guid: Mapped[str | None] = mapped_column(String)
     owner_guid: Mapped[str | None] = mapped_column(String)
     game_session_guid: Mapped[str | None] = mapped_column(String)

@@ -186,8 +186,8 @@ def test_ship_backed_routes_are_persisted_and_failed_scans_preserve_them(session
         "route_ships": {
             "status": "success", "reported_count": 3, "assigned_count": 2,
             "items": [
-                {"ship_id": "8121", "ship_guid": "37222", "game_session_guid": "3245", "area_id": "8513", "route_name": "Olives Rav - Jul", "is_paused": False, "on_regular_route": True, "loading_speed_factor": 1.0},
-                {"ship_id": "8122", "ship_guid": "37223", "game_session_guid": "3245", "area_id": "8513", "route_name": "Olives Rav - Jul", "is_paused": True, "on_regular_route": True, "loading_speed_factor": 1.2},
+                {"ship_id": "8121", "ship_name": "Mercury", "ship_guid": "37222", "game_session_guid": "3245", "area_id": "8513", "route_name": "Olives Rav - Jul", "is_paused": False, "on_regular_route": True, "loading_speed_factor": 1.0},
+                {"ship_id": "8122", "ship_name": "Fortuna", "ship_guid": "37223", "game_session_guid": "3245", "area_id": "8513", "route_name": "Olives Rav - Jul", "is_paused": True, "on_regular_route": True, "loading_speed_factor": 1.2},
             ],
         },
     })
@@ -232,6 +232,7 @@ def test_ship_backed_routes_are_persisted_and_failed_scans_preserve_them(session
         assert route["status"] == "partially_paused"
         assert route["evidence_kind"] == "assigned_ships"
         assert len(route["ships"]) == 2
+        assert [ship["ship_name"] for ship in route["ships"]] == ["Mercury", "Fortuna"]
         assert payload["capabilities"]["stops"] is False
 
 

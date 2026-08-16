@@ -511,6 +511,8 @@ export interface components {
             ship_guid: string | null;
             /** Ship Id */
             ship_id: string;
+            /** Ship Name */
+            ship_name: string | null;
         };
         /** ActiveTradeRouteView */
         ActiveTradeRouteView: {

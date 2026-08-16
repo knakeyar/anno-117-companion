@@ -254,10 +254,22 @@
           "ship_id": {
             "title": "Ship Id",
             "type": "string"
+          },
+          "ship_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ship Name"
           }
         },
         "required": [
           "ship_id",
+          "ship_name",
           "ship_guid",
           "game_session_guid",
           "area_id",

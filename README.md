@@ -66,7 +66,7 @@ Anno Companion uses Linux containers through Docker Desktop's WSL 2 backend. You
    - `C:\Users\YOUR_WINDOWS_USER\Documents\Anno 117 - Pax Romana\mods`
    - `C:\Program Files (x86)\Steam\steamapps\common\Anno 117 - Pax Romana\mods`
 
-   Confirm its manifest is version `1.1.1`. Disable the telemetry probe during ordinary use. Version 1.1.1 adds the ship-backed active-route list.
+   Confirm its manifest is version `1.1.2`. Disable the telemetry probe during ordinary use. Version 1.1.2 adds player-visible ship names and fixes runtime city-coordinate capture.
 3. Copy `.env.example` to `.env` and replace `YOUR_WINDOWS_USER`. The default `ANNO_LOG_DIR` points to `C:/Users/YOUR_WINDOWS_USER/Documents/Anno 117 - Pax Romana/log`, which must contain the game log where `ANNO_COMPANION_TELEMETRY_JSON` appears. Keep forward slashes in `.env` paths.
 4. Create the directory configured by `ANNO_DATA_DIR`. The default is `C:/Users/YOUR_WINDOWS_USER/Documents/Anno Companion/data`; any writable persistent directory is acceptable.
 5. Start Docker Desktop. Then, from PowerShell in the repository directory, run:
@@ -110,7 +110,20 @@ Important scope rules are visible in both the API and dashboard:
 - route proposals are companion plans and do not imply route feasibility or an existing in-game route;
 - production pressure is inferred from stock history unless a verified static recipe relationship exists.
 
-The pinned community catalog release contains 145 reference products, 113 inventory-enabled factory goods, and 144 factory recipes. It records source revision and attribution but does not bundle proprietary icon binaries. See [`docs/data-model-v1.md`](docs/data-model-v1.md), [`catalog/anno117-community-2.1-c6a6e752.json`](catalog/anno117-community-2.1-c6a6e752.json), and [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+The pinned community catalog release contains 145 reference products, 113 inventory-enabled factory goods, and 144 factory recipes. It records source revision and attribution but does not bundle proprietary icon binaries. See [`docs/data-model-v1.md`](docs/data-model-v1.md) and [`catalog/anno117-community-2.1-c6a6e752.json`](catalog/anno117-community-2.1-c6a6e752.json).
+
+## Credits and catalog provenance
+
+Anno Companion's product and production-chain coverage would not exist in its current form without the excellent community work in [`anno-mods/anno-117-calculator`](https://github.com/anno-mods/anno-117-calculator). Specific thanks go to its author and maintainer **Nico Höllerich (NiHoel)** and to everyone who has contributed data, code, testing, and feedback to that project.
+
+This repository imports structured catalog data from the calculator at the deliberately pinned revision [`c6a6e752`](https://github.com/anno-mods/anno-117-calculator/tree/c6a6e7525d16927f74d4f554dde5831b84fa287c). We use that data to:
+
+- identify 145 reference products and the 113 factory input/output goods queried by the telemetry mod;
+- model 144 factories and their recipe inputs, outputs, cycle times, regions, DLC markers, base maintenance, and workforce requirements;
+- generate the Lua product/building allowlists used by the production telemetry mod; and
+- provide catalog labels, coverage reporting, production-chain relationships, estimated base maintenance, workforce grouping, inferred pressure, and trade-planning context in the data service and dashboard.
+
+The upstream calculator is MIT-licensed. Its application is not embedded here, and Anno Companion does not redistribute its proprietary game-icon assets. The exact source files, transformation path, license notice, and Ubisoft asset boundary are documented in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
 
 ## Runtime capability check
 
@@ -118,9 +131,9 @@ Coordinates and per-city factory counts depend on game Lua bindings that cannot 
 
 ### Real regional map discovery
 
-The current dashboard background is only a schematic. Probe version `0.4.0` tests whether Anno exposes the real save-specific island layout and whether those island rectangles align with city Kontor coordinates. You do **not** need to extract RDA archives for this test.
+The current dashboard background is only a schematic. Probe version `0.4.1` tests whether Anno exposes the real save-specific island layout, correlates city Kontor coordinates to island templates, and diagnoses opaque island rectangles. You do **not** need to extract RDA archives for this test.
 
-1. Copy the entire [`mod/anno-companion-telemetry-probe`](mod/anno-companion-telemetry-probe) folder into your active Anno 117 `mods` directory and confirm its manifest is version `0.4.0`. Keep only one copy of that ModID installed.
+1. Copy the entire [`mod/anno-companion-telemetry-probe`](mod/anno-companion-telemetry-probe) folder into your active Anno 117 `mods` directory and confirm its manifest is version `0.4.1`. Keep only one copy of that ModID installed.
 2. Fully restart Anno and load the campaign used by the companion.
 3. Enter Latium, keep the game unpaused, and wait at least 20 seconds.
 4. Switch to Albion, keep the game unpaused, and wait at least 20 seconds.
@@ -160,3 +173,9 @@ python3 tools/generate_catalog.py --check
 ```
 
 Compose defaults to ignored local `runtime-data` directories when `.env` is absent, which is useful for Linux development. Because the data image runs as UID 10001, make that local bind directory writable before the first Linux smoke test, for example with `sudo chown -R 10001:10001 runtime-data/data`. Docker Desktop users should configure the absolute Windows paths in `.env`.
+
+## License
+
+Anno Companion's original code and documentation are source-available under the [PolyForm Noncommercial License 1.0.0](LICENSE). You may use, study, modify, fork, and redistribute the project for noncommercial purposes. You may not sell it, charge for access to it, include it in a paid product or service, or otherwise use it for commercial purposes without separate permission from the copyright holders.
+
+Because of that noncommercial restriction, this is not an OSI-approved open-source license. Third-party components and derived materials remain under their respective terms; see [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
