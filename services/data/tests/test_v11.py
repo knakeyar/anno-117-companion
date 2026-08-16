@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import replace
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -18,6 +19,8 @@ from app.models import (
     ActiveTradeRouteCurrent,
     AreaBuildingCurrent,
     AreaProductCurrent,
+    AreaProductObservation,
+    AreaSnapshot,
     Campaign,
     ManagementAction,
     PlaySession,
@@ -134,6 +137,174 @@ def test_v2_baseline_delta_and_incomplete_batch_are_atomic(session_factory) -> N
         assert session.scalar(select(func.count()).select_from(SnapshotBatch).where(SnapshotBatch.is_complete)) == 1
         building = session.get(AreaBuildingCurrent, (1, "fixture-building"))
         assert building is not None and building.building_count == 2
+
+
+def test_v2_unchanged_goods_gain_provisional_then_stable_zero_velocity(
+    session_factory, app_settings
+) -> None:
+    ingestor = TelemetryIngestor(session_factory)
+    offset = 0
+    sequence = 0
+
+    def ingest(event: str, snapshot: int | None, data: dict) -> None:
+        nonlocal offset, sequence
+        sequence += 1
+        line = _v2(event, sequence, snapshot, data)
+        ingestor.ingest_line(
+            source_path="dense.log",
+            source_fingerprint="dense:1",
+            source_offset=offset,
+            line=line,
+        )
+        offset += len(line.encode())
+
+    ingest("telemetry_loaded", None, {})
+
+    def batch(snapshot: int, *, baseline: bool) -> None:
+        products = (
+            [{"product_guid": "2174", "stock": 50, "available": 50, "capacity": 100}]
+            if baseline
+            else []
+        )
+        ingest("snapshot_started", snapshot, {
+            "section_mode": "baseline" if baseline else "delta",
+            "context": {
+                "participant_guid": "41", "game_seed": "951",
+                "play_time": snapshot * 30_000,
+            },
+            "area_enumeration_scope": "all_controlled_areas", "area_count": 1,
+        })
+        ingest("area_core", snapshot, {"area_id": "100", "CityName": "Roma"})
+        ingest("area_inventory_chunk", snapshot, {
+            "area_id": "100", "chunk_index": 1, "chunk_count": 1,
+            "attempted_count": 1, "products": products,
+        })
+        ingest("area_building_chunk", snapshot, {
+            "area_id": "100", "chunk_index": 1, "chunk_count": 1,
+            "attempted_count": 0, "buildings": [],
+        })
+        ingest("area_completed", snapshot, {
+            "area_id": "100",
+            "inventory": {
+                "status": "success", "attempted_count": 1,
+                "captured_count": len(products), "chunk_count": 1,
+            },
+            "buildings": {
+                "status": "success", "attempted_count": 0,
+                "captured_count": 0, "chunk_count": 1,
+            },
+        })
+        ingest("snapshot_completed", snapshot, {
+            "complete": True, "expected_area_count": 1, "emitted_area_count": 1,
+        })
+
+    batch(1, baseline=True)
+    batch(2, baseline=False)
+    app = create_app(app_settings, session_factory)
+    with TestClient(app) as client:
+        velocity = client.get("/api/v1/inventory/latest").json()["items"][0]["velocity"]
+        assert velocity["net_stock_change_per_minute"] == 0
+        assert velocity["interval_count"] == 1
+        assert velocity["confidence"] == "provisional"
+
+    batch(3, baseline=False)
+    batch(4, baseline=False)
+    with TestClient(app) as client:
+        inventory = client.get("/api/v1/inventory/latest").json()
+        velocity = inventory["items"][0]["velocity"]
+        assert velocity["net_stock_change_per_minute"] == 0
+        assert velocity["interval_count"] == 3
+        assert velocity["confidence"] == "stable"
+        area_pk = inventory["items"][0]["area_pk"]
+        history = client.get(
+            "/api/v1/inventory/history",
+            params={"area_pk": area_pk, "product_guid": "2174"},
+        ).json()["items"]
+        assert [point["sample_kind"] for point in history] == [
+            "observed", "carried_forward", "carried_forward", "carried_forward"
+        ]
+
+    with session_factory() as session:
+        # The transport history remains sparse: only the baseline changed row
+        # is stored even though the API exposes four proven stock samples.
+        assert session.scalar(select(func.count()).select_from(AreaProductObservation)) == 1
+
+
+def test_new_play_session_uses_previous_rate_until_first_interval(
+    session_factory, app_settings
+) -> None:
+    seed_complete_snapshots(session_factory)
+    with session_factory() as session:
+        previous = session.scalar(select(PlaySession).where(PlaySession.is_current.is_(True)))
+        assert previous is not None and previous.campaign_id is not None
+        previous.is_current = False
+        previous.ended_at = datetime.now(UTC)
+        current = PlaySession(
+            play_session_id="new-session",
+            campaign_id=previous.campaign_id,
+            static_release_id=previous.static_release_id,
+            transport_key="new-transport",
+            load_epoch=2,
+            started_at=previous.started_at + timedelta(hours=1),
+            is_current=True,
+        )
+        session.add(current)
+        campaign_id = previous.campaign_id
+        session.commit()
+
+    app = create_app(app_settings, session_factory)
+    with TestClient(app) as client:
+        velocities = [
+            item["velocity"] for item in client.get("/api/v1/inventory/latest").json()["items"]
+        ]
+        assert all(velocity["confidence"] == "previous_session" for velocity in velocities)
+        assert all(velocity["is_historical"] is True for velocity in velocities)
+
+    with session_factory() as session:
+        current = session.get(PlaySession, "new-session")
+        assert current is not None
+        snapshot = SnapshotBatch(
+            play_session_id=current.play_session_id,
+            snapshot_sequence=1,
+            received_at=datetime.now(UTC),
+            completed_at=datetime.now(UTC),
+            play_time=2_000_000,
+            area_enumeration_scope="all_controlled_areas",
+            expected_area_count=2,
+            emitted_area_count=2,
+            is_complete=True,
+            normalization_status="complete",
+            section_mode="baseline",
+        )
+        session.add(snapshot)
+        session.flush()
+        current_rows = session.scalars(
+            select(AreaProductCurrent).where(
+                AreaProductCurrent.campaign_id == campaign_id
+            )
+        ).all()
+        for row in current_rows:
+            session.add(AreaSnapshot(snapshot_id=snapshot.snapshot_id, area_pk=row.area_pk))
+        session.flush()
+        for row in current_rows:
+            row.play_session_id = current.play_session_id
+            row.snapshot_id = snapshot.snapshot_id
+            session.add(AreaProductObservation(
+                snapshot_id=snapshot.snapshot_id,
+                area_pk=row.area_pk,
+                product_guid=row.product_guid,
+                stock=row.stock,
+                available_stock=row.available_stock,
+                storage_capacity=row.storage_capacity,
+            ))
+        session.commit()
+
+    with TestClient(app) as client:
+        velocities = [
+            item["velocity"] for item in client.get("/api/v1/inventory/latest").json()["items"]
+        ]
+        assert all(velocity["confidence"] == "previous_session" for velocity in velocities)
+        assert all(velocity["is_historical"] is True for velocity in velocities)
 
 
 def test_v2_missing_chunk_never_becomes_current(session_factory) -> None:

@@ -66,7 +66,7 @@ Anno Companion uses Linux containers through Docker Desktop's WSL 2 backend. You
    - `C:\Users\YOUR_WINDOWS_USER\Documents\Anno 117 - Pax Romana\mods`
    - `C:\Program Files (x86)\Steam\steamapps\common\Anno 117 - Pax Romana\mods`
 
-   Confirm its manifest is version `1.1.2`. Disable the telemetry probe during ordinary use. Version 1.1.2 adds player-visible ship names and fixes runtime city-coordinate capture.
+   Confirm its manifest is version `1.1.3`. Disable the telemetry probe during ordinary use. Version 1.1.3 takes its first baseline after 10 advancing game seconds, then returns to the normal 30-second cadence.
 3. Copy `.env.example` to `.env` and replace `YOUR_WINDOWS_USER`. The default `ANNO_LOG_DIR` points to `C:/Users/YOUR_WINDOWS_USER/Documents/Anno 117 - Pax Romana/log`, which must contain the game log where `ANNO_COMPANION_TELEMETRY_JSON` appears. Keep forward slashes in `.env` paths.
 4. Create the directory configured by `ANNO_DATA_DIR`. The default is `C:/Users/YOUR_WINDOWS_USER/Documents/Anno Companion/data`; any writable persistent directory is acceptable.
 5. Start Docker Desktop. Then, from PowerShell in the repository directory, run:
@@ -97,7 +97,7 @@ Cities, current inventory, finance, last-observed workforce, actions, conversati
 3. After the next complete telemetry cadence, the exact tag links the observed route to the plan. Running, partially paused, paused, issue, and freshness state remain separate from the plan workflow.
 4. Click a directed graph edge to see every underlying plan, observed route, named ship, warning, and goods-evidence category. Quantities are target movements, not verified per-trip settings.
 5. Existing routes following `Good SRC - DST`, such as `Bread Cud - Rhy`, auto-link when both three-letter city aliases are unique. Ambiguous and default route names remain in the collapsed attention tray, where they can be associated with a saved companion plan.
-6. Use **Force** for automatically clustered trade hubs, **Flow** for left-to-right direction, or **Circle** for an even overview. Layouts re-sort automatically when relationships change; **Auto-sort** resets any temporary node dragging.
+6. Use **Network** for ELK-routed orthogonal trade flow, **Hubs** for a radial view centered on the most connected city, or **Focus** to place a selected city's suppliers upstream and destinations downstream. Layouts re-sort automatically when relationships change; **Auto-sort** recalculates the active view.
 
 The city-port motifs are original inline SVG and CSS created for Anno Companion. They do not reuse or extract Anno artwork, icons, maps, or textures.
 
@@ -109,7 +109,7 @@ If the key is missing or the request fails, deterministic actions continue to wo
 
 ## Data contract
 
-Telemetry schema v2 emits a full baseline after load, change-only snapshots every 30 seconds of advancing game time, and a complete reconciliation every 10 game minutes. Product and building records are chunked to bound log-line size. The data service promotes state only when every required chunk and completion record agrees; read failures preserve the previous value and mark that section stale rather than writing zero.
+Telemetry schema v2 emits a full baseline after 10 seconds of advancing game time, change-only snapshots every 30 seconds after that, and a complete reconciliation every 10 game minutes. Product and building records are chunked to bound log-line size. The data service promotes state only when every required chunk and completion record agrees; read failures preserve the previous value and mark that section stale rather than writing zero. The data service reconstructs successful unchanged reads into an in-memory stock series while keeping database history sparse, allowing the dashboard to show provisional net stock change after one interval and a stable median after three.
 
 Important scope rules are visible in both the API and dashboard:
 

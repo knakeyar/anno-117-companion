@@ -139,34 +139,119 @@ def _offer_mode(item: AreaProductObservation) -> str:
     return "unknown"
 
 
-def _velocity_map(
+def _session_stock_samples(
     session: Session,
-    snapshot: SnapshotBatch,
-    expected_interval_seconds: int,
-) -> dict[tuple[int, str], dict]:
-    if snapshot.play_time is None:
-        return {}
-    rows = session.execute(
-        select(
-            AreaProductObservation.area_pk,
-            AreaProductObservation.product_guid,
-            AreaProductObservation.stock,
-            SnapshotBatch.play_time,
-            SnapshotBatch.snapshot_sequence,
-        )
-        .join(SnapshotBatch, SnapshotBatch.snapshot_id == AreaProductObservation.snapshot_id)
+    play_session_id: str,
+    *,
+    through_snapshot_sequence: int | None = None,
+    area_pk: int | None = None,
+    product_guids: list[str] | None = None,
+) -> dict[tuple[int, str], list[dict[str, Any]]]:
+    snapshot_query = (
+        select(SnapshotBatch)
         .where(
-            SnapshotBatch.play_session_id == snapshot.play_session_id,
+            SnapshotBatch.play_session_id == play_session_id,
             SnapshotBatch.is_complete.is_(True),
-            SnapshotBatch.play_time.is_not(None),
-            SnapshotBatch.snapshot_sequence <= snapshot.snapshot_sequence,
         )
         .order_by(SnapshotBatch.snapshot_sequence)
+    )
+    if through_snapshot_sequence is not None:
+        snapshot_query = snapshot_query.where(
+            SnapshotBatch.snapshot_sequence <= through_snapshot_sequence
+        )
+    snapshots = session.scalars(snapshot_query).all()
+    if not snapshots:
+        return {}
+    snapshot_ids = [item.snapshot_id for item in snapshots]
+
+    observation_query = select(AreaProductObservation).where(
+        AreaProductObservation.snapshot_id.in_(snapshot_ids)
+    )
+    if area_pk is not None:
+        observation_query = observation_query.where(AreaProductObservation.area_pk == area_pk)
+    if product_guids is not None:
+        observation_query = observation_query.where(
+            AreaProductObservation.product_guid.in_(product_guids)
+        )
+    observations = session.scalars(observation_query).all()
+    changes: dict[int, dict[tuple[int, str], AreaProductObservation]] = defaultdict(dict)
+    for item in observations:
+        changes[item.snapshot_id][(item.area_pk, item.product_guid)] = item
+
+    area_query = (
+        select(AreaSnapshot.snapshot_id, AreaSnapshot.area_pk, Area.area_id_raw)
+        .join(Area, Area.area_pk == AreaSnapshot.area_pk)
+        .where(
+            AreaSnapshot.snapshot_id.in_(snapshot_ids),
+        )
+    )
+    if area_pk is not None:
+        area_query = area_query.where(AreaSnapshot.area_pk == area_pk)
+    areas_by_snapshot: dict[int, dict[int, str]] = defaultdict(dict)
+    for snapshot_id, observed_area_pk, area_id_raw in session.execute(area_query):
+        areas_by_snapshot[snapshot_id][observed_area_pk] = area_id_raw
+
+    section_rows = session.execute(
+        select(
+            SnapshotSectionStatus.snapshot_id,
+            SnapshotSectionStatus.area_id_raw,
+            SnapshotSectionStatus.status,
+        ).where(
+            SnapshotSectionStatus.snapshot_id.in_(snapshot_ids),
+            SnapshotSectionStatus.section_name == "inventory",
+        )
     ).all()
+    inventory_status = {
+        (snapshot_id, raw_area_id): status
+        for snapshot_id, raw_area_id, status in section_rows
+    }
+
+    current: dict[tuple[int, str], AreaProductObservation] = {}
+    samples: dict[tuple[int, str], list[dict[str, Any]]] = defaultdict(list)
+    for snapshot in snapshots:
+        snapshot_changes = changes.get(snapshot.snapshot_id, {})
+        current.update(snapshot_changes)
+        changed_areas = {key[0] for key in snapshot_changes}
+        valid_areas: set[int] = set()
+        for observed_area_pk, raw_area_id in areas_by_snapshot.get(snapshot.snapshot_id, {}).items():
+            status = inventory_status.get((snapshot.snapshot_id, raw_area_id))
+            if status == "success" or (status is None and observed_area_pk in changed_areas):
+                valid_areas.add(observed_area_pk)
+        for key, value in current.items():
+            if key[0] not in valid_areas:
+                continue
+            samples[key].append(
+                {
+                    "snapshot": snapshot,
+                    "stock": value.stock,
+                    "available_stock": value.available_stock,
+                    "capacity": value.storage_capacity,
+                    "sample_kind": "observed" if key in snapshot_changes else "carried_forward",
+                    "source_snapshot_id": value.snapshot_id,
+                }
+            )
+    return samples
+
+
+def _session_velocity_map(
+    session: Session,
+    play_session_id: str,
+    expected_interval_seconds: int,
+    *,
+    through_snapshot_sequence: int | None = None,
+) -> dict[tuple[int, str], dict]:
+    samples = _session_stock_samples(
+        session,
+        play_session_id,
+        through_snapshot_sequence=through_snapshot_sequence,
+    )
     points: dict[tuple[int, str], list[tuple[int, float]]] = defaultdict(list)
-    for area_pk, product_guid, stock, play_time, _snapshot_sequence in rows:
-        if stock is not None and play_time is not None:
-            key = (area_pk, product_guid)
+    for key, values_for_key in samples.items():
+        for sample in values_for_key:
+            stock = sample["stock"]
+            play_time = sample["snapshot"].play_time
+            if stock is None or play_time is None:
+                continue
             values = points[key]
             point = (play_time, stock)
             if values and play_time < values[-1][0]:
@@ -192,14 +277,74 @@ def _velocity_map(
             elapsed_ms = current[0] - previous[0]
             if 0 < elapsed_ms <= max_gap_ms:
                 slopes.append((current[1] - previous[1]) / (elapsed_ms / 60_000))
-        if len(slopes) >= 3:
+        if slopes:
             value = median(slopes)
             result[key] = {
                 "net_stock_change_per_minute": round(value, 3),
                 "interval_count": len(slopes),
                 "window_minutes": 5,
-                "confidence": "measured_history",
+                "confidence": "stable" if len(slopes) >= 3 else "provisional",
+                "source_play_session_id": play_session_id,
+                "is_historical": False,
             }
+    return result
+
+
+def _velocity_map(
+    session: Session,
+    snapshot: SnapshotBatch,
+    expected_interval_seconds: int,
+) -> dict[tuple[int, str], dict]:
+    if snapshot.play_time is None:
+        return {}
+    result = _session_velocity_map(
+        session,
+        snapshot.play_session_id,
+        expected_interval_seconds,
+        through_snapshot_sequence=snapshot.snapshot_sequence,
+    )
+    play = session.get(PlaySession, snapshot.play_session_id)
+    if play is None or play.campaign_id is None:
+        return result
+    target_keys = set(
+        session.execute(
+            select(AreaProductCurrent.area_pk, AreaProductCurrent.product_guid).where(
+                AreaProductCurrent.campaign_id == play.campaign_id
+            )
+        ).all()
+    )
+    missing_keys = target_keys - result.keys()
+    if not missing_keys:
+        return result
+
+    # A new load deliberately starts a new derivative boundary. Until its
+    # first valid interval arrives, keep the most recent older rate visible as
+    # explicitly historical context instead of presenting an empty dashboard.
+    previous_sessions = session.scalars(
+        select(PlaySession)
+        .where(
+            PlaySession.campaign_id == play.campaign_id,
+            PlaySession.play_session_id != play.play_session_id,
+            PlaySession.started_at <= play.started_at,
+        )
+        .order_by(PlaySession.started_at.desc())
+    ).all()
+    for previous in previous_sessions:
+        previous_rates = _session_velocity_map(
+            session, previous.play_session_id, expected_interval_seconds
+        )
+        for key, rate in previous_rates.items():
+            if key not in missing_keys:
+                continue
+            result[key] = {
+                **rate,
+                "confidence": "previous_session",
+                "source_confidence": rate["confidence"],
+                "is_historical": True,
+            }
+            missing_keys.remove(key)
+        if not missing_keys:
+            break
     return result
 
 
@@ -222,6 +367,17 @@ def inventory_latest(
         return {"meta": meta, "catalog": coverage, "items": [], "signals": []}
 
     velocity = _velocity_map(session, snapshot, expected_interval_seconds)
+    active_play = current_play_session(session, campaign_id)
+    if active_play is not None and active_play.play_session_id != snapshot.play_session_id:
+        velocity = {
+            key: {
+                **rate,
+                "confidence": "previous_session",
+                "source_confidence": rate.get("source_confidence", rate["confidence"]),
+                "is_historical": True,
+            }
+            for key, rate in velocity.items()
+        }
     rows = session.execute(
         select(AreaProductCurrent, Area, Product, AreaProductPolicy)
         .join(Area, Area.area_pk == AreaProductCurrent.area_pk)
@@ -267,9 +423,10 @@ def inventory_latest(
             high_target = low_target
         fill = observed.stock / capacity if observed.stock is not None and capacity and capacity > 0 else None
         rate = velocity.get((area.area_pk, observed.product_guid))
+        current_rate = rate if rate and not rate.get("is_historical", False) else None
         eta = None
-        if rate and available is not None and rate["net_stock_change_per_minute"] < 0:
-            eta = available / abs(rate["net_stock_change_per_minute"])
+        if current_rate and available is not None and current_rate["net_stock_change_per_minute"] < 0:
+            eta = available / abs(current_rate["net_stock_change_per_minute"])
         item = {
             "area_pk": area.area_pk,
             "area_id": area.area_id_raw,
@@ -313,7 +470,7 @@ def inventory_latest(
             )
         if fill is not None and fill >= 0.9:
             signals.append(_signal("near_full", "warning", item))
-        if rate and rate["net_stock_change_per_minute"] < 0:
+        if current_rate and current_rate["net_stock_change_per_minute"] < 0:
             signals.append(_signal("falling_stock", "warning", item))
         if eta is not None and eta <= 30:
             signals.append(
@@ -346,7 +503,9 @@ def _signal(code: str, severity: str, item: dict) -> dict:
             "capacity": item["capacity"],
             "low_target": item["low_target"],
             "net_stock_change_per_minute": (
-                item["velocity"]["net_stock_change_per_minute"] if item["velocity"] else None
+                item["velocity"]["net_stock_change_per_minute"]
+                if item["velocity"] and not item["velocity"].get("is_historical", False)
+                else None
             ),
         },
         "interpretation": "inferred_pressure",
@@ -418,29 +577,26 @@ def inventory_history(
     play_session_id: str,
     limit: int = 240,
 ) -> list[dict]:
-    rows = session.execute(
-        select(AreaProductObservation, SnapshotBatch)
-        .join(SnapshotBatch, SnapshotBatch.snapshot_id == AreaProductObservation.snapshot_id)
-        .where(
-            AreaProductObservation.area_pk == area_pk,
-            AreaProductObservation.product_guid == product_guid,
-            SnapshotBatch.is_complete.is_(True),
-            SnapshotBatch.play_session_id == play_session_id,
-        )
-        .order_by(SnapshotBatch.snapshot_sequence.desc())
-        .limit(limit)
-    ).all()
+    rows = _session_stock_samples(
+        session,
+        play_session_id,
+        area_pk=area_pk,
+        product_guids=[product_guid],
+    ).get((area_pk, product_guid), [])[-limit:]
     return [
         {
-            "snapshot_id": snapshot.snapshot_id,
-            "play_session_id": snapshot.play_session_id,
-            "observed_at": _iso(snapshot.completed_at or snapshot.received_at),
-            "play_time": snapshot.play_time,
-            "stock": observed.stock,
-            "available_stock": observed.available_stock,
-            "capacity": observed.storage_capacity,
+            "snapshot_id": sample["snapshot"].snapshot_id,
+            "play_session_id": sample["snapshot"].play_session_id,
+            "observed_at": _iso(
+                sample["snapshot"].completed_at or sample["snapshot"].received_at
+            ),
+            "play_time": sample["snapshot"].play_time,
+            "stock": sample["stock"],
+            "available_stock": sample["available_stock"],
+            "capacity": sample["capacity"],
+            "sample_kind": sample["sample_kind"],
         }
-        for observed, snapshot in reversed(rows)
+        for sample in rows
     ]
 
 
@@ -452,47 +608,33 @@ def inventory_history_group(
     play_session_id: str,
     limit: int = 240,
 ) -> list[dict]:
-    rows = session.execute(
-        select(AreaProductObservation, SnapshotBatch)
-        .join(SnapshotBatch, SnapshotBatch.snapshot_id == AreaProductObservation.snapshot_id)
-        .where(
-            AreaProductObservation.area_pk == area_pk,
-            AreaProductObservation.product_guid.in_(product_guids),
-            SnapshotBatch.is_complete.is_(True),
-            SnapshotBatch.play_session_id == play_session_id,
-        )
-        .order_by(
-            AreaProductObservation.product_guid,
-            SnapshotBatch.snapshot_sequence.desc(),
-        )
-    ).all()
-    grouped: dict[str, list[tuple[AreaProductObservation, SnapshotBatch]]] = {
-        guid: [] for guid in product_guids
-    }
-    for observed, snapshot in rows:
-        bucket = grouped.setdefault(observed.product_guid, [])
-        if len(bucket) < limit:
-            bucket.append((observed, snapshot))
+    samples = _session_stock_samples(
+        session,
+        play_session_id,
+        area_pk=area_pk,
+        product_guids=product_guids,
+    )
     return [
         {
             "product_guid": guid,
             "items": [
                 {
-                    "snapshot_id": snapshot.snapshot_id,
-                    "play_session_id": snapshot.play_session_id,
-                    "observed_at": _iso(snapshot.completed_at or snapshot.received_at),
-                    "play_time": snapshot.play_time,
-                    "stock": observed.stock,
-                    "available_stock": observed.available_stock,
-                    "capacity": observed.storage_capacity,
+                    "snapshot_id": sample["snapshot"].snapshot_id,
+                    "play_session_id": sample["snapshot"].play_session_id,
+                    "observed_at": _iso(
+                        sample["snapshot"].completed_at or sample["snapshot"].received_at
+                    ),
+                    "play_time": sample["snapshot"].play_time,
+                    "stock": sample["stock"],
+                    "available_stock": sample["available_stock"],
+                    "capacity": sample["capacity"],
+                    "sample_kind": sample["sample_kind"],
                 }
-                for observed, snapshot in reversed(grouped.get(guid, []))
+                for sample in samples.get((area_pk, guid), [])[-limit:]
             ],
         }
         for guid in product_guids
     ]
-
-
 def finance_latest(session: Session, snapshot: SnapshotBatch | None) -> dict | None:
     if snapshot is None:
         return None

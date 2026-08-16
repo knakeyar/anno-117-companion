@@ -61,4 +61,4 @@ Anno Companion is an unofficial fan project and is not endorsed by, sponsored by
 
 ## Trade-network UI libraries
 
-The interactive relationship graph uses [`@xyflow/react` 12.11.3](https://github.com/xyflow/xyflow/tree/main/packages/react) and [`@dagrejs/dagre` 3.1.1](https://github.com/dagrejs/dagre). Both projects are distributed under the MIT License. Their software remains under that license and is not relicensed by Anno Companion's PolyForm terms.
+The interactive relationship graph uses [`@xyflow/react` 12.11.3](https://github.com/xyflow/xyflow/tree/main/packages/react), distributed under the MIT License, and [`elkjs` 0.12.0](https://github.com/kieler/elkjs), distributed under the [Eclipse Public License 2.0 with its stated GPL-3.0-or-later secondary-license option](https://github.com/kieler/elkjs/blob/master/LICENSE.md). Their software remains under its respective upstream license and is not relicensed by Anno Companion's PolyForm terms.

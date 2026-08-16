@@ -396,6 +396,7 @@ class InventoryHistoryPointView(BaseModel):
     stock: float | None
     available_stock: float | None
     capacity: float | None
+    sample_kind: Literal["observed", "carried_forward"]
 
 
 class InventoryHistorySeriesView(BaseModel):

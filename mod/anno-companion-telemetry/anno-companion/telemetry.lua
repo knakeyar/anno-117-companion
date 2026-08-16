@@ -2,12 +2,13 @@ local Telemetry = {}
 local json = require("json")
 local catalog = require("catalog")
 
-local VERSION = "1.1.2"
+local VERSION = "1.1.3"
 local SCHEMA_VERSION = 2
 local PREFIX = "ANNO_COMPANION_TELEMETRY_JSON "
 
 local CONFIG = {
     delay_ticks_after_load = 30,
+    initial_sample_interval_ms = 10000,
     sample_interval_ms = 30000,
     max_areas = 64,
     max_population_levels = 16,
@@ -744,6 +745,7 @@ end
 function Telemetry:Init()
     state.initialized = true
     emit("telemetry_initialized", {
+        initial_sample_interval_ms = CONFIG.initial_sample_interval_ms,
         sample_interval_ms = CONFIG.sample_interval_ms,
         reconciliation_interval_ms = CONFIG.reconciliation_interval_ms,
         product_chunk_size = CONFIG.product_chunk_size,
@@ -767,6 +769,7 @@ function Telemetry:Load()
     state.delay_ticks_remaining = CONFIG.delay_ticks_after_load
     emit("telemetry_loaded", {
         delay_ticks_before_first_snapshot = CONFIG.delay_ticks_after_load,
+        initial_sample_interval_ms = CONFIG.initial_sample_interval_ms,
         sample_interval_ms = CONFIG.sample_interval_ms,
     })
 end
@@ -811,8 +814,10 @@ function Telemetry:Tick()
         return
     end
     state.last_observed_play_time = play_time
+    local interval_ms = state.needs_baseline
+        and CONFIG.initial_sample_interval_ms or CONFIG.sample_interval_ms
     if state.last_snapshot_play_time ~= nil
-        and play_time - state.last_snapshot_play_time >= CONFIG.sample_interval_ms then
+        and play_time - state.last_snapshot_play_time >= interval_ms then
         self:Sample("tick_play_time_watchdog")
     end
 end

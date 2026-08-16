@@ -4,7 +4,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useChains } from '../api'
 import { CatalogBadge, EmptyState, ErrorState, FreshnessBanner, LoadingState, PageHeader, SectionHeader } from '../components/Common'
 import type { ProductionChain } from '../types'
-import { formatNumber, formatRate } from '../utils'
+import { formatNumber, formatRate, velocityStatusLabel } from '../utils'
 
 function productionRegion(regionGuid: string | null): string {
   const value = regionGuid ?? ''
@@ -91,5 +91,5 @@ export function ProductionPage() {
 }
 
 function StockNode({ item }: { item: ProductionChain['city_states'][number]['stocks'][number] }) {
-  return <article className={(item.fill_ratio ?? .5) < .25 ? 'critical' : (item.fill_ratio ?? 0) > .9 ? 'warning' : ''}><strong>{item.amount}× {item.product_name || item.product_guid}</strong><span>{formatNumber(item.stock)} / {formatNumber(item.capacity)}</span><small>Net stock change {formatRate(item.net_stock_change?.net_stock_change_per_minute)}</small></article>
+  return <article className={(item.fill_ratio ?? .5) < .25 ? 'critical' : (item.fill_ratio ?? 0) > .9 ? 'warning' : ''}><strong>{item.amount}× {item.product_name || item.product_guid}</strong><span>{formatNumber(item.stock)} / {formatNumber(item.capacity)}</span><small>Net stock change {formatRate(item.net_stock_change?.net_stock_change_per_minute)} · {velocityStatusLabel(item.net_stock_change)}</small></article>
 }

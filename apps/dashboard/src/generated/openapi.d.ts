@@ -894,6 +894,11 @@ export interface components {
             play_session_id: string;
             /** Play Time */
             play_time: number | null;
+            /**
+             * Sample Kind
+             * @enum {string}
+             */
+            sample_kind: "observed" | "carried_forward";
             /** Snapshot Id */
             snapshot_id: number;
             /** Stock */

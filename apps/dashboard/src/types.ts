@@ -23,7 +23,10 @@ export interface Velocity {
   net_stock_change_per_minute: number
   interval_count: number
   window_minutes: number
-  confidence: string
+  confidence: 'provisional' | 'stable' | 'previous_session' | 'measured_history'
+  source_play_session_id?: string
+  source_confidence?: 'provisional' | 'stable'
+  is_historical?: boolean
 }
 
 export interface InventoryItem {
@@ -181,6 +184,7 @@ export interface TradeNetworkNode {
     capacity: number | null
     fill_ratio: number | null
     net_stock_change_per_minute: number | null
+    net_stock_change_confidence?: Velocity['confidence'] | null
   }>
   pressure_signals: ManagementSignal[]
 }
@@ -403,6 +407,7 @@ export interface HistoryPoint {
   stock: number | null
   available_stock: number | null
   capacity: number | null
+  sample_kind: 'observed' | 'carried_forward'
 }
 
 export interface HistorySeries {

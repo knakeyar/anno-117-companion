@@ -324,15 +324,15 @@ def test_incomplete_newer_batch_does_not_replace_current_state(session_factory, 
 
 
 @pytest.mark.parametrize(
-    "play_times",
+    ("play_times", "expected_intervals"),
     [
-        [1_000_000, 1_030_000, 1_030_000, 1_060_000],  # paused duplicate
-        [1_000_000, 1_030_000, 1_120_000, 1_150_000],  # cadence gap > 2x
-        [1_000_000, 1_030_000, 900_000, 930_000],  # game-clock rollback
+        ([1_000_000, 1_030_000, 1_030_000, 1_060_000], 2),  # paused duplicate
+        ([1_000_000, 1_030_000, 1_120_000, 1_150_000], 2),  # cadence gap > 2x
+        ([1_000_000, 1_030_000, 900_000, 930_000], 1),  # game-clock rollback
     ],
 )
 def test_velocity_rejects_invalid_clock_intervals(
-    session_factory, app_settings, play_times
+    session_factory, app_settings, play_times, expected_intervals
 ) -> None:
     seed_complete_snapshots(session_factory)
     with session_factory() as session:
@@ -353,7 +353,8 @@ def test_velocity_rejects_invalid_clock_intervals(
     app = create_app(app_settings, session_factory)
     with TestClient(app) as client:
         inventory = client.get("/api/v1/inventory/latest").json()
-        assert all(item["velocity"] is None for item in inventory["items"])
+        assert all(item["velocity"]["confidence"] == "provisional" for item in inventory["items"])
+        assert all(item["velocity"]["interval_count"] == expected_intervals for item in inventory["items"])
         source = next(item for item in inventory["items"] if item["area_name"] == "Juliana")
         assert source["free_space_raw"] == -500
         assert source["fill_ratio"] == 0.85

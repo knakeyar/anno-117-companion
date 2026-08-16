@@ -620,6 +620,7 @@ def build_trade_network(
                 "capacity": item.get("capacity"),
                 "fill_ratio": item.get("fill_ratio"),
                 "net_stock_change_per_minute": (item.get("velocity") or {}).get("net_stock_change_per_minute"),
+                "net_stock_change_confidence": (item.get("velocity") or {}).get("confidence"),
             } for item in important_goods],
             "pressure_signals": pressure_signals[:6],
         })

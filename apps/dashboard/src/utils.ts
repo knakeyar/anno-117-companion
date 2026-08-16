@@ -1,3 +1,5 @@
+import type { Velocity } from './types'
+
 export function formatNumber(value: number | null | undefined, maximumFractionDigits = 0): string {
   if (value == null || Number.isNaN(value)) return '—'
   return new Intl.NumberFormat(undefined, { maximumFractionDigits }).format(value)
@@ -12,9 +14,16 @@ export function formatMoney(value: number | null | undefined): string {
 }
 
 export function formatRate(value: number | null | undefined): string {
-  if (value == null) return 'Learning…'
+  if (value == null) return 'Awaiting sample…'
   const sign = value > 0 ? '+' : ''
   return `${sign}${formatNumber(value, 1)}/min`
+}
+
+export function velocityStatusLabel(velocity: Velocity | null | undefined): string {
+  if (!velocity) return 'Awaiting current data'
+  if (velocity.confidence === 'previous_session') return 'Previous session'
+  if (velocity.confidence === 'provisional') return 'Provisional'
+  return 'Stable'
 }
 
 export function formatDuration(minutes: number | null | undefined): string {
@@ -33,4 +42,3 @@ export function freshnessLabel(seconds: number | null): string {
 export function titleCase(value: string): string {
   return value.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
 }
-

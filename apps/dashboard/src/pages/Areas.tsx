@@ -11,7 +11,7 @@ import { useAreas, useChains, useFinance, useHistoryGroup, useInventory, useWork
 import { EmptyState, ErrorState, FillBar, FreshnessBanner, LoadingState, MetricCard, PageHeader, SectionHeader } from '../components/Common'
 import { PolicyEditor } from '../components/PolicyEditor'
 import type { InventoryItem, ProductionChain } from '../types'
-import { formatMoney, formatNumber, formatRate } from '../utils'
+import { formatMoney, formatNumber, formatRate, velocityStatusLabel } from '../utils'
 
 echarts.use([LineChart, GridComponent, LegendComponent, TooltipComponent, CanvasRenderer])
 
@@ -233,7 +233,7 @@ export function AreaDetailPage() {
       </section>
       <section className="panel stock-history-panel">
           <SectionHeader title="Stock history by workforce" description="Every resource produced by the selected regional workforce is plotted together. Click legend items to show or hide individual resources." action={<label className="history-product-picker"><span>Resource workforce</span><select aria-label="Resource workforce" value={effectiveStockGroup?.key ?? ''} onChange={(event) => setSelectedStockGroup(event.target.value)}>{stockGroups.map((group) => <option value={group.key} key={group.key}>{group.label} · {group.items.length} goods</option>)}</select></label>} />
-          {effectiveStockGroup ? <>{history.isLoading ? <LoadingState label="Loading resource histories…" /> : <><div className="history-series-summary">{effectiveStockGroup.items.map((item) => <span key={item.product_guid}><small>{item.product_name}</small><strong>{formatNumber(item.stock)}</strong><em className={(item.velocity?.net_stock_change_per_minute ?? 0) < 0 ? 'negative' : 'positive'}>{formatRate(item.velocity?.net_stock_change_per_minute)}</em></span>)}</div><ReactEChartsCore echarts={echarts} option={chart} style={{ height: 430 }} /></>}</> : <EmptyState title="No resource group available" description="This area has no observed product rows." />}
+          {effectiveStockGroup ? <>{history.isLoading ? <LoadingState label="Loading resource histories…" /> : <><div className="history-series-summary">{effectiveStockGroup.items.map((item) => <span key={item.product_guid}><small>{item.product_name}</small><strong>{formatNumber(item.stock)}</strong><em className={(item.velocity?.net_stock_change_per_minute ?? 0) < 0 ? 'negative' : 'positive'}>{formatRate(item.velocity?.net_stock_change_per_minute)}</em><i className={`velocity-confidence ${item.velocity?.confidence ?? 'awaiting'}`}>{velocityStatusLabel(item.velocity)}</i></span>)}</div><ReactEChartsCore echarts={echarts} option={chart} style={{ height: 430 }} /></>}</> : <EmptyState title="No resource group available" description="This area has no observed product rows." />}
       </section>
       <section className="panel workforce-panel">
           <SectionHeader title="Current-area workforce" description="Shown only when this was the camera area." />

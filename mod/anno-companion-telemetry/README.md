@@ -1,4 +1,4 @@
-# Anno Companion Telemetry 1.1.2
+# Anno Companion Telemetry 1.1.3
 
 This is the read-only production telemetry emitter used by the Anno Companion data service. It does not change game state and does not attempt direct file access.
 
@@ -10,7 +10,7 @@ The mod emits records beginning with:
 ANNO_COMPANION_TELEMETRY_JSON 
 ```
 
-It emits a full baseline after each load, change-only snapshots every 30 seconds of advancing game time, and a full reconciliation every 10 game minutes. Inventory is chunked in groups of 16 goods and building presence in groups of 32 catalog entries. Population, area finance, passive-trade flags, participant finance, route issues, assigned route ships, current-camera-area workforce, and optional Kontor coordinates are included when readable. Missing capabilities are emitted as structured section errors rather than zero values.
+It emits a full baseline after 10 seconds of advancing game time, change-only snapshots every 30 seconds after that, and a full reconciliation every 10 game minutes. Inventory is chunked in groups of 16 goods and building presence in groups of 32 catalog entries. Population, area finance, passive-trade flags, participant finance, route issues, assigned route ships, current-camera-area workforce, and optional Kontor coordinates are included when readable. Missing capabilities are emitted as structured section errors rather than zero values.
 
 Assigned route ships include the player-visible ship name when readable, immutable observation ID, mutable route name, and paused/running state. The validated bindings do not expose a stable route ID, configured stops, configured goods, or reliable ship cargo, so the companion keeps those details explicitly unknown.
 

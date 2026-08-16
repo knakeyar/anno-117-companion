@@ -1198,6 +1198,14 @@
             ],
             "title": "Play Time"
           },
+          "sample_kind": {
+            "enum": [
+              "observed",
+              "carried_forward"
+            ],
+            "title": "Sample Kind",
+            "type": "string"
+          },
           "snapshot_id": {
             "title": "Snapshot Id",
             "type": "integer"
@@ -1221,7 +1229,8 @@
           "play_time",
           "stock",
           "available_stock",
-          "capacity"
+          "capacity",
+          "sample_kind"
         ],
         "title": "InventoryHistoryPointView",
         "type": "object"

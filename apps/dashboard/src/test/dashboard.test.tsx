@@ -1,7 +1,7 @@
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { App } from '../App'
-import { calculateTradeLayout } from '../components/TradeNetworkGraph'
+import { calculateTradeLayout, selectTradeHub } from '../components/tradeNetworkLayout'
 import { inventory, overview, tradeNetwork } from './fixtures'
 import { installFetchMock, renderApp } from './render'
 
@@ -18,20 +18,48 @@ describe('first-class management dashboard', () => {
     expect(screen.queryByText(/measured production rate/i)).not.toBeInTheDocument()
   })
 
-  it('auto-sorts deterministically and offers force, flow, and circle layouts', async () => {
+  it('offers orthogonal network, radial hubs, and a selected-city focus layout', async () => {
     const graph = tradeNetwork.graphs.latium
-    const first = calculateTradeLayout(graph, 'latium', 'force')
-    const second = calculateTradeLayout(graph, 'latium', 'force')
-    expect(first.map((node) => node.position)).toEqual(second.map((node) => node.position))
-    expect(first.length).toBeGreaterThan(1)
-    expect(first.some((node, index) => first.slice(index + 1).some((candidate) => Math.abs(node.position.x - candidate.position.x) < 240 && Math.abs(node.position.y - candidate.position.y) < 128))).toBe(false)
+    const first = await calculateTradeLayout(graph, 'latium', 'network')
+    const second = await calculateTradeLayout(graph, 'latium', 'network')
+    expect(first.nodes.map((node) => node.position)).toEqual(second.nodes.map((node) => node.position))
+    expect(first.nodes.length).toBeGreaterThan(1)
+    expect(first.nodes.some((node, index) => first.nodes.slice(index + 1).some((candidate) => Math.abs(node.position.x - candidate.position.x) < 240 && Math.abs(node.position.y - candidate.position.y) < 128))).toBe(false)
+    expect(first.routes[graph.edges[0].edge_id].points.length).toBeGreaterThanOrEqual(2)
+
+    const baseEdge = graph.edges[0]
+    const cycleGraph = {
+      nodes: tradeNetwork.graphs.cross_region.nodes,
+      edges: [
+        baseEdge,
+        { ...baseEdge, edge_id: 'campaign-1:2:3', source_area_pk: 2, source_area_name: 'Naissus', destination_area_pk: 3, destination_area_name: 'Cudslip', scope: 'cross_region' as const },
+        { ...baseEdge, edge_id: 'campaign-1:3:1', source_area_pk: 3, source_area_name: 'Cudslip', destination_area_pk: 1, destination_area_name: 'Juliana', scope: 'cross_region' as const },
+      ],
+    }
+    const orthogonal = await calculateTradeLayout(cycleGraph, 'cross_region', 'network')
+    expect(Object.keys(orthogonal.routes)).toHaveLength(3)
+    expect(Math.max(...orthogonal.nodes.filter((node) => node.data.region === 'latium').map((node) => node.position.x))).toBeLessThan(orthogonal.nodes.find((node) => node.data.region === 'albion')!.position.x)
+    const disconnected = await calculateTradeLayout(tradeNetwork.graphs.cross_region, 'cross_region', 'network')
+    expect(disconnected.nodes).toHaveLength(tradeNetwork.graphs.cross_region.nodes.length)
+
+    const hubId = selectTradeHub(cycleGraph)
+    const hubs = await calculateTradeLayout(cycleGraph, 'cross_region', 'hubs')
+    expect(hubs.nodes).toHaveLength(cycleGraph.nodes.length)
+    expect(Object.keys(hubs.routes)).toHaveLength(cycleGraph.edges.length)
+    expect(hubs.nodes.find((node) => node.id === hubId)?.data.layoutRole).toBe('hub')
+    const focus = await calculateTradeLayout(cycleGraph, 'cross_region', 'focus', 'area-2')
+    expect(focus.focusNodeId).toBe('area-2')
+    expect(focus.nodes.find((node) => node.id === 'area-2')?.data.layoutRole).toBe('focus')
+    expect(focus.nodes.find((node) => node.id === 'area-1')!.position.x).toBeLessThan(focus.nodes.find((node) => node.id === 'area-2')!.position.x)
+    expect(focus.nodes.find((node) => node.id === 'area-3')!.position.x).toBeGreaterThan(focus.nodes.find((node) => node.id === 'area-2')!.position.x)
 
     installFetchMock()
     renderApp(<App />, '/trade')
-    const circle = await screen.findByRole('button', { name: 'Circle' })
-    await userEvent.click(circle)
-    expect(circle).toHaveAttribute('aria-pressed', 'true')
-    expect(localStorage.getItem('anno-companion:trade-network:campaign-1:latium:layout:v2')).toBe('circle')
+    const focusButton = await screen.findByRole('button', { name: 'Focus' })
+    await userEvent.click(focusButton)
+    expect(focusButton).toHaveAttribute('aria-pressed', 'true')
+    expect(await screen.findByLabelText('Focus city')).toBeInTheDocument()
+    expect(localStorage.getItem('anno-companion:trade-network:campaign-1:latium:layout:v3')).toBe('focus')
   })
 
   it('keeps isolated cities visible without geographic coordinates or routes', async () => {
@@ -47,6 +75,24 @@ describe('first-class management dashboard', () => {
     await userEvent.click(await screen.findByRole('link', { name: /Naissus/i }))
     expect(await screen.findByRole('heading', { name: 'Naissus' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Stock history by workforce' })).toBeInTheDocument()
+  })
+
+  it('labels a carried historical rate instead of leaving the resource learning', async () => {
+    installFetchMock({
+      '/api/v1/inventory/latest': {
+        ...inventory,
+        items: inventory.items.map((item) => item.area_pk === 2 ? {
+          ...item,
+          velocity: {
+            ...item.velocity!, confidence: 'previous_session' as const,
+            source_confidence: 'stable' as const, is_historical: true,
+          },
+        } : item),
+      },
+    })
+    renderApp(<App />, '/areas/2')
+    expect(await screen.findByText('Previous session')).toBeInTheDocument()
+    expect(screen.queryByText(/Learning/i)).not.toBeInTheDocument()
   })
 
   it('makes stale telemetry explicit without turning observations into zero', async () => {
