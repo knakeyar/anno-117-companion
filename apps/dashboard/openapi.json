@@ -301,6 +301,22 @@
             "title": "Evidence Kind",
             "type": "string"
           },
+          "freshness": {
+            "anyOf": [
+              {
+                "enum": [
+                  "live",
+                  "stale",
+                  "historical"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Freshness"
+          },
           "freshness_seconds": {
             "anyOf": [
               {
@@ -394,6 +410,14 @@
               }
             ],
             "title": "Regular Ship Count"
+          },
+          "relink_suggestions": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Relink Suggestions",
+            "type": "array"
           },
           "route_key": {
             "title": "Route Key",
@@ -1220,6 +1244,800 @@
         "title": "ProductionChainsResponse",
         "type": "object"
       },
+      "RouteLinkPatch": {
+        "properties": {
+          "destination_area_pk": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Destination Area Pk"
+          },
+          "route_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Route Key"
+          },
+          "source_area_pk": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Area Pk"
+          },
+          "trade_plan_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trade Plan Id"
+          }
+        },
+        "title": "RouteLinkPatch",
+        "type": "object"
+      },
+      "RouteLinkView": {
+        "properties": {
+          "campaign_id": {
+            "title": "Campaign Id",
+            "type": "string"
+          },
+          "destination_area_name": {
+            "title": "Destination Area Name",
+            "type": "string"
+          },
+          "destination_area_pk": {
+            "title": "Destination Area Pk",
+            "type": "integer"
+          },
+          "first_seen_at": {
+            "title": "First Seen At",
+            "type": "string"
+          },
+          "last_seen_at": {
+            "title": "Last Seen At",
+            "type": "string"
+          },
+          "link_id": {
+            "title": "Link Id",
+            "type": "string"
+          },
+          "link_method": {
+            "enum": [
+              "tag",
+              "manual"
+            ],
+            "title": "Link Method",
+            "type": "string"
+          },
+          "route_key": {
+            "title": "Route Key",
+            "type": "string"
+          },
+          "route_name": {
+            "title": "Route Name",
+            "type": "string"
+          },
+          "ship_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Ship Ids",
+            "type": "array"
+          },
+          "source_area_name": {
+            "title": "Source Area Name",
+            "type": "string"
+          },
+          "source_area_pk": {
+            "title": "Source Area Pk",
+            "type": "integer"
+          },
+          "trade_plan_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trade Plan Id"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "link_id",
+          "campaign_id",
+          "route_key",
+          "route_name",
+          "ship_ids",
+          "trade_plan_id",
+          "source_area_pk",
+          "source_area_name",
+          "destination_area_pk",
+          "destination_area_name",
+          "link_method",
+          "first_seen_at",
+          "last_seen_at",
+          "updated_at"
+        ],
+        "title": "RouteLinkView",
+        "type": "object"
+      },
+      "RouteLinkWrite": {
+        "properties": {
+          "campaign_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Campaign Id"
+          },
+          "destination_area_pk": {
+            "title": "Destination Area Pk",
+            "type": "integer"
+          },
+          "route_key": {
+            "title": "Route Key",
+            "type": "string"
+          },
+          "source_area_pk": {
+            "title": "Source Area Pk",
+            "type": "integer"
+          },
+          "trade_plan_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trade Plan Id"
+          }
+        },
+        "required": [
+          "route_key",
+          "source_area_pk",
+          "destination_area_pk"
+        ],
+        "title": "RouteLinkWrite",
+        "type": "object"
+      },
+      "TradeNetworkEdgeSummaryView": {
+        "properties": {
+          "goods": {
+            "title": "Goods",
+            "type": "integer"
+          },
+          "plans": {
+            "title": "Plans",
+            "type": "integer"
+          },
+          "routes": {
+            "title": "Routes",
+            "type": "integer"
+          },
+          "ships": {
+            "title": "Ships",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "goods",
+          "routes",
+          "ships",
+          "plans"
+        ],
+        "title": "TradeNetworkEdgeSummaryView",
+        "type": "object"
+      },
+      "TradeNetworkEdgeView": {
+        "properties": {
+          "actions": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Actions",
+            "type": "array"
+          },
+          "cargo_aboard": {
+            "items": {
+              "$ref": "#/components/schemas/TradeNetworkGoodEvidenceView"
+            },
+            "title": "Cargo Aboard",
+            "type": "array"
+          },
+          "configured_goods": {
+            "items": {
+              "$ref": "#/components/schemas/TradeNetworkGoodEvidenceView"
+            },
+            "title": "Configured Goods",
+            "type": "array"
+          },
+          "destination_area_name": {
+            "title": "Destination Area Name",
+            "type": "string"
+          },
+          "destination_area_pk": {
+            "title": "Destination Area Pk",
+            "type": "integer"
+          },
+          "edge_id": {
+            "title": "Edge Id",
+            "type": "string"
+          },
+          "endpoint_evidence": {
+            "items": {
+              "$ref": "#/components/schemas/TradeNetworkEndpointEvidenceView"
+            },
+            "title": "Endpoint Evidence",
+            "type": "array"
+          },
+          "freshness": {
+            "enum": [
+              "live",
+              "stale",
+              "historical"
+            ],
+            "title": "Freshness",
+            "type": "string"
+          },
+          "goods_verification": {
+            "enum": [
+              "planned_only",
+              "configured",
+              "unavailable"
+            ],
+            "title": "Goods Verification",
+            "type": "string"
+          },
+          "issues": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Issues",
+            "type": "array"
+          },
+          "planned_goods": {
+            "items": {
+              "$ref": "#/components/schemas/TradeNetworkGoodEvidenceView"
+            },
+            "title": "Planned Goods",
+            "type": "array"
+          },
+          "plans": {
+            "items": {
+              "$ref": "#/components/schemas/TradeNetworkPlanEvidenceView"
+            },
+            "title": "Plans",
+            "type": "array"
+          },
+          "routes": {
+            "items": {
+              "$ref": "#/components/schemas/ActiveTradeRouteView"
+            },
+            "title": "Routes",
+            "type": "array"
+          },
+          "scope": {
+            "enum": [
+              "latium",
+              "albion",
+              "cross_region",
+              "unknown"
+            ],
+            "title": "Scope",
+            "type": "string"
+          },
+          "severity": {
+            "enum": [
+              "critical",
+              "warning",
+              "stable"
+            ],
+            "title": "Severity",
+            "type": "string"
+          },
+          "ships": {
+            "items": {
+              "$ref": "#/components/schemas/ActiveTradeRouteShipView"
+            },
+            "title": "Ships",
+            "type": "array"
+          },
+          "source_area_name": {
+            "title": "Source Area Name",
+            "type": "string"
+          },
+          "source_area_pk": {
+            "title": "Source Area Pk",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "running",
+              "partially_paused",
+              "paused",
+              "issue",
+              "planned",
+              "inactive",
+              "historical",
+              "unknown"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/TradeNetworkEdgeSummaryView"
+          }
+        },
+        "required": [
+          "edge_id",
+          "source_area_pk",
+          "source_area_name",
+          "destination_area_pk",
+          "destination_area_name",
+          "scope",
+          "status",
+          "severity",
+          "freshness",
+          "goods_verification",
+          "endpoint_evidence",
+          "plans",
+          "routes",
+          "ships",
+          "planned_goods",
+          "configured_goods",
+          "cargo_aboard",
+          "issues",
+          "actions",
+          "summary"
+        ],
+        "title": "TradeNetworkEdgeView",
+        "type": "object"
+      },
+      "TradeNetworkEndpointEvidenceView": {
+        "properties": {
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "link_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Link Id"
+          },
+          "trade_plan_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trade Plan Id"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "TradeNetworkEndpointEvidenceView",
+        "type": "object"
+      },
+      "TradeNetworkGoodEvidenceView": {
+        "properties": {
+          "amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount"
+          },
+          "area_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area Id"
+          },
+          "evidence_kind": {
+            "title": "Evidence Kind",
+            "type": "string"
+          },
+          "observed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observed At"
+          },
+          "product_guid": {
+            "title": "Product Guid",
+            "type": "string"
+          },
+          "product_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Product Name"
+          },
+          "ship_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ship Id"
+          },
+          "stop_ordinal": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stop Ordinal"
+          },
+          "trade_plan_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trade Plan Id"
+          }
+        },
+        "required": [
+          "product_guid",
+          "product_name",
+          "amount",
+          "evidence_kind"
+        ],
+        "title": "TradeNetworkGoodEvidenceView",
+        "type": "object"
+      },
+      "TradeNetworkGraphView": {
+        "properties": {
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/TradeNetworkEdgeView"
+            },
+            "title": "Edges",
+            "type": "array"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/TradeNetworkNodeView"
+            },
+            "title": "Nodes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "nodes",
+          "edges"
+        ],
+        "title": "TradeNetworkGraphView",
+        "type": "object"
+      },
+      "TradeNetworkGraphsView": {
+        "properties": {
+          "albion": {
+            "$ref": "#/components/schemas/TradeNetworkGraphView"
+          },
+          "cross_region": {
+            "$ref": "#/components/schemas/TradeNetworkGraphView"
+          },
+          "latium": {
+            "$ref": "#/components/schemas/TradeNetworkGraphView"
+          }
+        },
+        "required": [
+          "latium",
+          "albion",
+          "cross_region"
+        ],
+        "title": "TradeNetworkGraphsView",
+        "type": "object"
+      },
+      "TradeNetworkNodeView": {
+        "properties": {
+          "area_name": {
+            "title": "Area Name",
+            "type": "string"
+          },
+          "area_pk": {
+            "title": "Area Pk",
+            "type": "integer"
+          },
+          "important_goods": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Important Goods",
+            "type": "array"
+          },
+          "node_id": {
+            "title": "Node Id",
+            "type": "string"
+          },
+          "paused_route_count": {
+            "title": "Paused Route Count",
+            "type": "integer"
+          },
+          "planned_route_count": {
+            "title": "Planned Route Count",
+            "type": "integer"
+          },
+          "pressure_count": {
+            "title": "Pressure Count",
+            "type": "integer"
+          },
+          "pressure_signals": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Pressure Signals",
+            "type": "array"
+          },
+          "region": {
+            "anyOf": [
+              {
+                "enum": [
+                  "latium",
+                  "albion"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Region"
+          },
+          "route_issue_count": {
+            "title": "Route Issue Count",
+            "type": "integer"
+          },
+          "running_route_count": {
+            "title": "Running Route Count",
+            "type": "integer"
+          },
+          "severity": {
+            "enum": [
+              "critical",
+              "warning",
+              "stable"
+            ],
+            "title": "Severity",
+            "type": "string"
+          },
+          "stock_health": {
+            "additionalProperties": true,
+            "title": "Stock Health",
+            "type": "object"
+          }
+        },
+        "required": [
+          "node_id",
+          "area_pk",
+          "area_name",
+          "region",
+          "severity",
+          "pressure_count",
+          "route_issue_count",
+          "running_route_count",
+          "paused_route_count",
+          "planned_route_count",
+          "stock_health",
+          "important_goods",
+          "pressure_signals"
+        ],
+        "title": "TradeNetworkNodeView",
+        "type": "object"
+      },
+      "TradeNetworkPlanEvidenceView": {
+        "properties": {
+          "goods": {
+            "items": {
+              "$ref": "#/components/schemas/TradeNetworkGoodEvidenceView"
+            },
+            "title": "Goods",
+            "type": "array"
+          },
+          "plan_kind": {
+            "enum": [
+              "emergency_transfer",
+              "recurring_supply"
+            ],
+            "title": "Plan Kind",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "route_tag": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Route Tag"
+          },
+          "runtime_freshness": {
+            "title": "Runtime Freshness",
+            "type": "string"
+          },
+          "runtime_status": {
+            "title": "Runtime Status",
+            "type": "string"
+          },
+          "suggested_route_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Suggested Route Name"
+          },
+          "trade_plan_id": {
+            "title": "Trade Plan Id",
+            "type": "string"
+          },
+          "workflow_status": {
+            "title": "Workflow Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "trade_plan_id",
+          "plan_kind",
+          "workflow_status",
+          "runtime_status",
+          "runtime_freshness",
+          "route_tag",
+          "suggested_route_name",
+          "reason",
+          "goods"
+        ],
+        "title": "TradeNetworkPlanEvidenceView",
+        "type": "object"
+      },
+      "TradeNetworkResponse": {
+        "properties": {
+          "campaign_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Campaign Id"
+          },
+          "capabilities": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "title": "Capabilities",
+            "type": "object"
+          },
+          "catalog": {
+            "additionalProperties": true,
+            "title": "Catalog",
+            "type": "object"
+          },
+          "evidence_notice": {
+            "title": "Evidence Notice",
+            "type": "string"
+          },
+          "graphs": {
+            "$ref": "#/components/schemas/TradeNetworkGraphsView"
+          },
+          "meta": {
+            "additionalProperties": true,
+            "title": "Meta",
+            "type": "object"
+          },
+          "unmapped_routes": {
+            "items": {
+              "$ref": "#/components/schemas/ActiveTradeRouteView"
+            },
+            "title": "Unmapped Routes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "meta",
+          "catalog",
+          "campaign_id",
+          "graphs",
+          "unmapped_routes",
+          "capabilities",
+          "evidence_notice"
+        ],
+        "title": "TradeNetworkResponse",
+        "type": "object"
+      },
       "TradeOpportunitiesResponse": {
         "properties": {
           "catalog": {
@@ -1285,14 +2103,35 @@
             "title": "Evidence",
             "type": "object"
           },
+          "expected_round_trip_minutes": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Round Trip Minutes"
+          },
           "goods": {
             "items": {
               "$ref": "#/components/schemas/TradePlanGoodWrite"
             },
-            "maxItems": 16,
+            "maxItems": 113,
             "minItems": 1,
             "title": "Goods",
             "type": "array"
+          },
+          "plan_kind": {
+            "default": "emergency_transfer",
+            "enum": [
+              "emergency_transfer",
+              "recurring_supply"
+            ],
+            "title": "Plan Kind",
+            "type": "string"
           },
           "reason": {
             "anyOf": [
@@ -1309,6 +2148,18 @@
           "source_area_pk": {
             "title": "Source Area Pk",
             "type": "integer"
+          },
+          "usable_ship_capacity": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Usable Ship Capacity"
           }
         },
         "required": [
@@ -1340,20 +2191,64 @@
       },
       "TradePlanPatch": {
         "properties": {
-          "status": {
-            "enum": [
-              "planned",
-              "implemented_unverified",
-              "completed",
-              "dismissed"
+          "expected_round_trip_minutes": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
             ],
-            "title": "Status",
-            "type": "string"
+            "title": "Expected Round Trip Minutes"
+          },
+          "plan_kind": {
+            "anyOf": [
+              {
+                "enum": [
+                  "emergency_transfer",
+                  "recurring_supply"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan Kind"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "planned",
+                  "implemented",
+                  "implemented_unverified",
+                  "completed",
+                  "dismissed"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "usable_ship_capacity": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Usable Ship Capacity"
           }
         },
-        "required": [
-          "status"
-        ],
         "title": "TradePlanPatch",
         "type": "object"
       },
@@ -1375,10 +2270,32 @@
             "title": "Destination Area Pk",
             "type": "integer"
           },
+          "estimated_required_ships": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estimated Required Ships"
+          },
           "evidence": {
             "additionalProperties": true,
             "title": "Evidence",
             "type": "object"
+          },
+          "expected_round_trip_minutes": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Round Trip Minutes"
           },
           "goods": {
             "items": {
@@ -1387,6 +2304,29 @@
             },
             "title": "Goods",
             "type": "array"
+          },
+          "goods_verification": {
+            "title": "Goods Verification",
+            "type": "string"
+          },
+          "last_runtime_match_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Runtime Match At"
+          },
+          "plan_kind": {
+            "enum": [
+              "emergency_transfer",
+              "recurring_supply"
+            ],
+            "title": "Plan Kind",
+            "type": "string"
           },
           "reason": {
             "anyOf": [
@@ -1398,6 +2338,18 @@
               }
             ],
             "title": "Reason"
+          },
+          "route_tag": {
+            "title": "Route Tag",
+            "type": "string"
+          },
+          "runtime_freshness": {
+            "title": "Runtime Freshness",
+            "type": "string"
+          },
+          "runtime_status": {
+            "title": "Runtime Status",
+            "type": "string"
           },
           "source_area_name": {
             "title": "Source Area Name",
@@ -1411,6 +2363,10 @@
             "title": "Status",
             "type": "string"
           },
+          "suggested_route_name": {
+            "title": "Suggested Route Name",
+            "type": "string"
+          },
           "trade_plan_id": {
             "title": "Trade Plan Id",
             "type": "string"
@@ -1418,6 +2374,17 @@
           "updated_at": {
             "title": "Updated At",
             "type": "string"
+          },
+          "usable_ship_capacity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Usable Ship Capacity"
           }
         },
         "required": [
@@ -1428,6 +2395,16 @@
           "destination_area_pk",
           "destination_area_name",
           "status",
+          "plan_kind",
+          "route_tag",
+          "suggested_route_name",
+          "usable_ship_capacity",
+          "expected_round_trip_minutes",
+          "estimated_required_ships",
+          "runtime_status",
+          "runtime_freshness",
+          "goods_verification",
+          "last_runtime_match_at",
           "reason",
           "evidence",
           "goods",
@@ -1510,7 +2487,7 @@
   "info": {
     "description": "Observed Anno 117 economy telemetry and deterministic management analytics.",
     "title": "Anno Companion Data API",
-    "version": "1.1.0"
+    "version": "1.2.0"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -2625,6 +3602,55 @@
         ]
       }
     },
+    "/api/v1/trade/network": {
+      "get": {
+        "operationId": "trade_network_api_v1_trade_network_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "campaign_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Campaign Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TradeNetworkResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Trade Network",
+        "tags": [
+          "management"
+        ]
+      }
+    },
     "/api/v1/trade/opportunities": {
       "get": {
         "operationId": "opportunities_api_v1_trade_opportunities_get",
@@ -2669,6 +3695,132 @@
           }
         },
         "summary": "Opportunities",
+        "tags": [
+          "management"
+        ]
+      }
+    },
+    "/api/v1/trade/route-links": {
+      "post": {
+        "operationId": "create_route_link_api_v1_trade_route_links_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RouteLinkWrite"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteLinkView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Route Link",
+        "tags": [
+          "management"
+        ]
+      }
+    },
+    "/api/v1/trade/route-links/{link_id}": {
+      "delete": {
+        "operationId": "delete_route_link_api_v1_trade_route_links__link_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "link_id",
+            "required": true,
+            "schema": {
+              "title": "Link Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Route Link",
+        "tags": [
+          "management"
+        ]
+      },
+      "patch": {
+        "operationId": "patch_route_link_api_v1_trade_route_links__link_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "link_id",
+            "required": true,
+            "schema": {
+              "title": "Link Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RouteLinkPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteLinkView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Patch Route Link",
         "tags": [
           "management"
         ]

@@ -365,6 +365,23 @@ export interface paths {
         patch: operations["patch_trade_plan_api_v1_trade_plans__trade_plan_id__patch"];
         trace?: never;
     };
+    "/api/v1/trade/network": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Trade Network */
+        get: operations["trade_network_api_v1_trade_network_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/trade/opportunities": {
         parameters: {
             query?: never;
@@ -380,6 +397,41 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/trade/route-links": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Route Link */
+        post: operations["create_route_link_api_v1_trade_route_links_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/trade/route-links/{link_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Route Link */
+        delete: operations["delete_route_link_api_v1_trade_route_links__link_id__delete"];
+        options?: never;
+        head?: never;
+        /** Patch Route Link */
+        patch: operations["patch_route_link_api_v1_trade_route_links__link_id__patch"];
         trace?: never;
     };
     "/api/v1/trade/routes": {
@@ -523,6 +575,8 @@ export interface components {
              * @enum {string}
              */
             evidence_kind: "assigned_ships" | "issue_only";
+            /** Freshness */
+            freshness?: ("live" | "stale" | "historical") | null;
             /** Freshness Seconds */
             freshness_seconds: number | null;
             /** Game Session Guid */
@@ -548,6 +602,10 @@ export interface components {
             region_guid: string | null;
             /** Regular Ship Count */
             regular_ship_count: number | null;
+            /** Relink Suggestions */
+            relink_suggestions?: {
+                [key: string]: unknown;
+            }[];
             /** Route Key */
             route_key: string;
             /** Route Name */
@@ -837,6 +895,263 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        /** RouteLinkPatch */
+        RouteLinkPatch: {
+            /** Destination Area Pk */
+            destination_area_pk?: number | null;
+            /** Route Key */
+            route_key?: string | null;
+            /** Source Area Pk */
+            source_area_pk?: number | null;
+            /** Trade Plan Id */
+            trade_plan_id?: string | null;
+        };
+        /** RouteLinkView */
+        RouteLinkView: {
+            /** Campaign Id */
+            campaign_id: string;
+            /** Destination Area Name */
+            destination_area_name: string;
+            /** Destination Area Pk */
+            destination_area_pk: number;
+            /** First Seen At */
+            first_seen_at: string;
+            /** Last Seen At */
+            last_seen_at: string;
+            /** Link Id */
+            link_id: string;
+            /**
+             * Link Method
+             * @enum {string}
+             */
+            link_method: "tag" | "manual";
+            /** Route Key */
+            route_key: string;
+            /** Route Name */
+            route_name: string;
+            /** Ship Ids */
+            ship_ids: string[];
+            /** Source Area Name */
+            source_area_name: string;
+            /** Source Area Pk */
+            source_area_pk: number;
+            /** Trade Plan Id */
+            trade_plan_id: string | null;
+            /** Updated At */
+            updated_at: string;
+        };
+        /** RouteLinkWrite */
+        RouteLinkWrite: {
+            /** Campaign Id */
+            campaign_id?: string | null;
+            /** Destination Area Pk */
+            destination_area_pk: number;
+            /** Route Key */
+            route_key: string;
+            /** Source Area Pk */
+            source_area_pk: number;
+            /** Trade Plan Id */
+            trade_plan_id?: string | null;
+        };
+        /** TradeNetworkEdgeSummaryView */
+        TradeNetworkEdgeSummaryView: {
+            /** Goods */
+            goods: number;
+            /** Plans */
+            plans: number;
+            /** Routes */
+            routes: number;
+            /** Ships */
+            ships: number;
+        };
+        /** TradeNetworkEdgeView */
+        TradeNetworkEdgeView: {
+            /** Actions */
+            actions: {
+                [key: string]: unknown;
+            }[];
+            /** Cargo Aboard */
+            cargo_aboard: components["schemas"]["TradeNetworkGoodEvidenceView"][];
+            /** Configured Goods */
+            configured_goods: components["schemas"]["TradeNetworkGoodEvidenceView"][];
+            /** Destination Area Name */
+            destination_area_name: string;
+            /** Destination Area Pk */
+            destination_area_pk: number;
+            /** Edge Id */
+            edge_id: string;
+            /** Endpoint Evidence */
+            endpoint_evidence: components["schemas"]["TradeNetworkEndpointEvidenceView"][];
+            /**
+             * Freshness
+             * @enum {string}
+             */
+            freshness: "live" | "stale" | "historical";
+            /**
+             * Goods Verification
+             * @enum {string}
+             */
+            goods_verification: "planned_only" | "configured" | "unavailable";
+            /** Issues */
+            issues: {
+                [key: string]: unknown;
+            }[];
+            /** Planned Goods */
+            planned_goods: components["schemas"]["TradeNetworkGoodEvidenceView"][];
+            /** Plans */
+            plans: components["schemas"]["TradeNetworkPlanEvidenceView"][];
+            /** Routes */
+            routes: components["schemas"]["ActiveTradeRouteView"][];
+            /**
+             * Scope
+             * @enum {string}
+             */
+            scope: "latium" | "albion" | "cross_region" | "unknown";
+            /**
+             * Severity
+             * @enum {string}
+             */
+            severity: "critical" | "warning" | "stable";
+            /** Ships */
+            ships: components["schemas"]["ActiveTradeRouteShipView"][];
+            /** Source Area Name */
+            source_area_name: string;
+            /** Source Area Pk */
+            source_area_pk: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "running" | "partially_paused" | "paused" | "issue" | "planned" | "inactive" | "historical" | "unknown";
+            summary: components["schemas"]["TradeNetworkEdgeSummaryView"];
+        };
+        /** TradeNetworkEndpointEvidenceView */
+        TradeNetworkEndpointEvidenceView: {
+            /** Kind */
+            kind: string;
+            /** Link Id */
+            link_id?: string | null;
+            /** Trade Plan Id */
+            trade_plan_id?: string | null;
+        };
+        /** TradeNetworkGoodEvidenceView */
+        TradeNetworkGoodEvidenceView: {
+            /** Amount */
+            amount: number | null;
+            /** Area Id */
+            area_id?: string | null;
+            /** Evidence Kind */
+            evidence_kind: string;
+            /** Observed At */
+            observed_at?: string | null;
+            /** Product Guid */
+            product_guid: string;
+            /** Product Name */
+            product_name: string | null;
+            /** Ship Id */
+            ship_id?: string | null;
+            /** Stop Ordinal */
+            stop_ordinal?: number | null;
+            /** Trade Plan Id */
+            trade_plan_id?: string | null;
+        };
+        /** TradeNetworkGraphView */
+        TradeNetworkGraphView: {
+            /** Edges */
+            edges: components["schemas"]["TradeNetworkEdgeView"][];
+            /** Nodes */
+            nodes: components["schemas"]["TradeNetworkNodeView"][];
+        };
+        /** TradeNetworkGraphsView */
+        TradeNetworkGraphsView: {
+            albion: components["schemas"]["TradeNetworkGraphView"];
+            cross_region: components["schemas"]["TradeNetworkGraphView"];
+            latium: components["schemas"]["TradeNetworkGraphView"];
+        };
+        /** TradeNetworkNodeView */
+        TradeNetworkNodeView: {
+            /** Area Name */
+            area_name: string;
+            /** Area Pk */
+            area_pk: number;
+            /** Important Goods */
+            important_goods: {
+                [key: string]: unknown;
+            }[];
+            /** Node Id */
+            node_id: string;
+            /** Paused Route Count */
+            paused_route_count: number;
+            /** Planned Route Count */
+            planned_route_count: number;
+            /** Pressure Count */
+            pressure_count: number;
+            /** Pressure Signals */
+            pressure_signals: {
+                [key: string]: unknown;
+            }[];
+            /** Region */
+            region: ("latium" | "albion") | null;
+            /** Route Issue Count */
+            route_issue_count: number;
+            /** Running Route Count */
+            running_route_count: number;
+            /**
+             * Severity
+             * @enum {string}
+             */
+            severity: "critical" | "warning" | "stable";
+            /** Stock Health */
+            stock_health: {
+                [key: string]: unknown;
+            };
+        };
+        /** TradeNetworkPlanEvidenceView */
+        TradeNetworkPlanEvidenceView: {
+            /** Goods */
+            goods: components["schemas"]["TradeNetworkGoodEvidenceView"][];
+            /**
+             * Plan Kind
+             * @enum {string}
+             */
+            plan_kind: "emergency_transfer" | "recurring_supply";
+            /** Reason */
+            reason: string | null;
+            /** Route Tag */
+            route_tag: string | null;
+            /** Runtime Freshness */
+            runtime_freshness: string;
+            /** Runtime Status */
+            runtime_status: string;
+            /** Suggested Route Name */
+            suggested_route_name: string | null;
+            /** Trade Plan Id */
+            trade_plan_id: string;
+            /** Workflow Status */
+            workflow_status: string;
+        };
+        /** TradeNetworkResponse */
+        TradeNetworkResponse: {
+            /** Campaign Id */
+            campaign_id: string | null;
+            /** Capabilities */
+            capabilities: {
+                [key: string]: boolean;
+            };
+            /** Catalog */
+            catalog: {
+                [key: string]: unknown;
+            };
+            /** Evidence Notice */
+            evidence_notice: string;
+            graphs: components["schemas"]["TradeNetworkGraphsView"];
+            /** Meta */
+            meta: {
+                [key: string]: unknown;
+            };
+            /** Unmapped Routes */
+            unmapped_routes: components["schemas"]["ActiveTradeRouteView"][];
+        };
         /** TradeOpportunitiesResponse */
         TradeOpportunitiesResponse: {
             /** Catalog */
@@ -868,12 +1183,22 @@ export interface components {
             evidence?: {
                 [key: string]: unknown;
             };
+            /** Expected Round Trip Minutes */
+            expected_round_trip_minutes?: number | null;
             /** Goods */
             goods: components["schemas"]["TradePlanGoodWrite"][];
+            /**
+             * Plan Kind
+             * @default emergency_transfer
+             * @enum {string}
+             */
+            plan_kind: "emergency_transfer" | "recurring_supply";
             /** Reason */
             reason?: string | null;
             /** Source Area Pk */
             source_area_pk: number;
+            /** Usable Ship Capacity */
+            usable_ship_capacity?: number | null;
         };
         /** TradePlanGoodWrite */
         TradePlanGoodWrite: {
@@ -884,11 +1209,14 @@ export interface components {
         };
         /** TradePlanPatch */
         TradePlanPatch: {
-            /**
-             * Status
-             * @enum {string}
-             */
-            status: "planned" | "implemented_unverified" | "completed" | "dismissed";
+            /** Expected Round Trip Minutes */
+            expected_round_trip_minutes?: number | null;
+            /** Plan Kind */
+            plan_kind?: ("emergency_transfer" | "recurring_supply") | null;
+            /** Status */
+            status?: ("planned" | "implemented" | "implemented_unverified" | "completed" | "dismissed") | null;
+            /** Usable Ship Capacity */
+            usable_ship_capacity?: number | null;
         };
         /** TradePlanView */
         TradePlanView: {
@@ -900,26 +1228,49 @@ export interface components {
             destination_area_name: string;
             /** Destination Area Pk */
             destination_area_pk: number;
+            /** Estimated Required Ships */
+            estimated_required_ships: number | null;
             /** Evidence */
             evidence: {
                 [key: string]: unknown;
             };
+            /** Expected Round Trip Minutes */
+            expected_round_trip_minutes: number | null;
             /** Goods */
             goods: {
                 [key: string]: unknown;
             }[];
+            /** Goods Verification */
+            goods_verification: string;
+            /** Last Runtime Match At */
+            last_runtime_match_at: string | null;
+            /**
+             * Plan Kind
+             * @enum {string}
+             */
+            plan_kind: "emergency_transfer" | "recurring_supply";
             /** Reason */
             reason: string | null;
+            /** Route Tag */
+            route_tag: string;
+            /** Runtime Freshness */
+            runtime_freshness: string;
+            /** Runtime Status */
+            runtime_status: string;
             /** Source Area Name */
             source_area_name: string;
             /** Source Area Pk */
             source_area_pk: number;
             /** Status */
             status: string;
+            /** Suggested Route Name */
+            suggested_route_name: string;
             /** Trade Plan Id */
             trade_plan_id: string;
             /** Updated At */
             updated_at: string;
+            /** Usable Ship Capacity */
+            usable_ship_capacity: number | null;
         };
         /** TradePlansResponse */
         TradePlansResponse: {
@@ -1727,6 +2078,37 @@ export interface operations {
             };
         };
     };
+    trade_network_api_v1_trade_network_get: {
+        parameters: {
+            query?: {
+                campaign_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TradeNetworkResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     opportunities_api_v1_trade_opportunities_get: {
         parameters: {
             query?: {
@@ -1745,6 +2127,103 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TradeOpportunitiesResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_route_link_api_v1_trade_route_links_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RouteLinkWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RouteLinkView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_route_link_api_v1_trade_route_links__link_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                link_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patch_route_link_api_v1_trade_route_links__link_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                link_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RouteLinkPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RouteLinkView"];
                 };
             };
             /** @description Validation Error */

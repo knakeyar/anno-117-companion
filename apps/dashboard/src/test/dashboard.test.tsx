@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { App } from '../App'
 import { inventory, overview } from './fixtures'
@@ -10,23 +10,27 @@ describe('first-class management dashboard', () => {
     renderApp(<App />)
     expect(await screen.findByRole('heading', { name: 'Decide what to fix next.' })).toBeInTheDocument()
     expect(screen.getByText('Move Timber from observed surplus.')).toBeInTheDocument()
-    expect(screen.getByRole('region', { name: /Latium city map/i })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: /Latium trade network/i })).toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: /Ask advisor/i }).length).toBeGreaterThan(0)
     expect(screen.queryByText(/measured production rate/i)).not.toBeInTheDocument()
   })
 
-  it('keeps cities visible with schematic markers when coordinate telemetry is unavailable', async () => {
-    const fixtures = await import('./fixtures')
-    const areas = fixtures.apiFixtures['/api/v1/areas'] as { items: Array<Record<string, unknown>> }
-    installFetchMock({
-      '/api/v1/areas': {
-        ...areas,
-        items: areas.items.map((area) => ({ ...area, position: null, position_source: null, manual_placement: false, location_status: 'not_observed' })),
-      },
-    })
-    renderApp(<App />)
-    expect(await screen.findByRole('link', { name: /Juliana, .*schematic position/i })).toBeInTheDocument()
-    expect(screen.getByText(/schematic placement/i)).toBeInTheDocument()
+  it('keeps isolated cities visible without geographic coordinates or routes', async () => {
+    installFetchMock()
+    renderApp(<App />, '/areas')
+    expect(await screen.findByRole('region', { name: /Albion trade network/i })).toBeInTheDocument()
+    expect(screen.getAllByText('Cudslip').length).toBeGreaterThan(0)
+    expect(screen.getByText(/Endpoints require a companion plan/i)).toBeInTheDocument()
+  })
+
+  it('opens city evidence with important goods and stock-derived pressure', async () => {
+    installFetchMock()
+    renderApp(<App />, '/areas')
+    const cityNodes = await screen.findAllByLabelText(/Naissus, critical, 1 economic pressures/i)
+    fireEvent.click(cityNodes[0])
+    expect(screen.getByRole('dialog', { name: /City evidence for Naissus/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Important goods' })).toBeInTheDocument()
+    expect(screen.getByText(/Stock is below the management target/i)).toBeInTheDocument()
   })
 
   it('makes stale telemetry explicit without turning observations into zero', async () => {
@@ -43,10 +47,10 @@ describe('first-class management dashboard', () => {
     const fetchMock = installFetchMock()
     renderApp(<App />, '/trade')
     expect(await screen.findByRole('heading', { name: 'Turn shortages into route plans.' })).toBeInTheDocument()
-    expect(screen.getByText(/route feasibility unknown/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/route feasibility unknown/i).length).toBeGreaterThan(0)
     await userEvent.click(screen.getByRole('button', { name: /Explain plan/i }))
     expect(screen.getByText('What saving this plan means')).toBeInTheDocument()
-    expect(screen.getByText(/Minimum ship estimate/i)).toBeInTheDocument()
+    expect(screen.getByText(/Capacity loads/i)).toBeInTheDocument()
     expect(screen.getByText(/planning assumption only/i)).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: /Save plan/i }))
     await waitFor(() => expect(fetchMock.mock.calls.some(([input, init]) => {
@@ -56,17 +60,20 @@ describe('first-class management dashboard', () => {
     })).toBe(true))
   })
 
-  it('lists ship-backed active routes separately from route suggestions', async () => {
+  it('opens a mapped trade edge with route, ship, and goods evidence', async () => {
     installFetchMock()
     renderApp(<App />, '/trade')
-    expect(await screen.findByRole('heading', { name: 'Known active routes' })).toBeInTheDocument()
-    expect(screen.getByText('Olives Rav - Jul')).toBeInTheDocument()
-    expect(screen.getByText(/2 assigned ships · 1 paused/i)).toBeInTheDocument()
-    await userEvent.click(screen.getByText(/Show 2 observed ships/i))
-    expect(screen.getByText('Mercury')).toBeInTheDocument()
+    expect(await screen.findByText('Trade network')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'List' }))
+    await userEvent.click(screen.getByRole('button', { name: /Juliana.*Naissus/i }))
+    expect(screen.getByRole('dialog', { name: /Trade evidence for Juliana to Naissus/i })).toBeInTheDocument()
+    expect(screen.getAllByText('AC-7K2P Jul-Nai').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Mercury').length).toBeGreaterThan(0)
     expect(screen.getByText('Ship 8122')).toBeInTheDocument()
     expect(screen.getByText(/ID 8121/)).toBeInTheDocument()
-    expect(screen.getByText(/Stops, configured goods, and ship cargo are not exposed/i)).toBeInTheDocument()
+    expect(screen.getByText(/Not exposed by validated telemetry/i)).toBeInTheDocument()
+    expect(screen.getByText(/tested ship cargo binding returned invalid weak references/i)).toBeInTheDocument()
+    expect(screen.getByText(/12 target/i)).toBeInTheDocument()
   })
 
   it('shows factory presence and pressure by city', async () => {

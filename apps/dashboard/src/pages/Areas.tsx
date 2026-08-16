@@ -5,12 +5,12 @@ import * as echarts from 'echarts/core'
 import { LineChart } from 'echarts/charts'
 import { GridComponent, TooltipComponent } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
-import { ArrowRight, Boxes, CircleDollarSign, Crown, Hammer, MapPinned, Pencil, Pickaxe, Scale, Search, UsersRound, Warehouse, Waves, Wheat } from 'lucide-react'
+import { ArrowRight, Boxes, CircleDollarSign, Crown, Hammer, MapPinned, Pickaxe, Scale, Search, UsersRound, Warehouse, Waves, Wheat } from 'lucide-react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { useAreas, useChains, useCompanionMutations, useFinance, useHistory, useInventory, useWorkforce } from '../api'
+import { useAreas, useChains, useCompanionMutations, useFinance, useHistory, useInventory, useTradeNetwork, useTradePlans, useWorkforce } from '../api'
 import { EmptyState, ErrorState, FillBar, FreshnessBanner, LoadingState, MetricCard, PageHeader, SectionHeader } from '../components/Common'
 import { PolicyEditor } from '../components/PolicyEditor'
-import { areaRegion, RegionMap } from '../components/RegionMap'
+import { TradeNetworkCards } from '../components/TradeNetworkGraph'
 import type { InventoryItem, ProductionChain } from '../types'
 import { formatMoney, formatNumber, formatRate } from '../utils'
 
@@ -138,19 +138,18 @@ export function AreasPage() {
   const areas = useAreas()
   const inventory = useInventory()
   const mutations = useCompanionMutations()
-  const [editingMap, setEditingMap] = useState(false)
-  if (areas.isLoading || inventory.isLoading) return <LoadingState label="Mapping controlled islands…" />
-  const error = areas.error || inventory.error
-  if (error) return <ErrorState error={error} retry={() => { void areas.refetch(); void inventory.refetch() }} />
-  if (!areas.data || !inventory.data) return null
+  const network = useTradeNetwork()
+  const plans = useTradePlans()
+  if (areas.isLoading || inventory.isLoading || network.isLoading || plans.isLoading) return <LoadingState label="Building the trade network…" />
+  const error = areas.error || inventory.error || network.error || plans.error
+  if (error) return <ErrorState error={error} retry={() => { void areas.refetch(); void inventory.refetch(); void network.refetch(); void plans.refetch() }} />
+  if (!areas.data || !inventory.data || !network.data || !plans.data) return null
   return (
     <div className="page">
-      <PageHeader eyebrow="Controlled areas" title="Your cities stay on the map." description="Latium and Albion remain populated from persisted campaign identity even when Anno is inactive." actions={<button className={`button ${editingMap ? 'primary' : 'ghost'}`} onClick={() => setEditingMap((value) => !value)}><Pencil size={14} /> {editingMap ? 'Finish placement' : 'Edit placement'}</button>} />
+      <PageHeader eyebrow="Controlled areas" title="Your cities form a trade network." description="Latium, Albion, and cross-region relationships remain available from persisted campaign evidence when Anno is inactive." />
       <FreshnessBanner meta={inventory.data.meta} />
-      {areas.data.items.length ? <div className="regional-map-grid">
-        {(['latium', 'albion'] as const).map((region) => <RegionMap key={region} region={region} areas={areas.data!.items.filter((item) => areaRegion(item) === region || (editingMap && areaRegion(item) === null))} signals={inventory.data!.signals} editable={editingMap} onPosition={(areaPk, regionGuid, x, y) => mutations.mapPosition.mutate({ areaPk, region_guid: regionGuid, x, y })} />)}
-      </div> : null}
-      {areas.data.items.some((item) => areaRegion(item) === null) && !editingMap && <div className="notice warning"><MapPinned size={18} /><div><strong>Some cities are unplaced</strong><span>Use Edit placement to assign cities whose runtime coordinate or region binding was not observed.</span></div></div>}
+      {areas.data.items.length ? <TradeNetworkCards network={network.data} areas={areas.data.items} plans={plans.data.items} onLink={(body) => mutations.linkTradeRoute.mutate(body)} onUnlink={(linkId) => mutations.unlinkTradeRoute.mutate(linkId)} onRelink={(linkId, routeKey) => mutations.relinkTradeRoute.mutate({ linkId, routeKey })} /> : null}
+      {network.data.graphs.latium.nodes.length + network.data.graphs.albion.nodes.length < areas.data.items.length && <div className="notice warning"><MapPinned size={18} /><div><strong>Some cities have no confirmed region</strong><span>They remain in the city list but cannot enter a regional graph until telemetry identifies Latium or Albion.</span></div></div>}
       {areas.data.items.length ? <div className="area-card-grid">
         {areas.data.items.map((area) => {
           const items = inventory.data.items.filter((item) => item.area_pk === area.area_pk)

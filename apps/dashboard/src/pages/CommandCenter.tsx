@@ -1,23 +1,23 @@
 import { AlertTriangle, ArrowRight, Banknote, Bot, Check, Clock3, Route, TrendingDown } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { useAreas, useCompanionMutations, useFinanceHistory, useOverview } from '../api'
+import { useAreas, useCompanionMutations, useFinanceHistory, useOverview, useTradeNetwork, useTradePlans } from '../api'
 import { CatalogBadge, EmptyState, ErrorState, FreshnessBanner, LoadingState, PageHeader, SectionHeader } from '../components/Common'
-import { areaRegion, RegionMap } from '../components/RegionMap'
+import { TradeNetworkCards } from '../components/TradeNetworkGraph'
 import { formatMoney, formatNumber } from '../utils'
 
 export function CommandCenterPage() {
   const overview = useOverview()
   const areas = useAreas()
   const history = useFinanceHistory()
+  const network = useTradeNetwork()
+  const plans = useTradePlans()
   const mutations = useCompanionMutations()
-  if (overview.isLoading || areas.isLoading) return <LoadingState />
-  const error = overview.error || areas.error
-  if (error) return <ErrorState error={error} retry={() => { void overview.refetch(); void areas.refetch() }} />
-  if (!overview.data || !areas.data) return null
+  if (overview.isLoading || areas.isLoading || network.isLoading || plans.isLoading) return <LoadingState />
+  const error = overview.error || areas.error || network.error || plans.error
+  if (error) return <ErrorState error={error} retry={() => { void overview.refetch(); void areas.refetch(); void network.refetch(); void plans.refetch() }} />
+  if (!overview.data || !areas.data || !network.data || !plans.data) return null
   const data = overview.data
   const critical = data.actions.filter((item) => item.severity === 'critical').length
-  const latium = areas.data.items.filter((item) => areaRegion(item) === 'latium')
-  const albion = areas.data.items.filter((item) => areaRegion(item) === 'albion')
   const treasuryPoints = history.data?.items.filter((item) => item.treasury != null) ?? []
   const treasuryMin = Math.min(...treasuryPoints.map((item) => item.treasury!), 0)
   const treasuryMax = Math.max(...treasuryPoints.map((item) => item.treasury!), 1)
@@ -32,10 +32,7 @@ export function CommandCenterPage() {
       <Link to="/trade" className={`metric-card ${data.suggested_routes.length ? 'warning' : ''}`}><span className="metric-label"><Route size={16} /> Suggested routes</span><strong className="metric-value">{data.suggested_routes.length}</strong><small className="metric-supporting">Grouped plans · feasibility unknown</small></Link>
     </section>
 
-    <div className="command-map-grid">
-      <RegionMap compact region="latium" areas={latium} signals={data.signals} />
-      <RegionMap compact region="albion" areas={albion} signals={data.signals} />
-    </div>
+    <TradeNetworkCards compact network={network.data} areas={areas.data.items} plans={plans.data.items} onLink={(body) => mutations.linkTradeRoute.mutate(body)} onUnlink={(linkId) => mutations.unlinkTradeRoute.mutate(linkId)} onRelink={(linkId, routeKey) => mutations.relinkTradeRoute.mutate({ linkId, routeKey })} />
 
     <div className="command-grid" id="actions">
       <section className="panel span-two"><SectionHeader title="Top economic actions" description="Deterministic, evidence-backed work ranked before any AI call." action={<Link className="text-link" to="/trade">Open trade plans <ArrowRight size={14} /></Link>} />

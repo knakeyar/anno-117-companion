@@ -1,6 +1,6 @@
 {
   "Anno": 8,
-  "Version": "0.4.1",
+  "Version": "0.5.0",
   "ModID": "anno-companion-telemetry-probe-local",
   "Difficulty": "unchanged",
   "Category": {
@@ -10,7 +10,7 @@
     "English": "Anno Companion Telemetry Probe"
   },
   "Description": {
-    "English": "Read-only focused scope probe for Anno 117. Validates island layout, Kontor positions, and per-area building counts."
+    "English": "Read-only focused route probe for Anno 117. Tests route editor evidence, ship positions, and alternative cargo surfaces."
   },
   "CreatorName": "Local research",
   "GameSetup": {

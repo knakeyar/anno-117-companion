@@ -1,7 +1,7 @@
 local Probe = {}
 local json = require("json")
 
-local VERSION = "0.4.1"
+local VERSION = "0.5.0"
 local EVENT_GROUP = "anno-companion-telemetry-probe"
 
 local CONFIG = {
@@ -10,7 +10,7 @@ local CONFIG = {
     sample_interval_ms = 10000,
     watchdog_interval_ms = 12000,
     event_min_spacing_ms = 8000,
-    max_samples_per_load = 24,
+    max_samples_per_load = 36,
     product_guids = { 2174, 2176, 2178 },
     building_guids = { 2955, 2962, 2963 },
     history_indices = { 0, 1, 2, 3 },
@@ -19,6 +19,8 @@ local CONFIG = {
         workforces = 16,
         trade_offers = 32,
         islands = 64,
+        ships = 64,
+        cargo_entries = 64,
     },
 }
 
@@ -884,6 +886,154 @@ local function build_runtime_capabilities()
     return true, result
 end
 
+local function capture_vector2(object, field_name)
+    local result = { status = "not_observed" }
+    local position_ok, position, position_error = safe_get(object, field_name)
+    if not position_ok or position == nil then
+        result.error = tostring(position_error or (field_name .. " unavailable"))
+        return result
+    end
+    local x_ok, x, x_error = safe_get(position, "x")
+    local y_ok, y, y_error = safe_get(position, "y")
+    if x_ok and y_ok and type(x) == "number" and type(y) == "number" then
+        result.status = "success"
+        result.x = safe_value(x)
+        result.y = safe_value(y)
+    else
+        result.error = tostring(x_error or y_error or "position axes were unreadable or non-numeric")
+    end
+    return result
+end
+
+local function capture_alternative_cargo_surface(ship)
+    local result = {
+        status = "not_observed",
+        surface = "CGameObject.ItemContainer.Cargo",
+        semantic_status = "unvalidated_candidate",
+        items = {},
+        note = "This surface may contain equipped items rather than product cargo; never promote it without runtime proof.",
+    }
+    local container_ok, container, container_error = safe_get(ship, "ItemContainer")
+    if not container_ok or container == nil then
+        result.error = tostring(container_error or "ItemContainer unavailable")
+        return result
+    end
+    local cargo_ok, cargo, cargo_error = safe_get(container, "Cargo")
+    if not cargo_ok or cargo == nil then
+        result.error = tostring(cargo_error or "ItemContainer.Cargo unavailable")
+        return result
+    end
+    local collection, collection_error = read_collection(cargo, CONFIG.limits.cargo_entries)
+    if collection == nil then
+        result.error = tostring(collection_error)
+        return result
+    end
+    result.status = "observed_candidate"
+    result.reported_count = collection.reported_count
+    result.captured_count = collection.captured_count
+    result.truncated = collection.truncated
+    for index, cargo_entry in ipairs(collection.items) do
+        local item = capture_fields(cargo_entry, { "Guid", "Text", "Value", "ValueAsFloat", "Icon" })
+        item.ordinal = index
+        result.items[#result.items + 1] = item
+    end
+    return result
+end
+
+local function build_route_capabilities()
+    local result = {
+        session_guid = safe_value(capture_fields(GameSession, { "SessionGUID" }).SessionGUID),
+        region_guid = safe_value(capture_fields(GameSession, { "RegionGUID" }).RegionGUID),
+        ui_edit_route = {
+            status = "not_observed",
+            configured_station_goods = {
+                status = "not_attempted",
+                reason = "No declared station-ID or good-ID enumeration is exposed. The probe will not guess or brute-force opaque IDs.",
+            },
+        },
+        ships = {
+            status = "not_observed",
+            items = {},
+        },
+        known_invalid_surface = {
+            name = "CGameObject.Logistic",
+            status = "not_retested",
+            reason = "The earlier probe returned invalid weak references for every tested ship.",
+        },
+    }
+
+    local edit_ok, edit_route, edit_error = safe_get(TradeRoute, "UIEditRoute")
+    if edit_ok and edit_route ~= nil then
+        local route = capture_fields(edit_route, {
+            "Name", "NotEnoughStationsActive", "NoGoodsActive", "NoShipsActive",
+            "AllShipsPausedActive", "ActiveErrorCount",
+        })
+        local valid_ok, valid_or_error = pcall(function() return edit_route:isValid() end)
+        route.status = valid_ok and valid_or_error and "success" or "not_observed"
+        route.is_valid = valid_ok and safe_value(valid_or_error) or nil
+        if not valid_ok then route.validity_error = tostring(valid_or_error) end
+        route.configured_station_goods = result.ui_edit_route.configured_station_goods
+        result.ui_edit_route = route
+    else
+        result.ui_edit_route.error = tostring(edit_error or "UIEditRoute unavailable; open a route editor during a sample")
+    end
+
+    local property_ok, property_value, property_error = safe_get(Properties, "TradeRouteVehicle")
+    local participant = capture_fields(Participants, { "GetCurrentParticipantGUID" }).GetCurrentParticipantGUID
+    if not property_ok or property_value == nil then
+        result.ships.error = tostring(property_error or "Properties.TradeRouteVehicle unavailable")
+        return false, result
+    end
+    if participant == nil then
+        result.ships.error = "participant GUID unavailable"
+        return false, result
+    end
+    local objects_ok, objects_or_error = pcall(function()
+        return Scripts:GetObjectGroupByProperty(property_value, participant)
+    end)
+    if not objects_ok or objects_or_error == nil then
+        result.ships.error = tostring(objects_or_error or "route-capable ship enumeration unavailable")
+        return false, result
+    end
+    local collection, collection_error = read_collection(objects_or_error, CONFIG.limits.ships)
+    if collection == nil then
+        result.ships.error = tostring(collection_error)
+        return false, result
+    end
+    result.ships.status = "success"
+    result.ships.reported_count = collection.reported_count
+    result.ships.captured_count = collection.captured_count
+    result.ships.truncated = collection.truncated
+    result.ships.assigned_count = 0
+    for index, ship in ipairs(collection.items) do
+        local item = capture_fields(ship, { "ID", "GUID", "SessionGuid", "Owner" })
+        item.ordinal = index
+        item.position = capture_vector2(ship, "Position2D")
+        local area_ok, area = safe_get(ship, "Area")
+        if area_ok and area ~= nil then
+            item.area_id = safe_value(capture_fields(area, { "ID" }).ID)
+        end
+        local nameable_ok, nameable = safe_get(ship, "Nameable")
+        if nameable_ok and nameable ~= nil then
+            item.ship_name = safe_value(capture_fields(nameable, { "Name" }).Name)
+        end
+        local vehicle_ok, vehicle, vehicle_error = safe_get(ship, "TradeRouteVehicle")
+        if vehicle_ok and vehicle ~= nil then
+            item.trade_route = capture_fields(vehicle, {
+                "IsAssignedOnTradeRoute", "RouteName", "IsPaused", "OnRegularRoute", "LoadingSpeedFactor",
+            })
+            if item.trade_route.IsAssignedOnTradeRoute == true then
+                result.ships.assigned_count = result.ships.assigned_count + 1
+            end
+        else
+            item.trade_route = { status = "not_observed", error = tostring(vehicle_error or "TradeRouteVehicle unavailable") }
+        end
+        item.alternative_cargo = capture_alternative_cargo_surface(ship)
+        result.ships.items[#result.ships.items + 1] = item
+    end
+    return not collection.truncated, result
+end
+
 function Probe:Complete(reason)
     if state.completed then
         return
@@ -922,65 +1072,17 @@ function Probe:Sample(trigger)
         emit("scope_context", false, nil, context_error, trigger)
     end
 
-    local economy_call_ok, economy_ok, economy = pcall(build_target_economy, target_area)
-    if economy_call_ok then
-        emit("scope_target_economy", economy_ok, economy, nil, trigger)
+    local routes_call_ok, routes_ok, routes = pcall(build_route_capabilities)
+    if routes_call_ok then
+        emit("scope_route_capabilities", routes_ok, routes, nil, trigger)
     else
-        local economy_error = economy_ok
-        economy_ok = false
-        emit("scope_target_economy", false, nil, economy_error, trigger)
-    end
-
-    local statistics_call_ok, statistics_ok, statistics = pcall(build_statistics)
-    if statistics_call_ok then
-        emit("scope_statistics", statistics_ok, statistics, nil, trigger)
-    else
-        local statistics_error = statistics_ok
-        statistics_ok = false
-        emit("scope_statistics", false, nil, statistics_error, trigger)
-    end
-
-    local workforce_call_ok, workforce_ok, workforce = pcall(build_workforce)
-    if workforce_call_ok then
-        emit("scope_workforce", workforce_ok, workforce, nil, trigger)
-    else
-        local workforce_error = workforce_ok
-        workforce_ok = false
-        emit("scope_workforce", false, nil, workforce_error, trigger)
-    end
-
-    local history_call_ok, history_ok, history = pcall(build_history)
-    if history_call_ok then
-        emit("scope_history", history_ok, history, nil, trigger)
-    else
-        local history_error = history_ok
-        history_ok = false
-        emit("scope_history", false, nil, history_error, trigger)
-    end
-
-    local runtime_call_ok, runtime_ok, runtime = pcall(build_runtime_capabilities)
-    if runtime_call_ok then
-        emit("scope_runtime_capabilities", runtime_ok, runtime, nil, trigger)
-    else
-        emit("scope_runtime_capabilities", false, nil, runtime_ok, trigger)
-    end
-
-    local islands_call_ok, islands_ok, islands = pcall(build_island_layout_capabilities)
-    if islands_call_ok then
-        emit("scope_island_layout", islands_ok, islands, nil, trigger)
-    else
-        emit("scope_island_layout", false, nil, islands_ok, trigger)
+        emit("scope_route_capabilities", false, nil, routes_ok, trigger)
     end
 
     state.last_sample_play_time = current_play_time()
     emit("scope_sample_finished", true, {
         context_ok = context_call_ok and context_ok,
-        target_economy_ok = economy_call_ok and economy_ok,
-        statistics_ok = statistics_call_ok and statistics_ok,
-        workforce_ok = workforce_call_ok and workforce_ok,
-        history_ok = history_call_ok and history_ok,
-        runtime_capabilities_ok = runtime_call_ok and runtime_ok,
-        island_layout_ok = islands_call_ok and islands_ok,
+        route_capabilities_ok = routes_call_ok and routes_ok,
     }, nil, trigger)
     state.sampling = false
 

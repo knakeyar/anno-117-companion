@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import math
 import uuid
 from collections.abc import AsyncIterator, Iterator
 from contextlib import asynccontextmanager
@@ -59,9 +60,16 @@ from .models import (
     TelemetryRaw,
     TradePlan,
     TradePlanItem,
+    TradeRouteLink,
     AdvisorConversation,
     AdvisorMessage,
     utcnow,
+)
+from .trade_network import (
+    build_trade_network,
+    new_route_identity,
+    route_link_dict,
+    sync_trade_plan_runtime,
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
@@ -170,13 +178,57 @@ class TradePlanCreate(BaseModel):
     campaign_id: str | None = None
     source_area_pk: int
     destination_area_pk: int
-    goods: list[TradePlanGoodWrite] = Field(min_length=1, max_length=16)
+    goods: list[TradePlanGoodWrite] = Field(min_length=1, max_length=113)
+    plan_kind: Literal["emergency_transfer", "recurring_supply"] = "emergency_transfer"
+    usable_ship_capacity: float | None = Field(default=None, gt=0)
+    expected_round_trip_minutes: float | None = Field(default=None, gt=0)
     reason: str | None = Field(default=None, max_length=1000)
     evidence: dict[str, Any] = Field(default_factory=dict)
 
 
 class TradePlanPatch(BaseModel):
-    status: Literal["planned", "implemented_unverified", "completed", "dismissed"]
+    status: Literal["planned", "implemented", "implemented_unverified", "completed", "dismissed"] | None = None
+    plan_kind: Literal["emergency_transfer", "recurring_supply"] | None = None
+    usable_ship_capacity: float | None = Field(default=None, gt=0)
+    expected_round_trip_minutes: float | None = Field(default=None, gt=0)
+
+    @model_validator(mode="after")
+    def includes_a_change(self) -> "TradePlanPatch":
+        clearable_assumption = bool(
+            self.model_fields_set & {"usable_ship_capacity", "expected_round_trip_minutes"}
+        )
+        if not self.model_fields_set or (
+            self.status is None and self.plan_kind is None and not clearable_assumption
+        ):
+            raise ValueError("at least one trade-plan field is required")
+        return self
+
+
+class RouteLinkWrite(BaseModel):
+    campaign_id: str | None = None
+    route_key: str
+    source_area_pk: int
+    destination_area_pk: int
+    trade_plan_id: str | None = None
+
+
+class RouteLinkPatch(BaseModel):
+    route_key: str | None = None
+    source_area_pk: int | None = None
+    destination_area_pk: int | None = None
+    trade_plan_id: str | None = None
+
+    @model_validator(mode="after")
+    def includes_a_change(self) -> "RouteLinkPatch":
+        clears_plan = "trade_plan_id" in self.model_fields_set
+        if not self.model_fields_set or (
+            self.route_key is None
+            and self.source_area_pk is None
+            and self.destination_area_pk is None
+            and not clears_plan
+        ):
+            raise ValueError("at least one route-link field is required")
+        return self
 
 
 class AdvisorMessageWrite(BaseModel):
@@ -214,6 +266,16 @@ class TradePlanView(BaseModel):
     destination_area_pk: int
     destination_area_name: str
     status: str
+    plan_kind: Literal["emergency_transfer", "recurring_supply"]
+    route_tag: str
+    suggested_route_name: str
+    usable_ship_capacity: float | None
+    expected_round_trip_minutes: float | None
+    estimated_required_ships: int | None
+    runtime_status: str
+    runtime_freshness: str
+    goods_verification: str
+    last_runtime_match_at: str | None
     reason: str | None
     evidence: dict[str, Any]
     goods: list[dict[str, Any]]
@@ -224,6 +286,120 @@ class TradePlanView(BaseModel):
 class TradePlansResponse(BaseModel):
     campaign_id: str | None
     items: list[TradePlanView]
+
+
+class RouteLinkView(BaseModel):
+    link_id: str
+    campaign_id: str
+    route_key: str
+    route_name: str
+    ship_ids: list[str]
+    trade_plan_id: str | None
+    source_area_pk: int
+    source_area_name: str
+    destination_area_pk: int
+    destination_area_name: str
+    link_method: Literal["tag", "manual"]
+    first_seen_at: str
+    last_seen_at: str
+    updated_at: str
+
+
+class TradeNetworkGoodEvidenceView(BaseModel):
+    product_guid: str
+    product_name: str | None
+    amount: float | None
+    evidence_kind: str
+    trade_plan_id: str | None = None
+    ship_id: str | None = None
+    area_id: str | None = None
+    stop_ordinal: int | None = None
+    observed_at: str | None = None
+
+
+class TradeNetworkPlanEvidenceView(BaseModel):
+    trade_plan_id: str
+    plan_kind: Literal["emergency_transfer", "recurring_supply"]
+    workflow_status: str
+    runtime_status: str
+    runtime_freshness: str
+    route_tag: str | None
+    suggested_route_name: str | None
+    reason: str | None
+    goods: list[TradeNetworkGoodEvidenceView]
+
+
+class TradeNetworkNodeView(BaseModel):
+    node_id: str
+    area_pk: int
+    area_name: str
+    region: Literal["latium", "albion"] | None
+    severity: Literal["critical", "warning", "stable"]
+    pressure_count: int
+    route_issue_count: int
+    running_route_count: int
+    paused_route_count: int
+    planned_route_count: int
+    stock_health: dict[str, Any]
+    important_goods: list[dict[str, Any]]
+    pressure_signals: list[dict[str, Any]]
+
+
+class TradeNetworkEndpointEvidenceView(BaseModel):
+    kind: str
+    trade_plan_id: str | None = None
+    link_id: str | None = None
+
+
+class TradeNetworkEdgeSummaryView(BaseModel):
+    goods: int
+    routes: int
+    ships: int
+    plans: int
+
+
+class TradeNetworkEdgeView(BaseModel):
+    edge_id: str
+    source_area_pk: int
+    source_area_name: str
+    destination_area_pk: int
+    destination_area_name: str
+    scope: Literal["latium", "albion", "cross_region", "unknown"]
+    status: Literal["running", "partially_paused", "paused", "issue", "planned", "inactive", "historical", "unknown"]
+    severity: Literal["critical", "warning", "stable"]
+    freshness: Literal["live", "stale", "historical"]
+    goods_verification: Literal["planned_only", "configured", "unavailable"]
+    endpoint_evidence: list[TradeNetworkEndpointEvidenceView]
+    plans: list[TradeNetworkPlanEvidenceView]
+    routes: list[ActiveTradeRouteView]
+    ships: list[ActiveTradeRouteShipView]
+    planned_goods: list[TradeNetworkGoodEvidenceView]
+    configured_goods: list[TradeNetworkGoodEvidenceView]
+    cargo_aboard: list[TradeNetworkGoodEvidenceView]
+    issues: list[dict[str, Any]]
+    actions: list[dict[str, Any]]
+    summary: TradeNetworkEdgeSummaryView
+
+
+class TradeNetworkGraphView(BaseModel):
+    nodes: list[TradeNetworkNodeView]
+    edges: list[TradeNetworkEdgeView]
+
+
+class TradeNetworkGraphsView(BaseModel):
+    latium: TradeNetworkGraphView
+    albion: TradeNetworkGraphView
+    cross_region: TradeNetworkGraphView
+
+
+class TradeNetworkResponse(BaseModel):
+    meta: dict[str, Any]
+    catalog: dict[str, Any]
+    campaign_id: str | None
+    graphs: TradeNetworkGraphsView
+    unmapped_routes: list[ActiveTradeRouteView]
+    capabilities: dict[str, bool]
+    evidence_notice: str
 
 
 class AreaView(BaseModel):
@@ -299,6 +475,8 @@ class ActiveTradeRouteView(BaseModel):
     observed_at: str | None
     freshness_seconds: float | None
     is_stale: bool
+    freshness: Literal["live", "stale", "historical"] | None = None
+    relink_suggestions: list[dict[str, Any]] = Field(default_factory=list)
     issues: list[dict[str, Any]]
     ships: list[ActiveTradeRouteShipView]
 
@@ -394,7 +572,7 @@ def create_app(
 
     app = FastAPI(
         title="Anno Companion Data API",
-        version="1.1.0",
+        version="1.2.0",
         description="Observed Anno 117 economy telemetry and deterministic management analytics.",
         lifespan=lifespan,
     )
@@ -618,7 +796,7 @@ def create_app(
             for item in database.scalars(
                 select(TradePlan).where(
                     TradePlan.campaign_id == effective,
-                    TradePlan.status.in_(["planned", "implemented_unverified"]),
+                    TradePlan.status.in_(["planned", "implemented", "implemented_unverified"]),
                 )
             ).all()
         } if effective else set()
@@ -653,6 +831,32 @@ def create_app(
         )
         result["meta"] = snapshot_meta(snapshot, stale_after_seconds=app_settings.stale_after_seconds)
         return result
+
+    @app.get("/api/v1/trade/network", tags=["management"], response_model=TradeNetworkResponse)
+    def trade_network(database: Database, campaign_id: str | None = None) -> dict:
+        effective = resolve_campaign_id(database, campaign_id)
+        snapshot = latest_complete_snapshot(database, effective)
+        meta = snapshot_meta(snapshot, stale_after_seconds=app_settings.stale_after_seconds)
+        route_state = active_trade_routes(
+            database,
+            effective,
+            snapshot,
+            stale_after_seconds=app_settings.stale_after_seconds,
+        )
+        telemetry_active = current_play_session(database, effective) is not None
+        sync_trade_plan_runtime(
+            database,
+            effective,
+            route_state,
+            telemetry_active=telemetry_active,
+            telemetry_stale=bool(meta.get("is_stale", True)),
+        )
+        database.commit()
+        inventory = _inventory(database, effective, app_settings)
+        return build_trade_network(
+            database, effective, route_state, inventory, meta,
+            telemetry_active=telemetry_active,
+        )
 
     @app.get("/api/v1/production/chains", tags=["management"], response_model=ProductionChainsResponse)
     def chains(database: Database, campaign_id: str | None = None) -> dict:
@@ -804,6 +1008,17 @@ def create_app(
     @app.get("/api/v1/trade-plans", tags=["management"], response_model=TradePlansResponse)
     def trade_plans(database: Database, campaign_id: str | None = None) -> dict:
         effective = resolve_campaign_id(database, campaign_id)
+        snapshot = latest_complete_snapshot(database, effective)
+        meta = snapshot_meta(snapshot, stale_after_seconds=app_settings.stale_after_seconds)
+        route_state = active_trade_routes(
+            database, effective, snapshot, stale_after_seconds=app_settings.stale_after_seconds,
+        )
+        sync_trade_plan_runtime(
+            database, effective, route_state,
+            telemetry_active=current_play_session(database, effective) is not None,
+            telemetry_stale=bool(meta.get("is_stale", True)),
+        )
+        database.commit()
         rows = database.scalars(
             select(TradePlan).where(TradePlan.campaign_id == effective).order_by(TradePlan.updated_at.desc())
         ).all() if effective else []
@@ -821,7 +1036,16 @@ def create_app(
         plan = TradePlan(
             trade_plan_id=str(uuid.uuid4()), campaign_id=effective,
             source_area_pk=source.area_pk, destination_area_pk=destination.area_pk,
+            plan_kind=write.plan_kind,
+            usable_ship_capacity=write.usable_ship_capacity,
+            expected_round_trip_minutes=write.expected_round_trip_minutes,
             reason=write.reason, evidence_json=json.dumps(write.evidence, ensure_ascii=False, sort_keys=True),
+        )
+        plan.route_tag, plan.suggested_route_name = new_route_identity(
+            database,
+            effective,
+            source.latest_name or source.area_id_raw,
+            destination.latest_name or destination.area_id_raw,
         )
         database.add(plan)
         database.flush()
@@ -837,10 +1061,103 @@ def create_app(
         plan = database.get(TradePlan, trade_plan_id)
         if plan is None:
             raise HTTPException(status_code=404, detail="trade plan not found")
-        plan.status = patch.status
+        if patch.status is not None:
+            plan.status = patch.status
+        if patch.plan_kind is not None:
+            plan.plan_kind = patch.plan_kind
+        if "usable_ship_capacity" in patch.model_fields_set:
+            plan.usable_ship_capacity = patch.usable_ship_capacity
+        if "expected_round_trip_minutes" in patch.model_fields_set:
+            plan.expected_round_trip_minutes = patch.expected_round_trip_minutes
         plan.updated_at = utcnow()
         database.commit()
         return _trade_plan_dict(database, plan)
+
+    @app.post("/api/v1/trade/route-links", tags=["management"], response_model=RouteLinkView)
+    def create_route_link(write: RouteLinkWrite, database: Database) -> dict:
+        effective = resolve_campaign_id(database, write.campaign_id)
+        source, destination = _validate_route_link_endpoints(
+            database, effective, write.source_area_pk, write.destination_area_pk, write.trade_plan_id,
+        )
+        snapshot = latest_complete_snapshot(database, effective)
+        route_state = active_trade_routes(
+            database, effective, snapshot, stale_after_seconds=app_settings.stale_after_seconds,
+        )
+        route = next((item for item in route_state["items"] if item["route_key"] == write.route_key), None)
+        if route is None:
+            raise HTTPException(status_code=404, detail="observed route not found")
+        existing = database.scalar(
+            select(TradeRouteLink).where(
+                TradeRouteLink.campaign_id == effective,
+                TradeRouteLink.route_key == write.route_key,
+            )
+        )
+        now = utcnow()
+        link = existing or TradeRouteLink(
+            link_id=str(uuid.uuid4()),
+            campaign_id=effective,
+            route_key=write.route_key,
+            first_seen_at=now,
+            last_seen_at=now,
+        )
+        link.route_name = route["route_name"]
+        link.ship_ids_json = json.dumps(sorted({str(ship["ship_id"]) for ship in route.get("ships") or []}))
+        link.trade_plan_id = write.trade_plan_id
+        link.source_area_pk = source.area_pk
+        link.destination_area_pk = destination.area_pk
+        link.link_method = "manual"
+        link.updated_at = now
+        if existing is None:
+            database.add(link)
+        database.commit()
+        return route_link_dict(database, link)
+
+    @app.patch("/api/v1/trade/route-links/{link_id}", tags=["management"], response_model=RouteLinkView)
+    def patch_route_link(link_id: str, patch: RouteLinkPatch, database: Database) -> dict:
+        link = database.get(TradeRouteLink, link_id)
+        if link is None:
+            raise HTTPException(status_code=404, detail="route link not found")
+        source_pk = patch.source_area_pk if patch.source_area_pk is not None else link.source_area_pk
+        destination_pk = patch.destination_area_pk if patch.destination_area_pk is not None else link.destination_area_pk
+        plan_id = patch.trade_plan_id if "trade_plan_id" in patch.model_fields_set else link.trade_plan_id
+        source, destination = _validate_route_link_endpoints(
+            database, link.campaign_id, source_pk, destination_pk, plan_id,
+        )
+        if patch.route_key is not None and patch.route_key != link.route_key:
+            snapshot = latest_complete_snapshot(database, link.campaign_id)
+            route_state = active_trade_routes(
+                database, link.campaign_id, snapshot,
+                stale_after_seconds=app_settings.stale_after_seconds,
+            )
+            route = next((item for item in route_state["items"] if item["route_key"] == patch.route_key), None)
+            if route is None:
+                raise HTTPException(status_code=404, detail="replacement observed route not found")
+            conflict = database.scalar(select(TradeRouteLink).where(
+                TradeRouteLink.campaign_id == link.campaign_id,
+                TradeRouteLink.route_key == patch.route_key,
+                TradeRouteLink.link_id != link.link_id,
+            ))
+            if conflict is not None:
+                raise HTTPException(status_code=409, detail="replacement route is already linked")
+            link.route_key = patch.route_key
+            link.route_name = route["route_name"]
+            link.ship_ids_json = json.dumps(sorted({str(ship["ship_id"]) for ship in route.get("ships") or []}))
+            link.last_seen_at = utcnow()
+        link.source_area_pk = source.area_pk
+        link.destination_area_pk = destination.area_pk
+        link.trade_plan_id = plan_id
+        link.link_method = "manual"
+        link.updated_at = utcnow()
+        database.commit()
+        return route_link_dict(database, link)
+
+    @app.delete("/api/v1/trade/route-links/{link_id}", tags=["management"], status_code=204)
+    def delete_route_link(link_id: str, database: Database) -> None:
+        link = database.get(TradeRouteLink, link_id)
+        if link is None:
+            raise HTTPException(status_code=404, detail="route link not found")
+        database.delete(link)
+        database.commit()
 
     @app.post("/api/v1/advisor/messages", tags=["advisor"], response_model=AdvisorConversationView)
     def advisor_message(write: AdvisorMessageWrite, database: Database) -> dict:
@@ -987,7 +1304,7 @@ def _sync_management(
         for item in database.scalars(
             select(TradePlan).where(
                 TradePlan.campaign_id == campaign_id,
-                TradePlan.status.in_(["planned", "implemented_unverified"]),
+                TradePlan.status.in_(["planned", "implemented", "implemented_unverified"]),
             )
         ).all()
     }
@@ -1009,6 +1326,14 @@ def _sync_management(
 def _trade_plan_dict(database: Session, plan: TradePlan) -> dict:
     source = database.get(Area, plan.source_area_pk)
     destination = database.get(Area, plan.destination_area_pk)
+    if plan.route_tag is None or plan.suggested_route_name is None:
+        plan.route_tag, plan.suggested_route_name = new_route_identity(
+            database,
+            plan.campaign_id,
+            source.latest_name or source.area_id_raw if source else str(plan.source_area_pk),
+            destination.latest_name or destination.area_id_raw if destination else str(plan.destination_area_pk),
+        )
+        database.flush()
     products = {
         item.product_guid: item.name
         for item in database.scalars(
@@ -1018,6 +1343,10 @@ def _trade_plan_dict(database: Session, plan: TradePlan) -> dict:
     goods = database.scalars(
         select(TradePlanItem).where(TradePlanItem.trade_plan_id == plan.trade_plan_id)
     ).all()
+    total_target = sum(item.amount for item in goods)
+    estimated_required_ships = None
+    if plan.usable_ship_capacity and plan.expected_round_trip_minutes:
+        estimated_required_ships = max(1, math.ceil(total_target / plan.usable_ship_capacity))
     return {
         "trade_plan_id": plan.trade_plan_id,
         "campaign_id": plan.campaign_id,
@@ -1026,12 +1355,50 @@ def _trade_plan_dict(database: Session, plan: TradePlan) -> dict:
         "destination_area_pk": plan.destination_area_pk,
         "destination_area_name": destination.latest_name or destination.area_id_raw if destination else str(plan.destination_area_pk),
         "status": plan.status,
+        "plan_kind": plan.plan_kind,
+        "route_tag": plan.route_tag,
+        "suggested_route_name": plan.suggested_route_name,
+        "usable_ship_capacity": plan.usable_ship_capacity,
+        "expected_round_trip_minutes": plan.expected_round_trip_minutes,
+        "estimated_required_ships": estimated_required_ships,
+        "runtime_status": plan.runtime_status,
+        "runtime_freshness": plan.runtime_freshness,
+        "goods_verification": plan.goods_verification,
+        "last_runtime_match_at": plan.last_runtime_match_at.isoformat() if plan.last_runtime_match_at else None,
         "reason": plan.reason,
         "evidence": json.loads(plan.evidence_json),
         "goods": [{"product_guid": item.product_guid, "product_name": products.get(item.product_guid), "amount": item.amount} for item in goods],
         "created_at": plan.created_at.isoformat(),
         "updated_at": plan.updated_at.isoformat(),
     }
+
+
+def _validate_route_link_endpoints(
+    database: Session,
+    campaign_id: str | None,
+    source_area_pk: int,
+    destination_area_pk: int,
+    trade_plan_id: str | None,
+) -> tuple[Area, Area]:
+    source = database.get(Area, source_area_pk)
+    destination = database.get(Area, destination_area_pk)
+    if (
+        campaign_id is None
+        or source is None
+        or destination is None
+        or source.campaign_id != campaign_id
+        or destination.campaign_id != campaign_id
+    ):
+        raise HTTPException(status_code=404, detail="source or destination area not found in campaign")
+    if source.area_pk == destination.area_pk:
+        raise HTTPException(status_code=422, detail="source and destination must differ")
+    if trade_plan_id is not None:
+        plan = database.get(TradePlan, trade_plan_id)
+        if plan is None or plan.campaign_id != campaign_id:
+            raise HTTPException(status_code=404, detail="trade plan not found in campaign")
+        if plan.source_area_pk != source.area_pk or plan.destination_area_pk != destination.area_pk:
+            raise HTTPException(status_code=422, detail="route-link endpoints must match the selected trade plan")
+    return source, destination
 
 
 def _reassign_play_session(database: Session, play: PlaySession, target: Campaign) -> None:

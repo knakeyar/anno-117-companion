@@ -1,4 +1,4 @@
-# Anno Companion v1.1 data model
+# Anno Companion v1.2 data model
 
 The SQLite database is an observation store, not a reconstruction of hidden game state. String identifiers prevent cross-language precision loss, quantities are `REAL`, timestamps are UTC receipt times, and every time-series derivative stays inside one backend-created play-session authority epoch.
 
@@ -42,9 +42,10 @@ Only a complete production snapshot can become current. Legacy focused-probe rec
 | `participant_finance_observation` | One participant treasury/balance record per snapshot. |
 | `finance_category_observation` | Localized ordinal categories; zero GUIDs are retained as raw evidence, not identity. |
 | `area_workforce_observation` | Current-camera-area scope only; precise registered production/consumption and delta fields. |
-| `trade_route_issue_observation` | Ephemeral route-name label and coarse issue code; no durable route entity. |
+| `trade_route_issue_observation` | Ephemeral route-name label and coarse issue code; not a durable route identity. |
+| `active_trade_route_current` / `active_trade_route_ship_current` | Last complete ship-backed route-name evidence. Route names remain mutable labels and ship IDs remain the stronger rename clue. |
 
-UI-selected production statistics/history, ship cargo, route topology, periodic factory records, and the invalid `buffed_delta` candidate have no normalized v1 tables.
+UI-selected production statistics/history, inferred route topology, periodic factory records, and the invalid `buffed_delta` candidate have no normalized v1 tables. The optional route-good observation table remains empty until configured goods or cargo are independently validated; failed or speculative probes are raw-only.
 
 Materialized state changes only after a complete baseline, delta, or reconciliation. A failed read updates freshness/error evidence without replacing the previous value. A telemetry unload ends the active play session but never clears selected campaign state.
 
@@ -54,6 +55,8 @@ Materialized state changes only after a complete baseline, delta, or reconciliat
 |---|---|
 | `management_action` | Stable deterministic action identity and active/accepted/snoozed/dismissed/completed/resolved workflow. |
 | `trade_plan` / `trade_plan_item` | Companion-only route intent; no write is made to Anno. |
+| `trade_route_link` | User-confirmed or exact-tag evidence connecting an opaque observed Anno route to source/destination cities and, optionally, a companion plan. |
+| `trade_route_good_observation` | Optional future normalized evidence for configured route goods or cargo aboard. Evidence kind is mandatory; planned intent is never written here. |
 | `advisor_conversation` / `advisor_message` | Campaign-scoped local conversation history and validated action references. |
 
 ## Deterministic management layer
@@ -69,5 +72,7 @@ The API calculates rather than persists:
 - reported-balance versus treasury-trend analysis and category evidence;
 - inferred base maintenance from observed factory counts, explicitly excluding buffs;
 - grouped, bounded source/destination route proposals with unknown feasibility.
+- campaign-scoped Latium, Albion, and cross-region graph edges aggregated by directed city pair without summing unlike goods;
+- exact, case-insensitive `AC-XXXXX` route-tag matching with separate workflow, runtime, and freshness states.
 
 These outputs always carry snapshot, play-session, observation time, scope, freshness, and catalog coverage. They use “net stock change” and “inferred pressure”; they are not presented as measured factory production or consumption.

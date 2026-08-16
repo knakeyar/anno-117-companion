@@ -128,6 +128,8 @@ export interface ActiveTradeRoute {
   observed_at: string | null
   freshness_seconds: number | null
   is_stale: boolean
+  freshness?: 'live' | 'stale' | 'historical' | null
+  relink_suggestions?: Array<{ link_id: string; previous_route_name: string; overlapping_ship_ids: string[]; requires_confirmation: true }>
   issues: RouteIssue[]
   ships: ActiveTradeRouteShip[]
 }
@@ -151,6 +153,107 @@ export interface ActiveTradeRoutesResponse {
     assigned_ships: number
   }
   items: ActiveTradeRoute[]
+}
+
+export type TradeNetworkStatus = 'running' | 'partially_paused' | 'paused' | 'issue' | 'planned' | 'inactive' | 'historical' | 'unknown'
+
+export interface TradeNetworkNode {
+  node_id: string
+  area_pk: number
+  area_name: string
+  region: 'latium' | 'albion' | null
+  severity: 'critical' | 'warning' | 'stable'
+  pressure_count: number
+  route_issue_count: number
+  running_route_count: number
+  paused_route_count: number
+  planned_route_count: number
+  stock_health: {
+    tracked_goods: number
+    average_fill_ratio: number | null
+    critical: number
+    warning: number
+  }
+  important_goods: Array<{
+    product_guid: string
+    product_name: string
+    stock: number | null
+    capacity: number | null
+    fill_ratio: number | null
+    net_stock_change_per_minute: number | null
+  }>
+  pressure_signals: ManagementSignal[]
+}
+
+export interface TradeNetworkPlanEvidence {
+  trade_plan_id: string
+  plan_kind: 'emergency_transfer' | 'recurring_supply'
+  workflow_status: string
+  runtime_status: string
+  runtime_freshness: string
+  route_tag: string | null
+  suggested_route_name: string | null
+  reason: string | null
+  goods: Array<{ product_guid: string; product_name: string | null; amount: number; evidence_kind: 'planned'; trade_plan_id: string }>
+}
+
+export interface TradeNetworkEdge {
+  edge_id: string
+  source_area_pk: number
+  source_area_name: string
+  destination_area_pk: number
+  destination_area_name: string
+  scope: 'latium' | 'albion' | 'cross_region' | 'unknown'
+  status: TradeNetworkStatus
+  severity: 'critical' | 'warning' | 'stable'
+  freshness: 'live' | 'stale' | 'historical'
+  goods_verification: 'planned_only' | 'configured' | 'unavailable'
+  endpoint_evidence: Array<{ kind: string; trade_plan_id?: string; link_id?: string }>
+  plans: TradeNetworkPlanEvidence[]
+  routes: ActiveTradeRoute[]
+  ships: ActiveTradeRouteShip[]
+  planned_goods: TradeNetworkPlanEvidence['goods']
+  configured_goods: Array<Record<string, unknown>>
+  cargo_aboard: Array<Record<string, unknown>>
+  issues: RouteIssue[]
+  actions: Array<Record<string, unknown>>
+  summary: { goods: number; routes: number; ships: number; plans: number }
+}
+
+export interface TradeNetworkGraph {
+  nodes: TradeNetworkNode[]
+  edges: TradeNetworkEdge[]
+}
+
+export interface TradeNetworkResponse {
+  meta: ObservationMeta
+  catalog: CatalogSummary
+  campaign_id: string | null
+  graphs: {
+    latium: TradeNetworkGraph
+    albion: TradeNetworkGraph
+    cross_region: TradeNetworkGraph
+  }
+  unmapped_routes: ActiveTradeRoute[]
+  capabilities: ActiveTradeRoutesResponse['capabilities']
+  evidence_notice: string
+}
+
+export interface TradeRouteLink {
+  link_id: string
+  campaign_id: string
+  route_key: string
+  route_name: string
+  ship_ids: string[]
+  trade_plan_id: string | null
+  source_area_pk: number
+  source_area_name: string
+  destination_area_pk: number
+  destination_area_name: string
+  link_method: 'tag' | 'manual'
+  first_seen_at: string
+  last_seen_at: string
+  updated_at: string
 }
 
 export interface Finance {
@@ -385,7 +488,17 @@ export interface TradePlan {
   source_area_name: string
   destination_area_pk: number
   destination_area_name: string
-  status: 'planned' | 'implemented_unverified' | 'completed' | 'dismissed'
+  status: 'planned' | 'implemented' | 'implemented_unverified' | 'completed' | 'dismissed'
+  plan_kind: 'emergency_transfer' | 'recurring_supply'
+  route_tag: string
+  suggested_route_name: string
+  usable_ship_capacity: number | null
+  expected_round_trip_minutes: number | null
+  estimated_required_ships: number | null
+  runtime_status: 'not_detected' | 'running' | 'partially_paused' | 'paused' | 'issue' | 'inactive' | 'ambiguous'
+  runtime_freshness: 'live' | 'stale' | 'historical'
+  goods_verification: 'planned_only' | 'configured_match' | 'configured_mismatch' | 'cargo_partial' | 'unavailable'
+  last_runtime_match_at: string | null
   reason: string | null
   evidence: Record<string, unknown>
   goods: Array<{ product_guid: string; product_name: string | null; amount: number }>

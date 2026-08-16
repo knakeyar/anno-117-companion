@@ -1,4 +1,4 @@
-import type { ActiveTradeRoutesResponse, InventoryResponse, OverviewResponse, StatusResponse, TradeResponse } from '../types'
+import type { ActiveTradeRoutesResponse, InventoryResponse, OverviewResponse, StatusResponse, TradeNetworkResponse, TradePlan, TradeResponse } from '../types'
 
 export const meta = {
   snapshot_id: 44,
@@ -69,6 +69,46 @@ export const activeTradeRoutes: ActiveTradeRoutesResponse = {
   }],
 }
 
+export const tradePlan: TradePlan = {
+  trade_plan_id: 'plan-1', campaign_id: 'campaign-1', source_area_pk: 1, source_area_name: 'Juliana', destination_area_pk: 2, destination_area_name: 'Naissus',
+  status: 'implemented', plan_kind: 'recurring_supply', route_tag: 'AC-7K2P', suggested_route_name: 'AC-7K2P Jul-Nai', usable_ship_capacity: null,
+  expected_round_trip_minutes: null, estimated_required_ships: null, runtime_status: 'partially_paused', runtime_freshness: 'live', goods_verification: 'planned_only',
+  last_runtime_match_at: meta.observed_at, reason: 'Keep Naissus supplied with Timber.', evidence: { source: 'deterministic_action' },
+  goods: [{ product_guid: '2174', product_name: 'Timber', amount: 12 }], created_at: meta.observed_at, updated_at: meta.observed_at,
+}
+
+const networkNodes = [
+  { node_id: 'area-1', area_pk: 1, area_name: 'Juliana', region: 'latium' as const, severity: 'warning' as const, pressure_count: 1, route_issue_count: 0, running_route_count: 0, paused_route_count: 1, planned_route_count: 0, stock_health: { tracked_goods: 1, average_fill_ratio: .92, critical: 0, warning: 1 }, important_goods: [{ product_guid: '2174', product_name: 'Timber', stock: 92, capacity: 100, fill_ratio: .92, net_stock_change_per_minute: 4 }], pressure_signals: [inventory.signals[1]] },
+  { node_id: 'area-2', area_pk: 2, area_name: 'Naissus', region: 'latium' as const, severity: 'critical' as const, pressure_count: 1, route_issue_count: 0, running_route_count: 0, paused_route_count: 1, planned_route_count: 0, stock_health: { tracked_goods: 1, average_fill_ratio: .08, critical: 1, warning: 0 }, important_goods: [{ product_guid: '2174', product_name: 'Timber', stock: 8, capacity: 100, fill_ratio: .08, net_stock_change_per_minute: -3.5 }], pressure_signals: [inventory.signals[0]] },
+  { node_id: 'area-3', area_pk: 3, area_name: 'Cudslip', region: 'albion' as const, severity: 'stable' as const, pressure_count: 0, route_issue_count: 0, running_route_count: 0, paused_route_count: 0, planned_route_count: 0, stock_health: { tracked_goods: 0, average_fill_ratio: null, critical: 0, warning: 0 }, important_goods: [], pressure_signals: [] },
+]
+
+const taggedRoute = {
+  ...activeTradeRoutes.items[0],
+  route_name: tradePlan.suggested_route_name,
+}
+
+const networkEdge = {
+  edge_id: 'campaign-1:1:2', source_area_pk: 1, source_area_name: 'Juliana', destination_area_pk: 2, destination_area_name: 'Naissus', scope: 'latium' as const,
+  status: 'partially_paused' as const, severity: 'critical' as const, freshness: 'live' as const, goods_verification: 'planned_only' as const,
+  endpoint_evidence: [{ kind: 'route_tag', trade_plan_id: tradePlan.trade_plan_id }],
+  plans: [{ trade_plan_id: tradePlan.trade_plan_id, plan_kind: tradePlan.plan_kind, workflow_status: tradePlan.status, runtime_status: tradePlan.runtime_status, runtime_freshness: tradePlan.runtime_freshness, route_tag: tradePlan.route_tag, suggested_route_name: tradePlan.suggested_route_name, reason: tradePlan.reason, goods: [{ ...tradePlan.goods[0], evidence_kind: 'planned' as const, trade_plan_id: tradePlan.trade_plan_id }] }],
+  routes: [taggedRoute], ships: taggedRoute.ships, planned_goods: [{ ...tradePlan.goods[0], evidence_kind: 'planned' as const, trade_plan_id: tradePlan.trade_plan_id }],
+  configured_goods: [], cargo_aboard: [], issues: [], actions: [], summary: { goods: 1, routes: 1, ships: 2, plans: 1 },
+}
+
+export const tradeNetwork: TradeNetworkResponse = {
+  meta: { ...meta }, catalog, campaign_id: 'campaign-1',
+  graphs: {
+    latium: { nodes: networkNodes.filter((node) => node.region === 'latium'), edges: [networkEdge] },
+    albion: { nodes: networkNodes.filter((node) => node.region === 'albion'), edges: [] },
+    cross_region: { nodes: networkNodes, edges: [] },
+  },
+  unmapped_routes: [{ ...activeTradeRoutes.items[0], route_key: 'route-bread', route_name: 'Bread Cud - Rhy', ships: [activeTradeRoutes.items[0].ships[0]], assigned_ship_count: 1, paused_ship_count: 0, status: 'running' }],
+  capabilities: activeTradeRoutes.capabilities,
+  evidence_notice: 'Endpoints require a companion plan, validated telemetry, or a confirmed manual link. Planned goods are not configured goods or cargo.',
+}
+
 export const overview: OverviewResponse = {
   meta: { ...meta }, catalog,
   finance: { participant_guid: '41', treasury: 3_756_154, total_balance_raw: 200, trade_balance_period_raw: 50, passive_trade_balance_period_raw: 20, active_trade_balance_period_raw: 30, categories: [] },
@@ -97,15 +137,16 @@ const areaBase = { persistent: true, telemetry_active: true, position_source: 'm
 export const apiFixtures: Record<string, unknown> = {
   '/api/v1/status': status,
   '/api/v1/campaigns': [{ campaign_id: 'campaign-1', display_name: 'Marcia’s campaign', game_seed: '951', participant_guid: '41', identity_method: 'game_seed_participant', identity_confidence: 'user_confirmed', created_at: new Date().toISOString(), archived_at: null }],
-  '/api/v1/areas': { campaign_id: 'campaign-1', items: [{ ...areaBase, area_pk: 1, area_id: '8513', name: 'Juliana', region_guid: '3225', game_session_guid: '3245', region_evidence: 'current_camera_area_same_snapshot', first_seen_at: new Date().toISOString(), last_seen_at: new Date().toISOString(), position: { x: .3, y: .4 } }, { ...areaBase, area_pk: 2, area_id: '8961', name: 'Naissus', region_guid: '3225', game_session_guid: '3245', region_evidence: 'current_camera_area_same_snapshot', first_seen_at: new Date().toISOString(), last_seen_at: new Date().toISOString(), position: { x: .7, y: .6 } }] },
+  '/api/v1/areas': { campaign_id: 'campaign-1', items: [{ ...areaBase, area_pk: 1, area_id: '8513', name: 'Juliana', region_guid: '3225', game_session_guid: '3245', region_evidence: 'current_camera_area_same_snapshot', first_seen_at: new Date().toISOString(), last_seen_at: new Date().toISOString(), position: { x: .3, y: .4 } }, { ...areaBase, area_pk: 2, area_id: '8961', name: 'Naissus', region_guid: '3225', game_session_guid: '3245', region_evidence: 'current_camera_area_same_snapshot', first_seen_at: new Date().toISOString(), last_seen_at: new Date().toISOString(), position: { x: .7, y: .6 } }, { ...areaBase, area_pk: 3, area_id: '8451', name: 'Cudslip', region_guid: '6626', game_session_guid: '6569', region_evidence: 'current_camera_area_same_snapshot', first_seen_at: new Date().toISOString(), last_seen_at: new Date().toISOString(), position: null, position_source: null, manual_placement: false }] },
   '/api/v1/inventory/latest': inventory,
   '/api/v1/dashboard/overview': overview,
   '/api/v1/trade/opportunities': trade,
   '/api/v1/trade/routes': activeTradeRoutes,
+  '/api/v1/trade/network': tradeNetwork,
   '/api/v1/production/chains': { meta, catalog: { ...catalog, recipes: 1 }, chains: [{ recipe_id: 'factory:2955', name: 'Fishing Hut', building_guid: '2955', building_name: 'Fishing Hut', workforce_guid: '2181', workforce_name: 'Libertus Workforce', cycle_seconds: 60, items: [{ role: 'output', ordinal: 1, product_guid: '2174', product_name: 'Timber', amount: 1 }], inferred_pressures: [], associated_regions: ['Roman'], base_maintenance: 6, city_states: [{ area_pk: 1, area_name: 'Juliana', region_guid: '3225', building_count: 2, presence_status: 'installed', observed_at: meta.observed_at, inferred_pressures: [], stocks: [{ role: 'output', ordinal: 1, product_guid: '2174', product_name: 'Timber', amount: 1, stock: 92, capacity: 100, fill_ratio: .92, net_stock_change: { net_stock_change_per_minute: 4, interval_count: 5, window_minutes: 5, confidence: 'measured_history' } }] }], measurement_notice: 'Stock-based inferred pressure; no measured factory rate.' }] },
   '/api/v1/finance': { meta, finance: overview.finance, balance_analysis: overview.balance_analysis },
   '/api/v1/finance/history': { meta, items: [{ observed_at: meta.observed_at, treasury: 3_756_154, reported_balance: 200 }] },
-  '/api/v1/trade-plans': { campaign_id: 'campaign-1', items: [] },
+  '/api/v1/trade-plans': { campaign_id: 'campaign-1', items: [tradePlan] },
   '/api/v1/actions': { campaign_id: 'campaign-1', items: overview.actions },
   '/api/v1/workforce': { meta, scope: 'current_camera_area', items: overview.workforce_shortages },
   '/api/v1/policies': { campaign_id: 'campaign-1', items: [] },

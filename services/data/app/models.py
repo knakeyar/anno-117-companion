@@ -571,10 +571,23 @@ class TradePlan(Base):
     source_area_pk: Mapped[int] = mapped_column(ForeignKey("area.area_pk"), nullable=False)
     destination_area_pk: Mapped[int] = mapped_column(ForeignKey("area.area_pk"), nullable=False)
     status: Mapped[str] = mapped_column(String, default="planned", nullable=False)
+    plan_kind: Mapped[str] = mapped_column(String, default="emergency_transfer", nullable=False)
+    route_tag: Mapped[str | None] = mapped_column(String)
+    suggested_route_name: Mapped[str | None] = mapped_column(String)
+    usable_ship_capacity: Mapped[float | None] = mapped_column(Float)
+    expected_round_trip_minutes: Mapped[float | None] = mapped_column(Float)
+    runtime_status: Mapped[str] = mapped_column(String, default="not_detected", nullable=False)
+    runtime_freshness: Mapped[str] = mapped_column(String, default="historical", nullable=False)
+    goods_verification: Mapped[str] = mapped_column(String, default="planned_only", nullable=False)
+    last_runtime_match_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     reason: Mapped[str | None] = mapped_column(Text)
     evidence_json: Mapped[str] = mapped_column(Text, default="{}", nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+    __table_args__ = (
+        Index("ux_trade_plan_campaign_tag", "campaign_id", "route_tag", unique=True),
+    )
 
 
 class TradePlanItem(Base):
@@ -583,6 +596,51 @@ class TradePlanItem(Base):
     trade_plan_id: Mapped[str] = mapped_column(ForeignKey("trade_plan.trade_plan_id"), primary_key=True)
     product_guid: Mapped[str] = mapped_column(String, primary_key=True)
     amount: Mapped[float] = mapped_column(Float, nullable=False)
+
+
+class TradeRouteLink(Base):
+    """Companion evidence connecting an opaque Anno route to known endpoints."""
+
+    __tablename__ = "trade_route_link"
+
+    link_id: Mapped[str] = mapped_column(String, primary_key=True)
+    campaign_id: Mapped[str] = mapped_column(ForeignKey("campaign.campaign_id"), nullable=False)
+    route_key: Mapped[str] = mapped_column(String, nullable=False)
+    route_name: Mapped[str] = mapped_column(String, nullable=False)
+    ship_ids_json: Mapped[str] = mapped_column(Text, default="[]", nullable=False)
+    trade_plan_id: Mapped[str | None] = mapped_column(ForeignKey("trade_plan.trade_plan_id"))
+    source_area_pk: Mapped[int] = mapped_column(ForeignKey("area.area_pk"), nullable=False)
+    destination_area_pk: Mapped[int] = mapped_column(ForeignKey("area.area_pk"), nullable=False)
+    link_method: Mapped[str] = mapped_column(String, nullable=False)
+    first_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+    last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+    __table_args__ = (
+        Index("ux_trade_route_link_campaign_route", "campaign_id", "route_key", unique=True),
+        Index("ix_trade_route_link_plan", "trade_plan_id"),
+    )
+
+
+class TradeRouteGoodObservation(Base):
+    """Optional configured-good or onboard-cargo evidence; never inferred from names."""
+
+    __tablename__ = "trade_route_good_observation"
+
+    observation_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    snapshot_id: Mapped[int] = mapped_column(ForeignKey("snapshot_batch.snapshot_id"), nullable=False)
+    route_name: Mapped[str] = mapped_column(String, nullable=False)
+    ship_id_raw: Mapped[str | None] = mapped_column(String)
+    product_guid: Mapped[str] = mapped_column(String, nullable=False)
+    evidence_kind: Mapped[str] = mapped_column(String, nullable=False)
+    amount: Mapped[float | None] = mapped_column(Float)
+    area_id_raw: Mapped[str | None] = mapped_column(String)
+    stop_ordinal: Mapped[int | None] = mapped_column(Integer)
+    observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (
+        Index("ix_trade_route_good_snapshot_route", "snapshot_id", "route_name"),
+    )
 
 
 class AdvisorConversation(Base):

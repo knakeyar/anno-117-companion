@@ -19,6 +19,8 @@ import type {
   StatusResponse,
   TradeResponse,
   TradePlan,
+  TradeNetworkResponse,
+  TradeRouteLink,
   WorkforceItem,
 } from './types'
 
@@ -62,16 +64,22 @@ export const api = {
   overview: () => unwrap<OverviewResponse>(client.GET('/api/v1/dashboard/overview')),
   trade: () => unwrap<TradeResponse>(client.GET('/api/v1/trade/opportunities')),
   activeTradeRoutes: () => unwrap<ActiveTradeRoutesResponse>(client.GET('/api/v1/trade/routes')),
+  tradeNetwork: () => unwrap<TradeNetworkResponse>(client.GET('/api/v1/trade/network')),
   tradePlans: () => unwrap<{ campaign_id: string | null; items: TradePlan[] }>(client.GET('/api/v1/trade-plans')),
-  createTradePlan: (route: TradeResponse['suggested_routes'][number], campaignId: string) => unwrap<TradePlan>(client.POST('/api/v1/trade-plans', { body: {
+  createTradePlan: (route: TradeResponse['suggested_routes'][number], campaignId: string, planKind: TradePlan['plan_kind'] = 'emergency_transfer') => unwrap<TradePlan>(client.POST('/api/v1/trade-plans', { body: {
     campaign_id: campaignId,
     source_area_pk: route.source_area_pk,
     destination_area_pk: route.destination_area_pk,
     goods: route.goods.map((item) => ({ product_guid: item.product_guid, amount: item.advisory_amount })),
     reason: route.reason,
     evidence: route.evidence,
+    plan_kind: planKind,
   } })),
   patchTradePlan: (tradePlanId: string, status: TradePlan['status']) => unwrap<TradePlan>(client.PATCH('/api/v1/trade-plans/{trade_plan_id}', { params: { path: { trade_plan_id: tradePlanId } }, body: { status } })),
+  linkTradeRoute: (body: { campaign_id: string; route_key: string; source_area_pk: number; destination_area_pk: number; trade_plan_id?: string }) =>
+    unwrap<TradeRouteLink>(client.POST('/api/v1/trade/route-links', { body })),
+  unlinkTradeRoute: (linkId: string) => unwrap<void>(client.DELETE('/api/v1/trade/route-links/{link_id}', { params: { path: { link_id: linkId } } })),
+  relinkTradeRoute: (linkId: string, routeKey: string) => unwrap<TradeRouteLink>(client.PATCH('/api/v1/trade/route-links/{link_id}', { params: { path: { link_id: linkId } }, body: { route_key: routeKey } })),
   actions: () => unwrap<{ campaign_id: string | null; items: ManagementAction[] }>(client.GET('/api/v1/actions')),
   patchAction: (actionId: string, status: 'active' | 'accepted' | 'snoozed' | 'dismissed' | 'completed') => unwrap<ManagementAction>(client.PATCH('/api/v1/actions/{action_id}', { params: { path: { action_id: actionId } }, body: { status } })),
   chains: () =>
@@ -99,6 +107,7 @@ export const queryKeys = {
   overview: ['overview'] as const,
   trade: ['trade'] as const,
   activeTradeRoutes: ['active-trade-routes'] as const,
+  tradeNetwork: ['trade-network'] as const,
   tradePlans: ['trade-plans'] as const,
   actions: ['actions'] as const,
   chains: ['chains'] as const,
@@ -120,6 +129,7 @@ export const useOverview = () =>
   useQuery({ queryKey: queryKeys.overview, queryFn: api.overview, ...queryOptions })
 export const useTrade = () => useQuery({ queryKey: queryKeys.trade, queryFn: api.trade, ...queryOptions })
 export const useActiveTradeRoutes = () => useQuery({ queryKey: queryKeys.activeTradeRoutes, queryFn: api.activeTradeRoutes, ...queryOptions })
+export const useTradeNetwork = () => useQuery({ queryKey: queryKeys.tradeNetwork, queryFn: api.tradeNetwork, ...queryOptions })
 export const useTradePlans = () => useQuery({ queryKey: queryKeys.tradePlans, queryFn: api.tradePlans, ...queryOptions })
 export const useActions = () => useQuery({ queryKey: queryKeys.actions, queryFn: api.actions, ...queryOptions })
 export const useChains = () =>
@@ -142,8 +152,11 @@ export function useCompanionMutations() {
   const refresh = () => queries.invalidateQueries()
   return {
     mapPosition: useMutation({ mutationFn: ({ areaPk, ...body }: { areaPk: number; region_guid?: string; x?: number; y?: number; clear?: boolean }) => api.setMapPosition(areaPk, body), onSuccess: refresh }),
-    createTradePlan: useMutation({ mutationFn: ({ route, campaignId }: { route: TradeResponse['suggested_routes'][number]; campaignId: string }) => api.createTradePlan(route, campaignId), onSuccess: refresh }),
+    createTradePlan: useMutation({ mutationFn: ({ route, campaignId, planKind = 'emergency_transfer' }: { route: TradeResponse['suggested_routes'][number]; campaignId: string; planKind?: TradePlan['plan_kind'] }) => api.createTradePlan(route, campaignId, planKind), onSuccess: refresh }),
     patchTradePlan: useMutation({ mutationFn: ({ id, status }: { id: string; status: TradePlan['status'] }) => api.patchTradePlan(id, status), onSuccess: refresh }),
+    linkTradeRoute: useMutation({ mutationFn: (body: { campaign_id: string; route_key: string; source_area_pk: number; destination_area_pk: number; trade_plan_id?: string }) => api.linkTradeRoute(body), onSuccess: refresh }),
+    unlinkTradeRoute: useMutation({ mutationFn: (linkId: string) => api.unlinkTradeRoute(linkId), onSuccess: refresh }),
+    relinkTradeRoute: useMutation({ mutationFn: ({ linkId, routeKey }: { linkId: string; routeKey: string }) => api.relinkTradeRoute(linkId, routeKey), onSuccess: refresh }),
     patchAction: useMutation({ mutationFn: ({ id, status }: { id: string; status: 'active' | 'accepted' | 'snoozed' | 'dismissed' | 'completed' }) => api.patchAction(id, status), onSuccess: refresh }),
   }
 }

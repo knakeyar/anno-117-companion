@@ -1,8 +1,8 @@
-# Anno Companion v1.1
+# Anno Companion v1.2
 
 Manage your empire the way Caesar definitely did: with fancy dashboards and up-to-date information about trade and resource production. Better yet, Caesar's greatest achievements were apparently powered by AI workers—although at the time he used the word “slaves.” Please do not quote us on these completely made-up historical facts. Connect your game data to AI for suggestions on keeping your people happy. Note: this only works for Anno, not real life.
 
-> Anno Companion is a local, read-only economic workspace for Anno 117. It turns JSON records emitted to the game log into durable campaign state, interactive regional maps, ranked actions and trade plans, city-specific production pressure, finance guidance, workforce facts, and an optional on-demand advisor.
+> Anno Companion is a local, read-only economic workspace for Anno 117. It turns JSON records emitted to the game log into durable campaign state, interactive regional trade networks, ranked actions and tagged route plans, city-specific production pressure, finance guidance, workforce facts, and an optional on-demand advisor.
 
 ## Why Anno Companion?
 
@@ -88,7 +88,15 @@ The SQLite database remains in `ANNO_DATA_DIR`. Do not use `docker compose down 
 
 Campaigns start with an automatically generated “Unassigned” name. Settings can rename the current campaign or move the current play session to another campaign when the game seed/participant evidence belongs to an existing save.
 
-Cities, current inventory, finance, last-observed workforce, map placement, actions, conversations, and companion route plans are stored in SQLite. Leaving the game or stopping telemetry makes these values stale/inactive; it does not hide or reset them. The Areas screen supports manual Latium/Albion placement when a runtime coordinate binding is unavailable.
+Cities, current inventory, finance, last-observed workforce, actions, conversations, route links, and companion route plans are stored in SQLite. Leaving the game or stopping telemetry makes these values historical; it does not hide, reset, or mark a previously running route inactive. The Areas and Trade screens organize cities into Latium, Albion, and cross-region relationship graphs rather than pretending to reproduce Anno's geographic map.
+
+### Using the trade network
+
+1. Save a recommended route as either a one-time emergency transfer or recurring supply plan.
+2. Copy its short generated route name, such as `AC-7K2P Aga-Tit`, into the route name in Anno and assign a ship.
+3. After the next complete telemetry cadence, the exact tag links the observed route to the plan. Running, partially paused, paused, issue, and freshness state remain separate from the plan workflow.
+4. Click a directed graph edge to see every underlying plan, observed route, named ship, warning, and goods-evidence category. Quantities are target movements, not verified per-trip settings.
+5. Untagged observed routes stay in **Unmapped routes**. Link their endpoints manually; the companion never tries to decode names such as `Bread Cud - Rhy`.
 
 ## Optional advisor
 
@@ -108,6 +116,9 @@ Important scope rules are visible in both the API and dashboard:
 - UI-selected production statistics/history are raw-only and are not assigned to islands;
 - engine trend and free-space values remain raw diagnostics;
 - route proposals are companion plans and do not imply route feasibility or an existing in-game route;
+- a saved plan receives an exact `AC-XXXXX` tag; it becomes implemented/running only when telemetry observes that tag in an Anno route name with assigned ship evidence;
+- observed routes with unknown endpoints remain unmapped until the user links them; names such as `Bread Cud - Rhy` are never parsed as topology;
+- planned goods, configured route goods, and cargo aboard are separate evidence kinds and are never conflated;
 - production pressure is inferred from stock history unless a verified static recipe relationship exists.
 
 The pinned community catalog release contains 145 reference products, 113 inventory-enabled factory goods, and 144 factory recipes. It records source revision and attribution but does not bundle proprietary icon binaries. See [`docs/data-model-v1.md`](docs/data-model-v1.md) and [`catalog/anno117-community-2.1-c6a6e752.json`](catalog/anno117-community-2.1-c6a6e752.json).
@@ -125,23 +136,11 @@ This repository imports structured catalog data from the calculator at the delib
 
 The upstream calculator is MIT-licensed. Its application is not embedded here, and Anno Companion does not redistribute its proprietary game-icon assets. The exact source files, transformation path, license notice, and Ubisoft asset boundary are documented in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
 
-## Runtime capability check
+## Optional route capability check
 
-Coordinates and per-city factory counts depend on game Lua bindings that cannot be verified outside Anno. Before treating them as proven on your installation, temporarily enable [`mod/anno-companion-telemetry-probe`](mod/anno-companion-telemetry-probe), capture one `scope_runtime_capabilities` record in Latium and one in Albion, then disable the probe again. Failed coordinate reads use manual map placement; failed building reads remain `presence unknown` and production remains stock-derived.
+The trade network already works from companion plans, exact route-name tags, assigned ship IDs/names, pause state, and route issues. Configured route goods, ship cargo, and live ship positions remain unverified capabilities and are never guessed.
 
-### Real regional map discovery
-
-The current dashboard background is only a schematic. Probe version `0.4.1` tests whether Anno exposes the real save-specific island layout, correlates city Kontor coordinates to island templates, and diagnoses opaque island rectangles. You do **not** need to extract RDA archives for this test.
-
-1. Copy the entire [`mod/anno-companion-telemetry-probe`](mod/anno-companion-telemetry-probe) folder into your active Anno 117 `mods` directory and confirm its manifest is version `0.4.1`. Keep only one copy of that ModID installed.
-2. Fully restart Anno and load the campaign used by the companion.
-3. Enter Latium, keep the game unpaused, and wait at least 20 seconds.
-4. Switch to Albion, keep the game unpaused, and wait at least 20 seconds.
-5. Close the game and search the Anno log for `scope_island_layout` and `scope_runtime_capabilities`.
-6. Return one complete `scope_island_layout` line and its matching `scope_runtime_capabilities` line from each region. A screenshot of each in-game Province Map is also useful for verifying orientation and scaling.
-7. Disable the probe after collecting the four records. The production telemetry mod can remain installed throughout the test.
-
-If the probe succeeds, the next companion release can draw islands and cities in their real world-coordinate positions without bundling Ubisoft artwork. Exact coastlines would remain a separate, optional local-extraction feature.
+Probe version `0.5.0` is a temporary focused test for those fields. Copy [`mod/anno-companion-telemetry-probe`](mod/anno-companion-telemetry-probe) into the Anno mods directory, follow its three-route Latium/Albion/cross-region procedure, return the `scope_route_capabilities` log records, and then disable it. The probe does not modify routes and deliberately does not retry the previously invalid `Logistic` cargo reference.
 
 ## Development and verification
 

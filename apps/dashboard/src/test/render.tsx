@@ -29,7 +29,14 @@ export function installFetchMock(overrides: Record<string, unknown> = {}) {
     }
     if (method === 'POST' && url.pathname === '/api/v1/trade-plans') {
       const parsed = JSON.parse(body)
-      return Response.json({ trade_plan_id: 'plan-1', campaign_id: parsed.campaign_id, source_area_pk: parsed.source_area_pk, source_area_name: 'Juliana', destination_area_pk: parsed.destination_area_pk, destination_area_name: 'Naissus', status: 'planned', reason: parsed.reason, evidence: parsed.evidence, goods: parsed.goods, created_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+      return Response.json({ trade_plan_id: 'plan-new', campaign_id: parsed.campaign_id, source_area_pk: parsed.source_area_pk, source_area_name: 'Juliana', destination_area_pk: parsed.destination_area_pk, destination_area_name: 'Naissus', status: 'planned', plan_kind: parsed.plan_kind, route_tag: 'AC-NEW1', suggested_route_name: 'AC-NEW1 Jul-Nai', usable_ship_capacity: null, expected_round_trip_minutes: null, estimated_required_ships: null, runtime_status: 'not_detected', runtime_freshness: 'historical', goods_verification: 'planned_only', last_runtime_match_at: null, reason: parsed.reason, evidence: parsed.evidence, goods: parsed.goods, created_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+    }
+    if (method === 'POST' && url.pathname === '/api/v1/trade/route-links') {
+      const parsed = JSON.parse(body)
+      return Response.json({ link_id: 'link-1', ...parsed, route_name: 'Bread Cud - Rhy', ship_ids: ['8121'], trade_plan_id: parsed.trade_plan_id ?? null, source_area_name: 'Juliana', destination_area_name: 'Cudslip', link_method: 'manual', first_seen_at: new Date().toISOString(), last_seen_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+    }
+    if (method === 'DELETE' && url.pathname.startsWith('/api/v1/trade/route-links/')) {
+      return new Response(null, { status: 204 })
     }
     if (url.pathname === '/api/v1/inventory/history') {
       return Response.json({ items: [] })

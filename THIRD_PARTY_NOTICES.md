@@ -58,3 +58,7 @@ SOFTWARE.
 Anno 117: Pax Romana, Anno names, game data, artwork, icons, and related intellectual property belong to Ubisoft and their respective rights holders. They are not licensed under either the upstream MIT License or Anno Companion's PolyForm Noncommercial license. No proprietary icon binaries are bundled in Anno Companion.
 
 Anno Companion is an unofficial fan project and is not endorsed by, sponsored by, or affiliated with Ubisoft or the `anno-117-calculator` maintainers.
+
+## Trade-network UI libraries
+
+The interactive relationship graph uses [`@xyflow/react` 12.11.3](https://github.com/xyflow/xyflow/tree/main/packages/react) and [`@dagrejs/dagre` 3.1.1](https://github.com/dagrejs/dagre). Both projects are distributed under the MIT License. Their software remains under that license and is not relicensed by Anno Companion's PolyForm terms.
