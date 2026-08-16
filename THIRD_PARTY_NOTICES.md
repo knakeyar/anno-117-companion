@@ -55,7 +55,7 @@ SOFTWARE.
 
 ## Ubisoft and Anno 117
 
-Anno 117: Pax Romana, Anno names, game data, artwork, icons, and related intellectual property belong to Ubisoft and their respective rights holders. They are not licensed under either the upstream MIT License or Anno Companion's PolyForm Noncommercial license. No proprietary icon binaries are bundled in Anno Companion.
+Anno 117: Pax Romana, Anno names, game data, artwork, icons, and related intellectual property belong to Ubisoft and their respective rights holders. They are not licensed under either the upstream MIT License or Anno Companion's PolyForm Noncommercial license. No proprietary icon binaries are bundled in Anno Companion. Dashboard city-port motifs are original code-generated SVG/CSS shapes and do not reproduce or extract Ubisoft artwork.
 
 Anno Companion is an unofficial fan project and is not endorsed by, sponsored by, or affiliated with Ubisoft or the `anno-117-calculator` maintainers.
 

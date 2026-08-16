@@ -1,7 +1,8 @@
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { App } from '../App'
-import { inventory, overview } from './fixtures'
+import { calculateTradeLayout } from '../components/TradeNetworkGraph'
+import { inventory, overview, tradeNetwork } from './fixtures'
 import { installFetchMock, renderApp } from './render'
 
 describe('first-class management dashboard', () => {
@@ -10,9 +11,27 @@ describe('first-class management dashboard', () => {
     renderApp(<App />)
     expect(await screen.findByRole('heading', { name: 'Decide what to fix next.' })).toBeInTheDocument()
     expect(screen.getByText('Move Timber from observed surplus.')).toBeInTheDocument()
-    expect(screen.getByRole('region', { name: /Latium trade network/i })).toBeInTheDocument()
+    expect(screen.getAllByRole('region', { name: 'Trade network' })).toHaveLength(1)
+    expect(screen.getByRole('button', { name: 'Latium' })).toHaveClass('active')
+    expect(screen.getByRole('group', { name: 'Graph layout' })).toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: /Ask advisor/i }).length).toBeGreaterThan(0)
     expect(screen.queryByText(/measured production rate/i)).not.toBeInTheDocument()
+  })
+
+  it('auto-sorts deterministically and offers force, flow, and circle layouts', async () => {
+    const graph = tradeNetwork.graphs.latium
+    const first = calculateTradeLayout(graph, 'latium', 'force')
+    const second = calculateTradeLayout(graph, 'latium', 'force')
+    expect(first.map((node) => node.position)).toEqual(second.map((node) => node.position))
+    expect(first.length).toBeGreaterThan(1)
+    expect(first.some((node, index) => first.slice(index + 1).some((candidate) => Math.abs(node.position.x - candidate.position.x) < 240 && Math.abs(node.position.y - candidate.position.y) < 128))).toBe(false)
+
+    installFetchMock()
+    renderApp(<App />, '/trade')
+    const circle = await screen.findByRole('button', { name: 'Circle' })
+    await userEvent.click(circle)
+    expect(circle).toHaveAttribute('aria-pressed', 'true')
+    expect(localStorage.getItem('anno-companion:trade-network:campaign-1:latium:layout:v2')).toBe('circle')
   })
 
   it('keeps isolated cities visible without geographic coordinates or routes', async () => {

@@ -97,6 +97,9 @@ Cities, current inventory, finance, last-observed workforce, actions, conversati
 3. After the next complete telemetry cadence, the exact tag links the observed route to the plan. Running, partially paused, paused, issue, and freshness state remain separate from the plan workflow.
 4. Click a directed graph edge to see every underlying plan, observed route, named ship, warning, and goods-evidence category. Quantities are target movements, not verified per-trip settings.
 5. Existing routes following `Good SRC - DST`, such as `Bread Cud - Rhy`, auto-link when both three-letter city aliases are unique. Ambiguous and default route names remain in the collapsed attention tray, where they can be associated with a saved companion plan.
+6. Use **Force** for automatically clustered trade hubs, **Flow** for left-to-right direction, or **Circle** for an even overview. Layouts re-sort automatically when relationships change; **Auto-sort** resets any temporary node dragging.
+
+The city-port motifs are original inline SVG and CSS created for Anno Companion. They do not reuse or extract Anno artwork, icons, maps, or textures.
 
 ## Optional advisor
 

@@ -1,21 +1,20 @@
 import { AlertTriangle, ArrowRight, Banknote, Bot, Check, Clock3, Route, TrendingDown } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { useAreas, useCompanionMutations, useFinanceHistory, useOverview, useTradeNetwork, useTradePlans } from '../api'
+import { useCompanionMutations, useFinanceHistory, useOverview, useTradeNetwork, useTradePlans } from '../api'
 import { CatalogBadge, EmptyState, ErrorState, FreshnessBanner, LoadingState, PageHeader, SectionHeader } from '../components/Common'
-import { TradeNetworkCards } from '../components/TradeNetworkGraph'
+import { TradeNetworkExplorer } from '../components/TradeNetworkGraph'
 import { formatMoney, formatNumber } from '../utils'
 
 export function CommandCenterPage() {
   const overview = useOverview()
-  const areas = useAreas()
   const history = useFinanceHistory()
   const network = useTradeNetwork()
   const plans = useTradePlans()
   const mutations = useCompanionMutations()
-  if (overview.isLoading || areas.isLoading || network.isLoading || plans.isLoading) return <LoadingState />
-  const error = overview.error || areas.error || network.error || plans.error
-  if (error) return <ErrorState error={error} retry={() => { void overview.refetch(); void areas.refetch(); void network.refetch(); void plans.refetch() }} />
-  if (!overview.data || !areas.data || !network.data || !plans.data) return null
+  if (overview.isLoading || network.isLoading || plans.isLoading) return <LoadingState />
+  const error = overview.error || network.error || plans.error
+  if (error) return <ErrorState error={error} retry={() => { void overview.refetch(); void network.refetch(); void plans.refetch() }} />
+  if (!overview.data || !network.data || !plans.data) return null
   const data = overview.data
   const critical = data.actions.filter((item) => item.severity === 'critical').length
   const treasuryPoints = history.data?.items.filter((item) => item.treasury != null) ?? []
@@ -32,7 +31,7 @@ export function CommandCenterPage() {
       <Link to="/trade" className={`metric-card ${data.suggested_routes.length ? 'warning' : ''}`}><span className="metric-label"><Route size={16} /> Suggested routes</span><strong className="metric-value">{data.suggested_routes.length}</strong><small className="metric-supporting">Grouped plans · feasibility unknown</small></Link>
     </section>
 
-    <TradeNetworkCards compact network={network.data} areas={areas.data.items} plans={plans.data.items} onLink={(body) => mutations.linkTradeRoute.mutate(body)} onUnlink={(linkId) => mutations.unlinkTradeRoute.mutate(linkId)} onRelink={(linkId, routeKey) => mutations.relinkTradeRoute.mutate({ linkId, routeKey })} />
+    <TradeNetworkExplorer showUnmapped={false} network={network.data} plans={plans.data.items} onLink={(body) => mutations.linkTradeRoute.mutate(body)} onUnlink={(linkId) => mutations.unlinkTradeRoute.mutate(linkId)} onRelink={(linkId, routeKey) => mutations.relinkTradeRoute.mutate({ linkId, routeKey })} />
 
     <div className="command-grid" id="actions">
       <section className="panel span-two"><SectionHeader title="Top economic actions" description="Deterministic, evidence-backed work ranked before any AI call." action={<Link className="text-link" to="/trade">Open trade plans <ArrowRight size={14} /></Link>} />

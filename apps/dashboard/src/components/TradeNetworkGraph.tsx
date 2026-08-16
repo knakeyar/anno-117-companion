@@ -12,6 +12,7 @@ import {
   ReactFlowProvider,
   applyNodeChanges,
   getBezierPath,
+  getSmoothStepPath,
   type Edge,
   type EdgeProps,
   type Node,
@@ -22,23 +23,35 @@ import {
 import '@xyflow/react/dist/style.css'
 import { AlertTriangle, ArrowRight, Boxes, CircleHelp, Copy, ExternalLink, List, Network, PackageOpen, Route, Ship, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import type { Area, TradeNetworkEdge, TradeNetworkGraph as TradeGraph, TradeNetworkNode, TradeNetworkResponse, TradePlan } from '../types'
+import type { TradeNetworkEdge, TradeNetworkGraph as TradeGraph, TradeNetworkNode, TradeNetworkResponse, TradePlan } from '../types'
 import { formatNumber, titleCase } from '../utils'
 
 type GraphKey = 'latium' | 'albion' | 'cross_region'
+type LayoutMode = 'force' | 'flow' | 'circle'
 type CityNodeData = TradeNetworkNode & Record<string, unknown>
 type CityFlowNode = Node<CityNodeData, 'city'>
-type TradeEdgeData = { evidence: TradeNetworkEdge; parallel: boolean }
+type TradeEdgeData = { evidence: TradeNetworkEdge; parallel: boolean; layout: LayoutMode }
 type TradeFlowEdge = Edge<TradeEdgeData, 'trade'>
 
-const nodeWidth = 220
-const nodeHeight = 106
+const nodeWidth = 240
+const nodeHeight = 128
+
+function CityPortMark({ region, severity, name }: { region: TradeNetworkNode['region']; severity: TradeNetworkNode['severity']; name: string }) {
+  return <span className={`city-port-mark ${region ?? 'unknown'} ${severity}`} aria-hidden="true"><svg viewBox="0 0 64 64">
+    <path className="port-water" d="M5 47c8-4 13 4 21 0s14-4 22 0 9 1 12-1v9H5z" />
+    <path className="port-island" d={region === 'albion' ? 'M8 43c4-15 15-24 29-23 10 1 17 8 20 20-10 3-18 4-26 1-7-2-14-1-23 2z' : 'M7 43c7-12 15-20 28-21 11-1 18 5 22 18-9 5-18 5-27 2-7-2-14-1-23 1z'} />
+    <path className="port-roofs" d="M17 34l7-6 7 6v8H17zm18 2 6-9 7 9v6H35z" />
+    <path className="port-tower" d="M48 22h5v20h-5zm-2 0 4-7 5 7z" />
+    <path className="port-wave" d="M8 50c6-3 11 3 17 0s11-3 17 0 10 2 15-1" />
+    <text x="24" y="40">{name.trim().slice(0, 1).toUpperCase()}</text>
+  </svg></span>
+}
 
 function CityNode({ data, selected }: NodeProps<CityFlowNode>) {
   const fill = data.stock_health.average_fill_ratio
   return <article className={`network-city-node ${data.severity} ${selected ? 'selected' : ''}`}>
     <Handle type="target" position={Position.Left} isConnectable={false} />
-    <header><span>{data.region === 'latium' ? 'LAT' : data.region === 'albion' ? 'ALB' : '?'}</span><strong>{data.area_name}</strong></header>
+    <header className="network-city-header"><CityPortMark region={data.region} severity={data.severity} name={data.area_name} /><span className="network-city-title"><small>{data.region === 'latium' ? 'Latium port' : data.region === 'albion' ? 'Albion port' : 'Unplaced port'}</small><strong>{data.area_name}</strong></span><em>{data.severity}</em></header>
     <div className="network-city-stats"><span><b>{data.pressure_count}</b><small>pressures</small></span><span><b>{data.route_issue_count}</b><small>route issues</small></span><span><b>{data.running_route_count}/{data.paused_route_count}/{data.planned_route_count}</b><small>run/pause/plan</small></span></div>
     <div className="network-stock-track" aria-label={fill == null ? 'Stock health unavailable' : `Average tracked stock ${Math.round(fill * 100)} percent full`}><i style={{ width: `${Math.max(0, Math.min(100, (fill ?? 0) * 100))}%` }} /></div>
     <Handle type="source" position={Position.Right} isConnectable={false} />
@@ -47,7 +60,16 @@ function CityNode({ data, selected }: NodeProps<CityFlowNode>) {
 
 function TradeEdge(props: EdgeProps<TradeFlowEdge>) {
   const evidence = props.data?.evidence
-  const [path, labelX, labelY] = getBezierPath({
+  const pathResult = props.data?.layout === 'flow' ? getSmoothStepPath({
+    sourceX: props.sourceX,
+    sourceY: props.sourceY,
+    sourcePosition: props.sourcePosition,
+    targetX: props.targetX,
+    targetY: props.targetY,
+    targetPosition: props.targetPosition,
+    borderRadius: 18,
+    offset: props.data?.parallel ? 34 : 24,
+  }) : getBezierPath({
     sourceX: props.sourceX,
     sourceY: props.sourceY,
     sourcePosition: props.sourcePosition,
@@ -56,6 +78,7 @@ function TradeEdge(props: EdgeProps<TradeFlowEdge>) {
     targetPosition: props.targetPosition,
     curvature: props.data?.parallel ? .42 : .24,
   })
+  const [path, labelX, labelY] = pathResult
   if (!evidence) return null
   return <>
     <BaseEdge
@@ -80,7 +103,7 @@ function TradeEdge(props: EdgeProps<TradeFlowEdge>) {
 const nodeTypes = { city: CityNode }
 const edgeTypes = { trade: TradeEdge }
 
-function layoutGraph(graph: TradeGraph, graphKey: GraphKey): CityFlowNode[] {
+function flowLayout(graph: TradeGraph, graphKey: GraphKey): CityFlowNode[] {
   const layout = new dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}))
   layout.setGraph({ rankdir: 'LR', nodesep: 34, ranksep: graphKey === 'cross_region' ? 180 : 95, marginx: 25, marginy: 25 })
   for (const node of graph.nodes) layout.setNode(node.node_id, { width: nodeWidth, height: nodeHeight })
@@ -99,7 +122,7 @@ function layoutGraph(graph: TradeGraph, graphKey: GraphKey): CityFlowNode[] {
     if (graphKey === 'cross_region') {
       const region = node.region === 'albion' ? 'albion' : 'latium'
       x = region === 'latium' ? 25 : 430
-      y = 25 + regionIndexes[region] * 125
+      y = 25 + regionIndexes[region] * (nodeHeight + 42)
       regionIndexes[region] += 1
     }
     return {
@@ -112,55 +135,178 @@ function layoutGraph(graph: TradeGraph, graphKey: GraphKey): CityFlowNode[] {
   })
 }
 
-function storageKey(campaignId: string | null, graphKey: GraphKey) {
-  return `anno-companion:trade-network:${campaignId ?? 'none'}:${graphKey}:v1`
+function circleLayout(graph: TradeGraph, graphKey: GraphKey): CityFlowNode[] {
+  const degree = new Map(graph.nodes.map((node) => [node.node_id, 0]))
+  for (const edge of graph.edges) {
+    degree.set(`area-${edge.source_area_pk}`, (degree.get(`area-${edge.source_area_pk}`) ?? 0) + 1)
+    degree.set(`area-${edge.destination_area_pk}`, (degree.get(`area-${edge.destination_area_pk}`) ?? 0) + 1)
+  }
+  const ordered = [...graph.nodes].sort((left, right) => {
+    if (graphKey === 'cross_region' && left.region !== right.region) return left.region === 'latium' ? -1 : 1
+    return (degree.get(right.node_id) ?? 0) - (degree.get(left.node_id) ?? 0) || left.area_name.localeCompare(right.area_name)
+  })
+  const radius = Math.max(330, ordered.length * 48)
+  const centerX = radius + nodeWidth / 2 + 60
+  const centerY = radius * .72 + nodeHeight / 2 + 60
+  return ordered.map((node, index) => {
+    const angle = -Math.PI / 2 + (Math.PI * 2 * index) / Math.max(1, ordered.length)
+    return toFlowNode(node, {
+      x: centerX + Math.cos(angle) * radius - nodeWidth / 2,
+      y: centerY + Math.sin(angle) * radius * .68 - nodeHeight / 2,
+    })
+  })
 }
 
-function loadSavedPositions(key: string): Record<string, { x: number; y: number }> {
-  try { return JSON.parse(localStorage.getItem(key) ?? '{}') as Record<string, { x: number; y: number }> } catch { return {} }
+function toFlowNode(node: TradeNetworkNode, position: { x: number; y: number }): CityFlowNode {
+  return {
+    id: node.node_id,
+    type: 'city',
+    position,
+    data: { ...node },
+    ariaLabel: `${node.area_name}, ${node.severity}, ${node.pressure_count} economic pressures`,
+  }
 }
 
-function NetworkCanvas({ campaignId, graphKey, graph, compact, onEdge, onNode }: {
+function forceLayout(graph: TradeGraph, graphKey: GraphKey): CityFlowNode[] {
+  const ordered = [...graph.nodes].sort((left, right) => left.area_name.localeCompare(right.area_name))
+  if (ordered.length <= 1) return ordered.map((node) => toFlowNode(node, { x: 80, y: 80 }))
+  const width = Math.max(1100, Math.ceil(Math.sqrt(ordered.length)) * 360)
+  const height = Math.max(680, Math.ceil(ordered.length / 4) * 230)
+  const centerX = width / 2
+  const centerY = height / 2
+  const indexById = new Map(ordered.map((node, index) => [node.node_id, index]))
+  const degree = ordered.map(() => 0)
+  const connections = graph.edges.flatMap((edge) => {
+    const source = indexById.get(`area-${edge.source_area_pk}`)
+    const destination = indexById.get(`area-${edge.destination_area_pk}`)
+    if (source == null || destination == null) return []
+    degree[source] += 1
+    degree[destination] += 1
+    return [[source, destination] as const]
+  })
+  const maxDegree = Math.max(1, ...degree)
+  const state = ordered.map((node, index) => {
+    const angle = -Math.PI / 2 + (Math.PI * 2 * index) / ordered.length
+    const radius = Math.min(width, height) * (degree[index] ? .34 : .43)
+    return { node, x: centerX + Math.cos(angle) * radius, y: centerY + Math.sin(angle) * radius, vx: 0, vy: 0 }
+  })
+  for (let iteration = 0; iteration < 280; iteration += 1) {
+    const forces = state.map(() => ({ x: 0, y: 0 }))
+    for (let left = 0; left < state.length; left += 1) {
+      for (let right = left + 1; right < state.length; right += 1) {
+        let dx = state[right].x - state[left].x
+        let dy = state[right].y - state[left].y
+        if (Math.abs(dx) + Math.abs(dy) < .01) { dx = right % 2 ? 1 : -1; dy = .5 }
+        const distanceSquared = Math.max(900, dx * dx + dy * dy)
+        const distance = Math.sqrt(distanceSquared)
+        const repulsion = 120000 / distanceSquared
+        const fx = (dx / distance) * repulsion
+        const fy = (dy / distance) * repulsion
+        forces[left].x -= fx; forces[left].y -= fy
+        forces[right].x += fx; forces[right].y += fy
+      }
+    }
+    for (const [source, destination] of connections) {
+      const dx = state[destination].x - state[source].x
+      const dy = state[destination].y - state[source].y
+      const distance = Math.max(1, Math.sqrt(dx * dx + dy * dy))
+      const attraction = (distance - 330) * .012
+      const fx = (dx / distance) * attraction
+      const fy = (dy / distance) * attraction
+      forces[source].x += fx; forces[source].y += fy
+      forces[destination].x -= fx; forces[destination].y -= fy
+    }
+    for (let index = 0; index < state.length; index += 1) {
+      const centrality = 1 + (degree[index] / maxDegree) * 1.6
+      forces[index].x += (centerX - state[index].x) * .0025 * centrality
+      forces[index].y += (centerY - state[index].y) * .0025 * centrality
+      if (graphKey === 'cross_region') {
+        const targetX = state[index].node.region === 'latium' ? width * .28 : width * .72
+        forces[index].x += (targetX - state[index].x) * .018
+      }
+      state[index].vx = (state[index].vx + forces[index].x * .5) * .78
+      state[index].vy = (state[index].vy + forces[index].y * .5) * .78
+      const speed = Math.max(1, Math.sqrt(state[index].vx ** 2 + state[index].vy ** 2) / 13)
+      state[index].x = Math.max(nodeWidth / 2 + 35, Math.min(width - nodeWidth / 2 - 35, state[index].x + state[index].vx / speed))
+      state[index].y = Math.max(nodeHeight / 2 + 35, Math.min(height - nodeHeight / 2 - 35, state[index].y + state[index].vy / speed))
+    }
+    for (let left = 0; left < state.length; left += 1) {
+      for (let right = left + 1; right < state.length; right += 1) {
+        const dx = state[right].x - state[left].x
+        const dy = state[right].y - state[left].y
+        const overlapX = nodeWidth + 54 - Math.abs(dx)
+        const overlapY = nodeHeight + 54 - Math.abs(dy)
+        if (overlapX <= 0 || overlapY <= 0) continue
+        if (overlapX < overlapY) {
+          const shift = overlapX / 2 + 1
+          state[left].x -= dx >= 0 ? shift : -shift
+          state[right].x += dx >= 0 ? shift : -shift
+        } else {
+          const shift = overlapY / 2 + 1
+          state[left].y -= dy >= 0 ? shift : -shift
+          state[right].y += dy >= 0 ? shift : -shift
+        }
+      }
+    }
+  }
+  return state.map(({ node, x, y }) => toFlowNode(node, { x: x - nodeWidth / 2, y: y - nodeHeight / 2 }))
+}
+
+export function calculateTradeLayout(graph: TradeGraph, graphKey: GraphKey, mode: LayoutMode): CityFlowNode[] {
+  if (mode === 'flow') return flowLayout(graph, graphKey)
+  if (mode === 'circle') return circleLayout(graph, graphKey)
+  return forceLayout(graph, graphKey)
+}
+
+function layoutStorageKey(campaignId: string | null, graphKey: GraphKey) {
+  return `anno-companion:trade-network:${campaignId ?? 'none'}:${graphKey}:layout:v2`
+}
+
+function preferredLayout(key: string): LayoutMode {
+  const value = localStorage.getItem(key)
+  return value === 'flow' || value === 'circle' ? value : 'force'
+}
+
+function NetworkCanvas({ campaignId, graphKey, graph, onEdge, onNode }: {
   campaignId: string | null
   graphKey: GraphKey
   graph: TradeGraph
-  compact?: boolean
   onEdge: (edge: TradeNetworkEdge) => void
   onNode: (node: TradeNetworkNode) => void
 }) {
-  const key = storageKey(campaignId, graphKey)
-  const calculated = useMemo(() => layoutGraph(graph, graphKey), [graph, graphKey])
-  const [layoutRevision, setLayoutRevision] = useState(0)
+  const preferenceKey = layoutStorageKey(campaignId, graphKey)
+  const [layoutMode, setLayoutMode] = useState<LayoutMode>(() => preferredLayout(preferenceKey))
+  const calculated = useMemo(() => calculateTradeLayout(graph, graphKey, layoutMode), [graph, graphKey, layoutMode])
   const [nodes, setNodes] = useState<CityFlowNode[]>([])
   const [instance, setInstance] = useState<ReactFlowInstance<CityFlowNode, TradeFlowEdge> | null>(null)
   useEffect(() => {
-    const saved = loadSavedPositions(key)
-    const next = calculated.map((node) => ({ ...node, position: saved[node.id] ?? node.position }))
-    setNodes(next)
-    localStorage.setItem(key, JSON.stringify(Object.fromEntries(next.map((node) => [node.id, node.position]))))
-  }, [calculated, key, layoutRevision])
+    setNodes(calculated)
+    const timer = window.setTimeout(() => instance?.fitView({ padding: .15, duration: 300 }), 0)
+    return () => window.clearTimeout(timer)
+  }, [calculated, instance])
   const directedPairs = useMemo(() => new Set(graph.edges.map((edge) => `${edge.source_area_pk}:${edge.destination_area_pk}`)), [graph.edges])
   const edges = useMemo<TradeFlowEdge[]>(() => graph.edges.map((edge) => ({
     id: edge.edge_id,
     source: `area-${edge.source_area_pk}`,
     target: `area-${edge.destination_area_pk}`,
     type: 'trade',
-    data: { evidence: edge, parallel: directedPairs.has(`${edge.destination_area_pk}:${edge.source_area_pk}`) },
+    data: { evidence: edge, parallel: directedPairs.has(`${edge.destination_area_pk}:${edge.source_area_pk}`), layout: layoutMode },
     markerEnd: { type: MarkerType.ArrowClosed, width: 15, height: 15 },
     animated: edge.status === 'running' && edge.freshness === 'live' && edge.goods_verification !== 'unavailable',
     ariaLabel: `${edge.source_area_name} to ${edge.destination_area_name}, ${edge.summary.goods} goods, ${edge.status}`,
-  })), [directedPairs, graph.edges])
+  })), [directedPairs, graph.edges, layoutMode])
   const onNodesChange = useCallback((changes: NodeChange<CityFlowNode>[]) => setNodes((current) => applyNodeChanges(changes, current)), [])
-  const savePositions = useCallback(() => {
-    localStorage.setItem(key, JSON.stringify(Object.fromEntries(nodes.map((node) => [node.id, node.position]))))
-  }, [key, nodes])
-  const reset = () => {
-    localStorage.removeItem(key)
-    setLayoutRevision((value) => value + 1)
-    window.setTimeout(() => instance?.fitView({ padding: .15, duration: 250 }), 0)
+  const chooseLayout = (mode: LayoutMode) => {
+    localStorage.setItem(preferenceKey, mode)
+    setLayoutMode(mode)
   }
-  return <div className={`trade-network-canvas ${compact ? 'compact' : ''}`}>
-    <div className="network-canvas-tools"><button onClick={() => instance?.fitView({ padding: .15, duration: 250 })}>Fit</button><button onClick={reset}>Re-layout</button></div>
+  const autoSort = () => {
+    setNodes(calculateTradeLayout(graph, graphKey, layoutMode))
+    window.setTimeout(() => instance?.fitView({ padding: .15, duration: 300 }), 0)
+  }
+  return <div className="trade-network-canvas">
+    <div className="network-layout-picker" role="group" aria-label="Graph layout">{(['force', 'flow', 'circle'] as LayoutMode[]).map((mode) => <button aria-pressed={layoutMode === mode} className={layoutMode === mode ? 'active' : ''} key={mode} onClick={() => chooseLayout(mode)}>{titleCase(mode)}</button>)}</div>
+    <div className="network-canvas-tools"><button onClick={() => instance?.fitView({ padding: .15, duration: 250 })}>Fit</button><button onClick={autoSort}>Auto-sort</button></div>
     <ReactFlow<CityFlowNode, TradeFlowEdge>
       nodes={nodes}
       edges={edges}
@@ -168,7 +314,6 @@ function NetworkCanvas({ campaignId, graphKey, graph, compact, onEdge, onNode }:
       edgeTypes={edgeTypes}
       onInit={setInstance}
       onNodesChange={onNodesChange}
-      onNodeDragStop={savePositions}
       onNodeClick={(_event, node) => onNode(node.data)}
       onEdgeClick={(_event, edge) => edge.data && onEdge(edge.data.evidence)}
       nodesConnectable={false}
@@ -182,23 +327,6 @@ function NetworkCanvas({ campaignId, graphKey, graph, compact, onEdge, onNode }:
       ariaLabelConfig={{ 'node.a11yDescription.default': 'Press Enter to select this city.', 'edge.a11yDescription.default': 'Press Enter to inspect this trade relationship.' }}
     ><Background color="#294044" gap={24} size={1} /><Controls showInteractive={false} /></ReactFlow>
   </div>
-}
-
-function GraphCard({ title, description, campaignId, graphKey, graph, compact, onEdge, onNode }: {
-  title: string
-  description: string
-  campaignId: string | null
-  graphKey: GraphKey
-  graph: TradeGraph
-  compact?: boolean
-  onEdge: (edge: TradeNetworkEdge) => void
-  onNode: (node: TradeNetworkNode) => void
-}) {
-  const [listView, setListView] = useState(false)
-  return <section className={`trade-network-card ${graphKey}`} aria-label={`${title} trade network`}>
-    <header><div><strong>{title}</strong><small>{description}</small></div><button className="button ghost" onClick={() => setListView((value) => !value)}>{listView ? <Network size={13} /> : <List size={13} />}{listView ? 'Graph' : 'List'}</button></header>
-    {listView ? <div className="network-list-view">{graph.edges.length ? graph.edges.map((edge) => <button key={edge.edge_id} onClick={() => onEdge(edge)}><span><strong>{edge.source_area_name}</strong><ArrowRight size={13} /><strong>{edge.destination_area_name}</strong></span><small>{edge.summary.goods} goods · {edge.summary.routes} routes · {edge.summary.ships} ships · {titleCase(edge.status)}</small></button>) : <p>No mapped trade relationships in this view.</p>}</div> : graph.nodes.length ? <ReactFlowProvider><NetworkCanvas campaignId={campaignId} graphKey={graphKey} graph={graph} compact={compact} onEdge={onEdge} onNode={onNode} /></ReactFlowProvider> : <div className="network-empty"><Network size={22} /><strong>No connected cities yet</strong><span>Plans and linked routes will appear here.</span></div>}
-  </section>
 }
 
 function EvidenceDrawer({ edge, node, allEdges, onClose, onUnlink }: { edge: TradeNetworkEdge | null; node: TradeNetworkNode | null; allEdges: TradeNetworkEdge[]; onClose: () => void; onUnlink: (linkId: string) => void }) {
@@ -246,35 +374,11 @@ function UnmappedRoutes({ network, plans, onLink, onRelink }: { network: TradeNe
 
 interface TradeNetworkProps {
   network: TradeNetworkResponse
-  areas: Area[]
   plans: TradePlan[]
   onLink: (body: { campaign_id: string; route_key: string; source_area_pk: number; destination_area_pk: number; trade_plan_id?: string }) => void
   onUnlink: (linkId: string) => void
   onRelink: (linkId: string, routeKey: string) => void
-  compact?: boolean
-}
-
-export function TradeNetworkCards({ network, areas, plans, onLink, onUnlink, onRelink, compact = false }: TradeNetworkProps) {
-  const [selectedEdge, setSelectedEdge] = useState<TradeNetworkEdge | null>(null)
-  const [selectedNode, setSelectedNode] = useState<TradeNetworkNode | null>(null)
-  const allEdges = useMemo(() => Object.values(network.graphs).flatMap((graph) => graph.edges), [network.graphs])
-  useEffect(() => {
-    const listener = (event: Event) => {
-      const edgeId = (event as CustomEvent<string>).detail
-      const found = allEdges.find((edge) => edge.edge_id === edgeId)
-      if (found) { setSelectedNode(null); setSelectedEdge(found) }
-    }
-    window.addEventListener('anno:trade-edge', listener)
-    return () => window.removeEventListener('anno:trade-edge', listener)
-  }, [allEdges])
-  const selectEdge = (edge: TradeNetworkEdge) => { setSelectedNode(null); setSelectedEdge(edge) }
-  const selectNode = (node: TradeNetworkNode) => { setSelectedEdge(null); setSelectedNode(node) }
-  return <>
-    <div className="trade-network-grid"><GraphCard title="Latium" description={`${network.graphs.latium.nodes.length} cities · ${network.graphs.latium.edges.length} relationships`} campaignId={network.campaign_id} graphKey="latium" graph={network.graphs.latium} compact={compact} onEdge={selectEdge} onNode={selectNode} /><GraphCard title="Albion" description={`${network.graphs.albion.nodes.length} cities · ${network.graphs.albion.edges.length} relationships`} campaignId={network.campaign_id} graphKey="albion" graph={network.graphs.albion} compact={compact} onEdge={selectEdge} onNode={selectNode} /><GraphCard title="Cross-region" description={`${network.graphs.cross_region.nodes.length} cities · ${network.graphs.cross_region.edges.length} relationships`} campaignId={network.campaign_id} graphKey="cross_region" graph={network.graphs.cross_region} compact={compact} onEdge={selectEdge} onNode={selectNode} /></div>
-    {!compact && <UnmappedRoutes network={network} plans={plans} onLink={onLink} onRelink={onRelink} />}
-    <div className="network-evidence-notice"><CircleHelp size={14} />{network.evidence_notice}</div>
-    <EvidenceDrawer edge={selectedEdge} node={selectedNode} allEdges={allEdges} onUnlink={onUnlink} onClose={() => { setSelectedEdge(null); setSelectedNode(null) }} />
-  </>
+  showUnmapped?: boolean
 }
 
 export function TradeNetworkExplorer(props: TradeNetworkProps) {
@@ -294,8 +398,8 @@ export function TradeNetworkExplorer(props: TradeNetworkProps) {
     return () => window.removeEventListener('anno:trade-edge', listener)
   }, [allEdges])
   return <>
-    <section className="trade-network-explorer"><header><div><strong>Trade network</strong><small>Relationships, not geography. Select an edge to inspect its ships and resource evidence.</small></div><div className="network-view-controls"><nav aria-label="Trade network region">{(['latium', 'albion', 'cross_region'] as GraphKey[]).map((item) => <button className={tab === item ? 'active' : ''} key={item} onClick={() => setTab(item)}>{item === 'cross_region' ? 'Cross-region' : titleCase(item)}</button>)}</nav><button className="button ghost" onClick={() => setListView((value) => !value)}>{listView ? <Network size={13} /> : <List size={13} />}{listView ? 'Graph' : 'List'}</button></div></header>{listView ? <div className="network-list-view">{graph.edges.length ? graph.edges.map((edge) => <button key={edge.edge_id} onClick={() => { setSelectedNode(null); setSelectedEdge(edge) }}><span><strong>{edge.source_area_name}</strong><ArrowRight size={13} /><strong>{edge.destination_area_name}</strong></span><small>{edge.summary.goods} goods · {edge.summary.routes} routes · {edge.summary.ships} ships · {titleCase(edge.status)}</small></button>) : <p>No mapped trade relationships in this view.</p>}</div> : <ReactFlowProvider><NetworkCanvas campaignId={props.network.campaign_id} graphKey={tab} graph={graph} onEdge={(edge) => { setSelectedNode(null); setSelectedEdge(edge) }} onNode={(node) => { setSelectedEdge(null); setSelectedNode(node) }} /></ReactFlowProvider>}</section>
-    <UnmappedRoutes network={props.network} plans={props.plans} onLink={props.onLink} onRelink={props.onRelink} />
+    <section className="trade-network-explorer" aria-label="Trade network"><header><div><strong>Trade network</strong><small>Auto-sorted relationships. Select a layout, then inspect an edge for ships and resource evidence.</small></div><div className="network-view-controls"><nav aria-label="Trade network region">{(['latium', 'albion', 'cross_region'] as GraphKey[]).map((item) => <button className={tab === item ? 'active' : ''} key={item} onClick={() => setTab(item)}>{item === 'cross_region' ? 'Cross-region' : titleCase(item)}</button>)}</nav><button className="button ghost" onClick={() => setListView((value) => !value)}>{listView ? <Network size={13} /> : <List size={13} />}{listView ? 'Graph' : 'List'}</button></div></header>{listView ? <div className="network-list-view">{graph.edges.length ? graph.edges.map((edge) => <button key={edge.edge_id} onClick={() => { setSelectedNode(null); setSelectedEdge(edge) }}><span><strong>{edge.source_area_name}</strong><ArrowRight size={13} /><strong>{edge.destination_area_name}</strong></span><small>{edge.summary.goods} goods · {edge.summary.routes} routes · {edge.summary.ships} ships · {titleCase(edge.status)}</small></button>) : <p>No mapped trade relationships in this view.</p>}</div> : graph.nodes.length ? <ReactFlowProvider><NetworkCanvas campaignId={props.network.campaign_id} graphKey={tab} graph={graph} onEdge={(edge) => { setSelectedNode(null); setSelectedEdge(edge) }} onNode={(node) => { setSelectedEdge(null); setSelectedNode(node) }} /></ReactFlowProvider> : <div className="network-empty"><Network size={24} /><strong>No cities in this view yet</strong><span>Persisted cities appear here as telemetry identifies their region.</span></div>}</section>
+    {(props.showUnmapped ?? true) && <UnmappedRoutes network={props.network} plans={props.plans} onLink={props.onLink} onRelink={props.onRelink} />}
     <div className="network-evidence-notice"><CircleHelp size={14} />{props.network.evidence_notice}</div>
     <EvidenceDrawer edge={selectedEdge} node={selectedNode} allEdges={allEdges} onUnlink={props.onUnlink} onClose={() => { setSelectedEdge(null); setSelectedNode(null) }} />
   </>

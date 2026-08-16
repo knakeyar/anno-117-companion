@@ -47,6 +47,10 @@ test.beforeEach(async ({ page }) => {
       await route.fulfill({ json: { items: [] } })
       return
     }
+    if (url.pathname === '/api/v1/inventory/history/group') {
+      await route.fulfill({ json: { series: url.searchParams.getAll('product_guid').map((productGuid) => ({ product_guid: productGuid, items: [] })) } })
+      return
+    }
     const fixture = apiFixtures[url.pathname]
     await route.fulfill(fixture === undefined ? { status: 404, body: 'Not found' } : { json: fixture })
   })
@@ -55,6 +59,9 @@ test.beforeEach(async ({ page }) => {
 test('command center and trade workflow stay actionable', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByRole('heading', { name: 'Decide what to fix next.' })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Trade network' })).toBeVisible()
+  await page.getByRole('button', { name: 'Flow' }).click()
+  await expect(page.getByRole('button', { name: 'Flow' })).toHaveAttribute('aria-pressed', 'true')
   await expect(page.getByText('Estimated base factory maintenance')).toBeVisible()
   await page.getByRole('main').getByRole('button', { name: 'Ask advisor' }).click()
   await expect(page.getByRole('complementary', { name: 'Economic advisor' })).toBeVisible()
@@ -67,10 +74,10 @@ test('command center and trade workflow stay actionable', async ({ page }) => {
   await expect(page.getByText('Mercury').last()).toBeVisible()
   await expect(page.getByText('Timber').last()).toBeVisible()
   await page.getByRole('button', { name: 'Close evidence' }).click()
-  await page.getByRole('button', { name: 'Link route' }).click()
-  await page.getByLabel('Source').selectOption('1')
-  await page.getByLabel('Destination').selectOption('3')
-  await page.getByRole('button', { name: 'Save link' }).click()
+  await page.getByText('Routes needing attention').click()
+  await page.getByRole('button', { name: 'Match a saved plan' }).click()
+  await page.getByLabel('Saved companion plan').selectOption('plan-1')
+  await page.getByRole('button', { name: 'Associate plan' }).click()
   await expect.poll(() => linkedRoutes).toBe(1)
   await expect(page.getByText('Route feasibility unknown').first()).toBeVisible()
   await page.getByRole('button', { name: 'Save plan' }).click()

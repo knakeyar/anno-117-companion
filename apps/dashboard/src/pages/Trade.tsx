@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { ArrowRight, Check, CheckCircle2, CircleHelp, Clock3, Copy, PackageOpen, Ship, ShipWheel, Target, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { useAreas, useCompanionMutations, useTrade, useTradeNetwork, useTradePlans } from '../api'
+import { useCompanionMutations, useTrade, useTradeNetwork, useTradePlans } from '../api'
 import { CatalogBadge, EmptyState, ErrorState, FreshnessBanner, LoadingState, PageHeader, SectionHeader } from '../components/Common'
 import { TradeNetworkExplorer } from '../components/TradeNetworkGraph'
 import type { TradePlan } from '../types'
@@ -10,23 +10,22 @@ import { formatNumber, titleCase } from '../utils'
 export function TradePage() {
   const trade = useTrade()
   const plans = useTradePlans()
-  const areas = useAreas()
   const network = useTradeNetwork()
   const mutations = useCompanionMutations()
   const [hidden, setHidden] = useState<string[]>([])
   const [explaining, setExplaining] = useState<string | null>(null)
   const [assumedShipCapacity, setAssumedShipCapacity] = useState(300)
   const [planKinds, setPlanKinds] = useState<Record<string, TradePlan['plan_kind']>>({})
-  if (trade.isLoading || plans.isLoading || areas.isLoading || network.isLoading) return <LoadingState label="Reading trade routes…" />
-  const error = trade.error || plans.error || areas.error || network.error
-  if (error) return <ErrorState error={error} retry={() => { void trade.refetch(); void plans.refetch(); void areas.refetch(); void network.refetch() }} />
-  if (!trade.data || !plans.data || !areas.data || !network.data) return null
+  if (trade.isLoading || plans.isLoading || network.isLoading) return <LoadingState label="Reading trade routes…" />
+  const error = trade.error || plans.error || network.error
+  if (error) return <ErrorState error={error} retry={() => { void trade.refetch(); void plans.refetch(); void network.refetch() }} />
+  if (!trade.data || !plans.data || !network.data) return null
   const suggestions = trade.data.suggested_routes.filter((item) => !hidden.includes(item.suggestion_id)).slice(0, 5)
 
   return <div className="page">
     <PageHeader eyebrow="Trade planner" title="Turn shortages into route plans." description="Ranked source-to-destination proposals combine compatible goods. Amounts are bounded by observed surplus and deficit; route feasibility remains unknown." actions={<CatalogBadge catalog={trade.data.catalog} />} />
     <FreshnessBanner meta={trade.data.meta} />
-    <TradeNetworkExplorer network={network.data} areas={areas.data.items} plans={plans.data.items} onLink={(body) => mutations.linkTradeRoute.mutate(body)} onUnlink={(linkId) => mutations.unlinkTradeRoute.mutate(linkId)} onRelink={(linkId, routeKey) => mutations.relinkTradeRoute.mutate({ linkId, routeKey })} />
+    <TradeNetworkExplorer network={network.data} plans={plans.data.items} onLink={(body) => mutations.linkTradeRoute.mutate(body)} onUnlink={(linkId) => mutations.unlinkTradeRoute.mutate(linkId)} onRelink={(linkId, routeKey) => mutations.relinkTradeRoute.mutate({ linkId, routeKey })} />
     <section className="panel trade-opportunities"><SectionHeader title="Recommended routes" description="Three to five focused suggestions, prioritized by policy and destination pressure." />
       {suggestions.length ? <div className="route-suggestion-list">{suggestions.map((route, index) => {
         const totalCargo = route.goods.reduce((total, good) => total + good.advisory_amount, 0)
