@@ -1,8 +1,8 @@
 # Anno Companion v1.1
 
-Anno Companion is a local, read-only economic workspace for Anno 117. It turns JSON records emitted to the game log into durable campaign state, interactive regional maps, ranked actions and trade plans, city-specific production pressure, finance guidance, workforce facts, and an optional on-demand advisor.
+Manage your empire the way Caesar definitely did: with fancy dashboards and up-to-date information about trade and resource production. Better yet, Caesar's greatest achievements were apparently powered by AI workers—although at the time he used the word “slaves.” Please do not quote us on these completely made-up historical facts. Connect your game data to AI for suggestions on keeping your people happy. Note: this only works for Anno, not real life.
 
-> Manage your empire the way Caesar definitely did: with fancy dashboards and up-to-date information about trade and resource production. Better yet, Caesar's greatest achievements were apparently powered by AI workers—although at the time he used the word “slaves.” Please do not quote us on these completely made-up historical facts. Connect your game data to AI for suggestions on keeping your people happy. Note: this only works for Anno, not real life.
+> Anno Companion is a local, read-only economic workspace for Anno 117. It turns JSON records emitted to the game log into durable campaign state, interactive regional maps, ranked actions and trade plans, city-specific production pressure, finance guidance, workforce facts, and an optional on-demand advisor.
 
 ## Why Anno Companion?
 
@@ -20,17 +20,63 @@ The dashboard never mounts or opens SQLite directly. Mount a directory for `/dat
 
 ## Windows setup
 
-1. Copy the entire [`mod/anno-companion-telemetry`](mod/anno-companion-telemetry) folder into the Anno 117 **Documents** mods directory. Confirm its manifest is version `1.1.1`. Disable the telemetry probe during ordinary use. Version 1.1.1 adds the ship-backed active-route list.
-2. Copy `.env.example` to `.env` and replace `YOUR_WINDOWS_USER`. `ANNO_LOG_DIR` must be the directory containing the game log where `ANNO_COMPANION_TELEMETRY_JSON` appears.
-3. Create the `ANNO_DATA_DIR` directory if it does not exist.
-4. From PowerShell in this repository, run:
+### Prerequisites
+
+Anno Companion uses Linux containers through Docker Desktop's WSL 2 backend. You do not need to run the companion from a Linux terminal; after WSL and Docker Desktop are installed, the commands below can be run from PowerShell.
+
+1. Confirm that hardware virtualization is enabled in BIOS/UEFI and that your Windows version meets Docker's requirements.
+2. Open **PowerShell as Administrator**, install WSL, and restart Windows when prompted:
+
+   ```powershell
+   wsl --install
+   ```
+
+3. After restarting, update WSL and confirm that the installed distribution uses version 2:
+
+   ```powershell
+   wsl --update
+   wsl --version
+   wsl --list --verbose
+   ```
+
+   New installations use WSL 2 by default. If an existing distribution reports version 1, follow Microsoft's upgrade instructions. See the official [Microsoft WSL installation guide](https://learn.microsoft.com/windows/wsl/install).
+
+4. Download and install [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/). During installation, select the WSL 2 backend. Start Docker Desktop and wait until it reports that the engine is running.
+5. In Docker Desktop, confirm **Settings → General → Use the WSL 2 based engine** is enabled and that Docker is using Linux containers.
+6. Verify the installation from PowerShell:
+
+   ```powershell
+   docker version
+   docker compose version
+   ```
+
+   If a command mentions `dockerDesktopLinuxEngine` or a missing named pipe, Docker Desktop is not running yet or its WSL 2 engine has not finished starting.
+
+### Install Anno Companion
+
+1. Download the repository as a ZIP from GitHub, or clone it and enter the repository directory:
+
+   ```powershell
+   git clone https://github.com/knakeyar/anno-117-companion.git
+   cd anno-117-companion
+   ```
+
+2. Copy the entire [`mod/anno-companion-telemetry`](mod/anno-companion-telemetry) folder into one of the Anno 117 mod directories:
+
+   - `C:\Users\YOUR_WINDOWS_USER\Documents\Anno 117 - Pax Romana\mods`
+   - `C:\Program Files (x86)\Steam\steamapps\common\Anno 117 - Pax Romana\mods`
+
+   Confirm its manifest is version `1.1.1`. Disable the telemetry probe during ordinary use. Version 1.1.1 adds the ship-backed active-route list.
+3. Copy `.env.example` to `.env` and replace `YOUR_WINDOWS_USER`. The default `ANNO_LOG_DIR` points to `C:/Users/YOUR_WINDOWS_USER/Documents/Anno 117 - Pax Romana/log`, which must contain the game log where `ANNO_COMPANION_TELEMETRY_JSON` appears. Keep forward slashes in `.env` paths.
+4. Create the directory configured by `ANNO_DATA_DIR`. The default is `C:/Users/YOUR_WINDOWS_USER/Documents/Anno Companion/data`; any writable persistent directory is acceptable.
+5. Start Docker Desktop. Then, from PowerShell in the repository directory, run:
 
    ```powershell
    docker compose up --build -d
    docker compose ps
    ```
 
-5. Open [http://127.0.0.1:8080](http://127.0.0.1:8080). The Health page shows the mounted log cursor, database path/size, current play-session epoch, parse errors, and catalog coverage.
+6. Wait for both services to report `healthy`, then open [http://127.0.0.1:8080](http://127.0.0.1:8080). The Health page shows the mounted log cursor, database path/size, current play-session epoch, parse errors, and catalog coverage.
 
 To stop without deleting data:
 
@@ -69,6 +115,20 @@ The pinned community catalog release contains 145 reference products, 113 invent
 ## Runtime capability check
 
 Coordinates and per-city factory counts depend on game Lua bindings that cannot be verified outside Anno. Before treating them as proven on your installation, temporarily enable [`mod/anno-companion-telemetry-probe`](mod/anno-companion-telemetry-probe), capture one `scope_runtime_capabilities` record in Latium and one in Albion, then disable the probe again. Failed coordinate reads use manual map placement; failed building reads remain `presence unknown` and production remains stock-derived.
+
+### Real regional map discovery
+
+The current dashboard background is only a schematic. Probe version `0.4.0` tests whether Anno exposes the real save-specific island layout and whether those island rectangles align with city Kontor coordinates. You do **not** need to extract RDA archives for this test.
+
+1. Copy the entire [`mod/anno-companion-telemetry-probe`](mod/anno-companion-telemetry-probe) folder into your active Anno 117 `mods` directory and confirm its manifest is version `0.4.0`. Keep only one copy of that ModID installed.
+2. Fully restart Anno and load the campaign used by the companion.
+3. Enter Latium, keep the game unpaused, and wait at least 20 seconds.
+4. Switch to Albion, keep the game unpaused, and wait at least 20 seconds.
+5. Close the game and search the Anno log for `scope_island_layout` and `scope_runtime_capabilities`.
+6. Return one complete `scope_island_layout` line and its matching `scope_runtime_capabilities` line from each region. A screenshot of each in-game Province Map is also useful for verifying orientation and scaling.
+7. Disable the probe after collecting the four records. The production telemetry mod can remain installed throughout the test.
+
+If the probe succeeds, the next companion release can draw islands and cities in their real world-coordinate positions without bundling Ubisoft artwork. Exact coastlines would remain a separate, optional local-extraction feature.
 
 ## Development and verification
 

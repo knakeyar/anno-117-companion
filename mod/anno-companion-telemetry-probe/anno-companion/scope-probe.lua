@@ -1,7 +1,7 @@
 local Probe = {}
 local json = require("json")
 
-local VERSION = "0.3.0"
+local VERSION = "0.4.0"
 local EVENT_GROUP = "anno-companion-telemetry-probe"
 
 local CONFIG = {
@@ -18,6 +18,7 @@ local CONFIG = {
         controlled_areas = 64,
         workforces = 16,
         trade_offers = 32,
+        islands = 64,
     },
 }
 
@@ -665,6 +666,84 @@ local function current_play_time()
     return nil
 end
 
+local function capture_rect(rect)
+    if rect == nil then return { status = "not_observed" } end
+    local result = { status = "opaque", rendered = safe_value(rect), fields = {}, points = {} }
+    local scalar_fields = {
+        "x", "y", "width", "height", "left", "top", "right", "bottom",
+        "X", "Y", "Width", "Height", "Left", "Top", "Right", "Bottom",
+        "x1", "y1", "x2", "y2", "minX", "minY", "maxX", "maxY",
+        "MinX", "MinY", "MaxX", "MaxY",
+    }
+    for _, field_name in ipairs(scalar_fields) do
+        local ok, value = safe_get(rect, field_name)
+        if ok and (type(value) == "number" or type(value) == "string") then
+            result.fields[field_name] = safe_value(value)
+            result.status = "success"
+        end
+    end
+    local point_fields = { "min", "max", "Min", "Max", "topLeft", "bottomRight", "Position", "Size" }
+    for _, field_name in ipairs(point_fields) do
+        local point_ok, point = safe_get(rect, field_name)
+        if point_ok and point ~= nil then
+            local captured = {}
+            for _, axis in ipairs({ "x", "y", "X", "Y" }) do
+                local axis_ok, value = safe_get(point, axis)
+                if axis_ok and type(value) == "number" then captured[axis] = safe_value(value) end
+            end
+            if next(captured) ~= nil then
+                result.points[field_name] = captured
+                result.status = "success"
+            end
+        end
+    end
+    return result
+end
+
+local function build_island_layout_capabilities()
+    local result = {
+        session_guid = safe_value(capture_fields(GameSession, { "SessionGUID" }).SessionGUID),
+        region_guid = safe_value(capture_fields(GameSession, { "RegionGUID" }).RegionGUID),
+        islands = {},
+    }
+    local ids_ok, island_ids, ids_error = safe_get(Island, "AllIslandIDs")
+    if not ids_ok or island_ids == nil then
+        result.status = "not_observed"
+        result.error = tostring(ids_error or "Island.AllIslandIDs unavailable")
+        return false, result
+    end
+    local collection, collection_error = read_collection(island_ids, CONFIG.limits.islands)
+    if collection == nil then
+        result.status = "not_observed"
+        result.error = tostring(collection_error)
+        return false, result
+    end
+    result.reported_count = collection.reported_count
+    result.captured_count = collection.captured_count
+    result.truncated = collection.truncated
+    for index, island_id in ipairs(collection.items) do
+        local item = { ordinal = index, island_id = safe_value(island_id), status = "not_observed" }
+        local island_ok, island_or_error = pcall(function() return Island:GetIsland(island_id) end)
+        if island_ok and island_or_error ~= nil then
+            local island = island_or_error
+            local fields = capture_fields(island, {
+                "IslandLabel", "IslandFilename", "IsPirateIsland", "IsStarterIsland", "IsReservedForPlayer",
+            })
+            for key, value in pairs(fields) do item[key] = value end
+            local bounding_ok, bounding_rect = safe_get(island, "BoundingRect")
+            local active_ok, active_rect = safe_get(island, "ActiveRect")
+            item.bounding_rect = bounding_ok and capture_rect(bounding_rect) or { status = "not_observed" }
+            item.active_rect = active_ok and capture_rect(active_rect) or { status = "not_observed" }
+            item.status = "success"
+        else
+            item.error = tostring(island_or_error or "Island.GetIsland returned nil")
+        end
+        result.islands[#result.islands + 1] = item
+    end
+    result.status = not collection.truncated and "success" or "partial"
+    return not collection.truncated, result
+end
+
 local function build_runtime_capabilities()
     local result = { areas = {}, building_guids = CONFIG.building_guids }
     local controlled_ok, controlled, controlled_error = safe_get(Participants, "ControlledAreaList")
@@ -802,6 +881,13 @@ function Probe:Sample(trigger)
         emit("scope_runtime_capabilities", false, nil, runtime_ok, trigger)
     end
 
+    local islands_call_ok, islands_ok, islands = pcall(build_island_layout_capabilities)
+    if islands_call_ok then
+        emit("scope_island_layout", islands_ok, islands, nil, trigger)
+    else
+        emit("scope_island_layout", false, nil, islands_ok, trigger)
+    end
+
     state.last_sample_play_time = current_play_time()
     emit("scope_sample_finished", true, {
         context_ok = context_call_ok and context_ok,
@@ -810,6 +896,7 @@ function Probe:Sample(trigger)
         workforce_ok = workforce_call_ok and workforce_ok,
         history_ok = history_call_ok and history_ok,
         runtime_capabilities_ok = runtime_call_ok and runtime_ok,
+        island_layout_ok = islands_call_ok and islands_ok,
     }, nil, trigger)
     state.sampling = false
 
