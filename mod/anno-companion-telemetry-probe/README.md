@@ -1,4 +1,4 @@
-# Anno Companion Telemetry Probe 0.1.0
+# Anno Companion Telemetry Probe 0.1.1
 
 This is a read-only diagnostic mod. It does not change game state. It runs the first-pass runtime probes together, catches each probe failure independently, and emits one-line JSON records prefixed with:
 

@@ -1,6 +1,6 @@
 {
   "Anno": 8,
-  "Version": "0.1.0",
+  "Version": "0.1.1",
   "ModID": "anno-companion-telemetry-probe-local",
   "Difficulty": "unchanged",
   "Category": {
@@ -19,8 +19,8 @@
     "Campaign": true,
     "Multiplayer": false
   },
-  "scripts": {
-    "modules": [
+  "Scripts": {
+    "Modules": [
       "anno-companion/telemetry-probe.lua"
     ],
     "Init": "AnnoCompanionTelemetryProbe = require(\"telemetry-probe\"); AnnoCompanionTelemetryProbe:Init()",

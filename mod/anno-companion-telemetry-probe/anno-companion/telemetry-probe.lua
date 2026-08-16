@@ -1351,7 +1351,7 @@ function Probe:Init()
         schema_version = 0,
         event_type = "probe_initialized",
         ok = true,
-        version = "0.1.0",
+        version = "0.1.1",
     }))
 end
 
