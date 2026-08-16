@@ -918,7 +918,11 @@ def active_trade_routes(
     }
 
 
-def production_chains(session: Session, inventory: dict) -> dict:
+def production_chains(
+    session: Session,
+    inventory: dict,
+    campaign_id: str | None = None,
+) -> dict:
     release_id = inventory["catalog"].get("release_id")
     if not release_id:
         return {"catalog": inventory["catalog"], "chains": []}
@@ -944,7 +948,7 @@ def production_chains(session: Session, inventory: dict) -> dict:
         )
     ).all():
         recipe_items_by_id[recipe_item.recipe_id].append(recipe_item)
-    campaign_id = resolve_campaign_id(session)
+    campaign_id = campaign_id or resolve_campaign_id(session)
     areas = session.scalars(
         select(Area).where(Area.campaign_id == campaign_id).order_by(Area.confirmed_region_guid, Area.latest_name)
     ).all() if campaign_id else []
@@ -971,6 +975,8 @@ def production_chains(session: Session, inventory: dict) -> dict:
                 "ordinal": item.ordinal,
                 "product_guid": item.product_guid,
                 "product_name": products[item.product_guid].name if item.product_guid in products else None,
+                "product_icon": products[item.product_guid].icon if item.product_guid in products else None,
+                "product_category": products[item.product_guid].category if item.product_guid in products else None,
                 "amount": item.amount,
             }
             for item in items
@@ -1034,6 +1040,7 @@ def production_chains(session: Session, inventory: dict) -> dict:
                 "name": recipe.name or (building.name if building else recipe.recipe_id),
                 "building_guid": recipe.building_guid,
                 "building_name": building.name if building else None,
+                "building_icon": building.icon if building else None,
                 "workforce_guid": building.workforce_guid if building else None,
                 "workforce_name": workforce_name(building.workforce_guid if building else None),
                 "cycle_seconds": recipe.cycle_seconds,

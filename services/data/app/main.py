@@ -43,6 +43,7 @@ from .config import Settings, settings as default_settings
 from .db import Base, SessionLocal, engine
 from .ingestion import TelemetryTailer
 from .normalizer import refresh_materialized_state
+from .production_explorer import build_production_explorer
 from .models import (
     Area,
     AreaLocation,
@@ -587,6 +588,141 @@ class ProductionChainsResponse(BaseModel):
     chains: list[dict[str, Any]]
 
 
+ProductionStatus = Literal[
+    "missing",
+    "deficit",
+    "constrained",
+    "risk",
+    "import_required",
+    "unknown",
+    "healthy",
+    "neutral",
+    "raw",
+]
+
+
+class ProductionResourceOptionView(BaseModel):
+    product_guid: str
+    name: str
+    icon: str | None
+    category: Literal[
+        "consumer_goods",
+        "intermediate_goods",
+        "raw_materials",
+        "construction_materials",
+    ]
+    required_rate: float | None
+    has_local_recipe: bool
+    stock: float | None
+
+
+class ProductionResourceNodeView(BaseModel):
+    node_id: str
+    kind: Literal["resource"]
+    product_guid: str
+    name: str
+    icon: str | None
+    category: str | None
+    stock: float | None
+    capacity: float | None
+    stock_trend: float | None
+    trend_confidence: str | None
+    depth: int
+    producer_factory_id: str | None
+    producer_state: Literal[
+        "not_selected",
+        "selected",
+        "unavailable_in_region",
+        "no_recipe",
+        "invalid_recipe",
+        "cycle_detected",
+    ]
+    cycle_detected: bool
+    required_rate: float | None
+    status: ProductionStatus
+    alerts: list[dict[str, Any]]
+
+
+class ProductionRecipeAlternativeView(BaseModel):
+    recipe_id: str
+    building_guid: str
+    building_name: str
+    output_per_minute: float | None
+    installed_buildings: float | None
+    presence_status: str
+    selected: bool
+
+
+class ProductionFactoryNodeView(BaseModel):
+    node_id: str
+    kind: Literal["factory"]
+    recipe_id: str
+    building_guid: str
+    building_name: str
+    building_icon: str | None
+    workforce_guid: str | None
+    workforce_name: str | None
+    cycle_seconds: float
+    output_product_guid: str
+    output_amount: float
+    output_per_minute_per_building: float
+    installed_buildings: float | None
+    presence_status: str
+    base_maintenance: float | None
+    depth: int
+    alternatives: list[ProductionRecipeAlternativeView]
+    required_output_rate: float | None
+    required_buildings: float | None
+    buildings_needed: int | None
+    available_output_rate: float | None
+    capacity_balance_rate: float | None
+    capacity_balance_buildings: float | None
+    utilization: float | None
+    status: ProductionStatus
+
+
+class ProductionEdgeView(BaseModel):
+    edge_id: str
+    source: str
+    target: str
+    kind: Literal["produced_by", "requires"]
+    recipe_amount: float
+    required_rate: float | None
+
+
+class ProductionBottleneckView(BaseModel):
+    node_id: str
+    kind: Literal["resource", "factory"]
+    name: str
+    status: ProductionStatus
+
+
+class ProductionExplorerSummaryView(BaseModel):
+    required_rate: float | None
+    available_rate: float | None
+    capacity_balance_rate: float | None
+    required_buildings: float | None
+    installed_buildings: float | None
+    status: ProductionStatus
+    bottleneck_count: int
+    bottlenecks: list[ProductionBottleneckView]
+
+
+class ProductionExplorerResponse(BaseModel):
+    meta: dict[str, Any]
+    catalog: dict[str, Any]
+    area: dict[str, Any]
+    root_product_guid: str | None
+    resource_options: list[ProductionResourceOptionView]
+    demand: dict[str, Any]
+    resources: list[ProductionResourceNodeView]
+    factories: list[ProductionFactoryNodeView]
+    edges: list[ProductionEdgeView]
+    summary: ProductionExplorerSummaryView
+    capabilities: dict[str, bool]
+    measurement_notice: str
+
+
 class DashboardOverviewResponse(BaseModel):
     meta: dict[str, Any]
     catalog: dict[str, Any]
@@ -1006,9 +1142,47 @@ def create_app(
     @app.get("/api/v1/production/chains", tags=["management"], response_model=ProductionChainsResponse)
     def chains(database: Database, campaign_id: str | None = None) -> dict:
         inventory = _inventory(database, campaign_id, app_settings)
-        result = production_chains(database, inventory)
+        result = production_chains(database, inventory, resolve_campaign_id(database, campaign_id))
         result["meta"] = inventory["meta"]
         return result
+
+    @app.get(
+        "/api/v1/production/explorer",
+        tags=["management"],
+        response_model=ProductionExplorerResponse,
+    )
+    def production_explorer(
+        database: Database,
+        area_pk: int = Query(gt=0),
+        product_guid: str | None = None,
+        recipe_override: list[str] = Query(default=[]),
+    ) -> dict:
+        area = database.get(Area, area_pk)
+        if area is None:
+            raise HTTPException(status_code=404, detail="area not found")
+        inventory = _inventory(database, area.campaign_id, app_settings)
+        planning = city_stock_planning(
+            database,
+            inventory,
+            area_pk=area_pk,
+            planning_catalog_path=app_settings.planning_catalog_path,
+        )
+        if planning is None:
+            raise HTTPException(status_code=404, detail="area not found")
+        overrides: dict[str, str] = {}
+        for value in recipe_override:
+            if ":" not in value:
+                raise HTTPException(status_code=422, detail="recipe_override must use product_guid:recipe_id")
+            override_product, recipe_id = value.split(":", 1)
+            overrides[override_product] = recipe_id
+        return build_production_explorer(
+            chains=production_chains(database, inventory, area.campaign_id),
+            planning=planning,
+            inventory=inventory,
+            area_pk=area_pk,
+            product_guid=product_guid,
+            recipe_overrides=overrides,
+        )
 
     @app.get("/api/v1/finance", tags=["economy"], response_model=FinanceResponse)
     def finance(database: Database, campaign_id: str | None = None) -> dict:

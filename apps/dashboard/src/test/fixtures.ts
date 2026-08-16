@@ -1,4 +1,4 @@
-import type { ActiveTradeRoutesResponse, CityStockPlanningResponse, InventoryResponse, OverviewResponse, StatusResponse, TradeNetworkResponse, TradePlan, TradeResponse } from '../types'
+import type { ActiveTradeRoutesResponse, CityStockPlanningResponse, InventoryResponse, OverviewResponse, ProductionExplorerResponse, StatusResponse, TradeNetworkResponse, TradePlan, TradeResponse } from '../types'
 
 export const meta = {
   snapshot_id: 44,
@@ -151,6 +151,39 @@ export const stockPlanning: CityStockPlanningResponse = {
   planning_source: { source_url: 'https://github.com/anno-mods/anno-117-calculator', source_revision: 'c6a6e752', residence_counts: 'telemetry where available' },
 }
 
+export const productionExplorer: ProductionExplorerResponse = {
+  meta: { ...meta },
+  catalog: { ...catalog, recipes: 3 },
+  area: { area_pk: 1, area_name: 'Juliana', region_guid: '3225', population_total: 10_768, residence_count: 520 },
+  root_product_guid: '2175',
+  resource_options: [
+    { product_guid: '2175', name: 'Bread', icon: null, category: 'consumer_goods', required_rate: 2.2, has_local_recipe: true, stock: 735 },
+    { product_guid: 'flour', name: 'Flour', icon: null, category: 'intermediate_goods', required_rate: null, has_local_recipe: true, stock: 300 },
+    { product_guid: 'wheat', name: 'Wheat', icon: null, category: 'raw_materials', required_rate: null, has_local_recipe: true, stock: 180 },
+  ],
+  demand: { required_rate: 2.2, population: 2.2, production: 0, construction: null, other: null, completeness: 'modeled_base', sources: [] },
+  resources: [
+    { node_id: 'resource:2175', kind: 'resource', product_guid: '2175', name: 'Bread', icon: null, category: 'food', stock: 735, capacity: 800, stock_trend: 0, trend_confidence: 'stable', depth: 0, producer_factory_id: 'factory:bakery:2175', producer_state: 'selected', cycle_detected: false, required_rate: 2.2, status: 'healthy', alerts: [] },
+    { node_id: 'resource:flour', kind: 'resource', product_guid: 'flour', name: 'Flour', icon: null, category: 'intermediate', stock: 300, capacity: 500, stock_trend: -0.2, trend_confidence: 'stable', depth: 2, producer_factory_id: 'factory:mill:flour', producer_state: 'selected', cycle_detected: false, required_rate: 2.2, status: 'deficit', alerts: [{ code: 'falling_stock', severity: 'warning', label: 'Net stock is falling' }] },
+    { node_id: 'resource:wheat', kind: 'resource', product_guid: 'wheat', name: 'Wheat', icon: null, category: 'raw', stock: 180, capacity: 500, stock_trend: 0.3, trend_confidence: 'stable', depth: 4, producer_factory_id: 'factory:wheat:wheat', producer_state: 'selected', cycle_detected: false, required_rate: 2.2, status: 'healthy', alerts: [] },
+  ],
+  factories: [
+    { node_id: 'factory:bakery:2175', kind: 'factory', recipe_id: 'factory:bakery', building_guid: 'bakery', building_name: 'Bakery', building_icon: null, workforce_guid: '2181', workforce_name: 'Libertus Workforce', cycle_seconds: 60, output_product_guid: '2175', output_amount: 2, output_per_minute_per_building: 2, installed_buildings: 2, presence_status: 'installed', base_maintenance: 25, depth: 1, alternatives: [{ recipe_id: 'factory:bakery', building_guid: 'bakery', building_name: 'Bakery', output_per_minute: 2, installed_buildings: 2, presence_status: 'installed', selected: true }], required_output_rate: 2.2, required_buildings: 1.1, buildings_needed: 2, available_output_rate: 4, capacity_balance_rate: 1.8, capacity_balance_buildings: .9, utilization: .55, status: 'healthy' },
+    { node_id: 'factory:mill:flour', kind: 'factory', recipe_id: 'factory:mill', building_guid: 'mill', building_name: 'Mill', building_icon: null, workforce_guid: '2181', workforce_name: 'Libertus Workforce', cycle_seconds: 60, output_product_guid: 'flour', output_amount: 1, output_per_minute_per_building: 1, installed_buildings: 2, presence_status: 'installed', base_maintenance: 18, depth: 3, alternatives: [{ recipe_id: 'factory:mill', building_guid: 'mill', building_name: 'Mill', output_per_minute: 1, installed_buildings: 2, presence_status: 'installed', selected: true }], required_output_rate: 2.2, required_buildings: 2.2, buildings_needed: 3, available_output_rate: 2, capacity_balance_rate: -.2, capacity_balance_buildings: -.2, utilization: 1.1, status: 'deficit' },
+    { node_id: 'factory:wheat:wheat', kind: 'factory', recipe_id: 'factory:wheat', building_guid: 'wheat-farm', building_name: 'Wheat Farm', building_icon: null, workforce_guid: '2181', workforce_name: 'Libertus Workforce', cycle_seconds: 60, output_product_guid: 'wheat', output_amount: 1, output_per_minute_per_building: 1, installed_buildings: 3, presence_status: 'installed', base_maintenance: 12, depth: 5, alternatives: [{ recipe_id: 'factory:wheat', building_guid: 'wheat-farm', building_name: 'Wheat Farm', output_per_minute: 1, installed_buildings: 3, presence_status: 'installed', selected: true }], required_output_rate: 2.2, required_buildings: 2.2, buildings_needed: 3, available_output_rate: 3, capacity_balance_rate: .8, capacity_balance_buildings: .8, utilization: .7333, status: 'healthy' },
+  ],
+  edges: [
+    { edge_id: 'bread-bakery', source: 'resource:2175', target: 'factory:bakery:2175', kind: 'produced_by', recipe_amount: 2, required_rate: 2.2 },
+    { edge_id: 'bakery-flour', source: 'factory:bakery:2175', target: 'resource:flour', kind: 'requires', recipe_amount: 2, required_rate: 2.2 },
+    { edge_id: 'flour-mill', source: 'resource:flour', target: 'factory:mill:flour', kind: 'produced_by', recipe_amount: 1, required_rate: 2.2 },
+    { edge_id: 'mill-wheat', source: 'factory:mill:flour', target: 'resource:wheat', kind: 'requires', recipe_amount: 1, required_rate: 2.2 },
+    { edge_id: 'wheat-farm', source: 'resource:wheat', target: 'factory:wheat:wheat', kind: 'produced_by', recipe_amount: 1, required_rate: 2.2 },
+  ],
+  summary: { required_rate: 2.2, available_rate: 4, capacity_balance_rate: 1.8, required_buildings: 1.1, installed_buildings: 2, status: 'deficit', bottleneck_count: 2, bottlenecks: [{ node_id: 'factory:mill:flour', kind: 'factory', name: 'Mill', status: 'deficit' }, { node_id: 'resource:flour', kind: 'resource', name: 'Flour', status: 'deficit' }] },
+  capabilities: { catalog_recipe_rates: true, observed_installed_buildings: true, observed_stock: true, observed_productivity_modifiers: false, construction_demand: false, active_project_demand: false },
+  measurement_notice: 'Required throughput uses the City Stock Planning base demand model. Available rate is catalog base capacity from observed building counts; productivity buffs are not observed.',
+}
+
 export const overview: OverviewResponse = {
   meta: { ...meta }, catalog,
   finance: { participant_guid: '41', treasury: 3_756_154, total_balance_raw: 200, trade_balance_period_raw: 50, passive_trade_balance_period_raw: 20, active_trade_balance_period_raw: 30, categories: [] },
@@ -189,6 +222,7 @@ export const apiFixtures: Record<string, unknown> = {
   '/api/v1/trade/routes': activeTradeRoutes,
   '/api/v1/trade/network': tradeNetwork,
   '/api/v1/production/chains': { meta, catalog: { ...catalog, recipes: 1 }, chains: [{ recipe_id: 'factory:2955', name: 'Fishing Hut', building_guid: '2955', building_name: 'Fishing Hut', workforce_guid: '2181', workforce_name: 'Libertus Workforce', cycle_seconds: 60, items: [{ role: 'output', ordinal: 1, product_guid: '2174', product_name: 'Timber', amount: 1 }], inferred_pressures: [], associated_regions: ['Roman'], base_maintenance: 6, city_states: [{ area_pk: 1, area_name: 'Juliana', region_guid: '3225', building_count: 2, presence_status: 'installed', observed_at: meta.observed_at, inferred_pressures: [], stocks: [{ role: 'output', ordinal: 1, product_guid: '2174', product_name: 'Timber', amount: 1, stock: 92, capacity: 100, fill_ratio: .92, net_stock_change: { net_stock_change_per_minute: 4, interval_count: 5, window_minutes: 5, confidence: 'measured_history' } }] }], measurement_notice: 'Stock-based inferred pressure; no measured factory rate.' }] },
+  '/api/v1/production/explorer': productionExplorer,
   '/api/v1/finance': { meta, finance: overview.finance, balance_analysis: overview.balance_analysis },
   '/api/v1/finance/history': { meta, items: [{ observed_at: meta.observed_at, treasury: 3_756_154, reported_balance: 200 }] },
   '/api/v1/trade-plans': { campaign_id: 'campaign-1', items: [tradePlan] },

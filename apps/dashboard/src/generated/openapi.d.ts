@@ -313,6 +313,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/production/explorer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Production Explorer */
+        get: operations["production_explorer_api_v1_production_explorer_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/products": {
         parameters: {
             query?: never;
@@ -992,6 +1009,23 @@ export interface components {
             /** Product Guid */
             product_guid: string;
         };
+        /** ProductionBottleneckView */
+        ProductionBottleneckView: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "resource" | "factory";
+            /** Name */
+            name: string;
+            /** Node Id */
+            node_id: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "missing" | "deficit" | "constrained" | "risk" | "import_required" | "unknown" | "healthy" | "neutral" | "raw";
+        };
         /** ProductionChainsResponse */
         ProductionChainsResponse: {
             /** Catalog */
@@ -1006,6 +1040,226 @@ export interface components {
             meta: {
                 [key: string]: unknown;
             };
+        };
+        /** ProductionEdgeView */
+        ProductionEdgeView: {
+            /** Edge Id */
+            edge_id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "produced_by" | "requires";
+            /** Recipe Amount */
+            recipe_amount: number;
+            /** Required Rate */
+            required_rate: number | null;
+            /** Source */
+            source: string;
+            /** Target */
+            target: string;
+        };
+        /** ProductionExplorerResponse */
+        ProductionExplorerResponse: {
+            /** Area */
+            area: {
+                [key: string]: unknown;
+            };
+            /** Capabilities */
+            capabilities: {
+                [key: string]: boolean;
+            };
+            /** Catalog */
+            catalog: {
+                [key: string]: unknown;
+            };
+            /** Demand */
+            demand: {
+                [key: string]: unknown;
+            };
+            /** Edges */
+            edges: components["schemas"]["ProductionEdgeView"][];
+            /** Factories */
+            factories: components["schemas"]["ProductionFactoryNodeView"][];
+            /** Measurement Notice */
+            measurement_notice: string;
+            /** Meta */
+            meta: {
+                [key: string]: unknown;
+            };
+            /** Resource Options */
+            resource_options: components["schemas"]["ProductionResourceOptionView"][];
+            /** Resources */
+            resources: components["schemas"]["ProductionResourceNodeView"][];
+            /** Root Product Guid */
+            root_product_guid: string | null;
+            summary: components["schemas"]["ProductionExplorerSummaryView"];
+        };
+        /** ProductionExplorerSummaryView */
+        ProductionExplorerSummaryView: {
+            /** Available Rate */
+            available_rate: number | null;
+            /** Bottleneck Count */
+            bottleneck_count: number;
+            /** Bottlenecks */
+            bottlenecks: components["schemas"]["ProductionBottleneckView"][];
+            /** Capacity Balance Rate */
+            capacity_balance_rate: number | null;
+            /** Installed Buildings */
+            installed_buildings: number | null;
+            /** Required Buildings */
+            required_buildings: number | null;
+            /** Required Rate */
+            required_rate: number | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "missing" | "deficit" | "constrained" | "risk" | "import_required" | "unknown" | "healthy" | "neutral" | "raw";
+        };
+        /** ProductionFactoryNodeView */
+        ProductionFactoryNodeView: {
+            /** Alternatives */
+            alternatives: components["schemas"]["ProductionRecipeAlternativeView"][];
+            /** Available Output Rate */
+            available_output_rate: number | null;
+            /** Base Maintenance */
+            base_maintenance: number | null;
+            /** Building Guid */
+            building_guid: string;
+            /** Building Icon */
+            building_icon: string | null;
+            /** Building Name */
+            building_name: string;
+            /** Buildings Needed */
+            buildings_needed: number | null;
+            /** Capacity Balance Buildings */
+            capacity_balance_buildings: number | null;
+            /** Capacity Balance Rate */
+            capacity_balance_rate: number | null;
+            /** Cycle Seconds */
+            cycle_seconds: number;
+            /** Depth */
+            depth: number;
+            /** Installed Buildings */
+            installed_buildings: number | null;
+            /**
+             * Kind
+             * @constant
+             */
+            kind: "factory";
+            /** Node Id */
+            node_id: string;
+            /** Output Amount */
+            output_amount: number;
+            /** Output Per Minute Per Building */
+            output_per_minute_per_building: number;
+            /** Output Product Guid */
+            output_product_guid: string;
+            /** Presence Status */
+            presence_status: string;
+            /** Recipe Id */
+            recipe_id: string;
+            /** Required Buildings */
+            required_buildings: number | null;
+            /** Required Output Rate */
+            required_output_rate: number | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "missing" | "deficit" | "constrained" | "risk" | "import_required" | "unknown" | "healthy" | "neutral" | "raw";
+            /** Utilization */
+            utilization: number | null;
+            /** Workforce Guid */
+            workforce_guid: string | null;
+            /** Workforce Name */
+            workforce_name: string | null;
+        };
+        /** ProductionRecipeAlternativeView */
+        ProductionRecipeAlternativeView: {
+            /** Building Guid */
+            building_guid: string;
+            /** Building Name */
+            building_name: string;
+            /** Installed Buildings */
+            installed_buildings: number | null;
+            /** Output Per Minute */
+            output_per_minute: number | null;
+            /** Presence Status */
+            presence_status: string;
+            /** Recipe Id */
+            recipe_id: string;
+            /** Selected */
+            selected: boolean;
+        };
+        /** ProductionResourceNodeView */
+        ProductionResourceNodeView: {
+            /** Alerts */
+            alerts: {
+                [key: string]: unknown;
+            }[];
+            /** Capacity */
+            capacity: number | null;
+            /** Category */
+            category: string | null;
+            /** Cycle Detected */
+            cycle_detected: boolean;
+            /** Depth */
+            depth: number;
+            /** Icon */
+            icon: string | null;
+            /**
+             * Kind
+             * @constant
+             */
+            kind: "resource";
+            /** Name */
+            name: string;
+            /** Node Id */
+            node_id: string;
+            /** Producer Factory Id */
+            producer_factory_id: string | null;
+            /**
+             * Producer State
+             * @enum {string}
+             */
+            producer_state: "not_selected" | "selected" | "unavailable_in_region" | "no_recipe" | "invalid_recipe" | "cycle_detected";
+            /** Product Guid */
+            product_guid: string;
+            /** Required Rate */
+            required_rate: number | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "missing" | "deficit" | "constrained" | "risk" | "import_required" | "unknown" | "healthy" | "neutral" | "raw";
+            /** Stock */
+            stock: number | null;
+            /** Stock Trend */
+            stock_trend: number | null;
+            /** Trend Confidence */
+            trend_confidence: string | null;
+        };
+        /** ProductionResourceOptionView */
+        ProductionResourceOptionView: {
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "consumer_goods" | "intermediate_goods" | "raw_materials" | "construction_materials";
+            /** Has Local Recipe */
+            has_local_recipe: boolean;
+            /** Icon */
+            icon: string | null;
+            /** Name */
+            name: string;
+            /** Product Guid */
+            product_guid: string;
+            /** Required Rate */
+            required_rate: number | null;
+            /** Stock */
+            stock: number | null;
         };
         /** RouteLinkPatch */
         RouteLinkPatch: {
@@ -2177,6 +2431,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProductionChainsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    production_explorer_api_v1_production_explorer_get: {
+        parameters: {
+            query: {
+                area_pk: number;
+                product_guid?: string | null;
+                recipe_override?: string[];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductionExplorerResponse"];
                 };
             };
             /** @description Validation Error */

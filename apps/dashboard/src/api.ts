@@ -18,6 +18,7 @@ import type {
   Policy,
   ManagementAction,
   ProductionChain,
+  ProductionExplorerResponse,
   StatusResponse,
   TradeResponse,
   TradePlan,
@@ -96,6 +97,14 @@ export const api = {
     unwrap<{ meta: ObservationMeta; catalog: InventoryResponse['catalog']; chains: ProductionChain[] }>(
       client.GET('/api/v1/production/chains'),
     ),
+  productionExplorer: (areaPk: number, productGuid?: string | null, recipeOverrides: string[] = []) =>
+    unwrap<ProductionExplorerResponse>(client.GET('/api/v1/production/explorer', {
+      params: { query: {
+        area_pk: areaPk,
+        ...(productGuid ? { product_guid: productGuid } : {}),
+        ...(recipeOverrides.length ? { recipe_override: recipeOverrides } : {}),
+      } },
+    })),
   finance: () => unwrap<{ meta: ObservationMeta; finance: Finance | null; balance_analysis: FinanceAnalysis | null }>(client.GET('/api/v1/finance')),
   financeHistory: () => unwrap<{ meta: ObservationMeta; items: Array<{ observed_at: string; treasury: number | null; reported_balance: number | null }> }>(client.GET('/api/v1/finance/history')),
   workforce: () =>
@@ -122,6 +131,8 @@ export const queryKeys = {
   tradePlans: ['trade-plans'] as const,
   actions: ['actions'] as const,
   chains: ['chains'] as const,
+  productionExplorer: (areaPk: number, productGuid: string | null, recipeOverrides: string[]) =>
+    ['production-explorer', areaPk, productGuid, [...recipeOverrides].sort().join('|')] as const,
   finance: ['finance'] as const,
   financeHistory: ['finance-history'] as const,
   workforce: ['workforce'] as const,
@@ -153,6 +164,13 @@ export const useTradePlans = () => useQuery({ queryKey: queryKeys.tradePlans, qu
 export const useActions = () => useQuery({ queryKey: queryKeys.actions, queryFn: api.actions, ...queryOptions })
 export const useChains = () =>
   useQuery({ queryKey: queryKeys.chains, queryFn: api.chains, ...queryOptions })
+export const useProductionExplorer = (areaPk: number, productGuid: string | null, recipeOverrides: string[] = []) =>
+  useQuery({
+    queryKey: queryKeys.productionExplorer(areaPk, productGuid, recipeOverrides),
+    queryFn: () => api.productionExplorer(areaPk, productGuid, recipeOverrides),
+    enabled: Boolean(areaPk),
+    ...queryOptions,
+  })
 export const useFinance = () =>
   useQuery({ queryKey: queryKeys.finance, queryFn: api.finance, ...queryOptions })
 export const useFinanceHistory = () => useQuery({ queryKey: queryKeys.financeHistory, queryFn: api.financeHistory, ...queryOptions })

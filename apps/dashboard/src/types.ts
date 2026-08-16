@@ -491,6 +491,8 @@ export interface RecipeItem {
   ordinal: number
   product_guid: string
   product_name: string | null
+  product_icon?: string | null
+  product_category?: string | null
   amount: number
 }
 
@@ -499,6 +501,7 @@ export interface ProductionChain {
   name: string
   building_guid: string
   building_name: string | null
+  building_icon?: string | null
   workforce_guid: string | null
   workforce_name: string | null
   cycle_seconds: number | null
@@ -507,6 +510,117 @@ export interface ProductionChain {
   associated_regions: string[]
   base_maintenance: number | null
   city_states: ChainCityState[]
+  measurement_notice: string
+}
+
+export type ProductionStatus = 'missing' | 'deficit' | 'constrained' | 'risk' | 'import_required' | 'unknown' | 'healthy' | 'neutral' | 'raw'
+
+export interface ProductionResourceOption {
+  product_guid: string
+  name: string
+  icon: string | null
+  category: 'consumer_goods' | 'intermediate_goods' | 'raw_materials' | 'construction_materials'
+  required_rate: number | null
+  has_local_recipe: boolean
+  stock: number | null
+}
+
+export interface ProductionResourceNode {
+  node_id: string
+  kind: 'resource'
+  product_guid: string
+  name: string
+  icon: string | null
+  category: string | null
+  stock: number | null
+  capacity: number | null
+  stock_trend: number | null
+  trend_confidence: string | null
+  depth: number
+  producer_factory_id: string | null
+  producer_state: 'not_selected' | 'selected' | 'unavailable_in_region' | 'no_recipe' | 'invalid_recipe' | 'cycle_detected'
+  cycle_detected: boolean
+  required_rate: number | null
+  status: ProductionStatus
+  alerts: Array<{ code: string; severity: string; label: string }>
+}
+
+export interface ProductionRecipeAlternative {
+  recipe_id: string
+  building_guid: string
+  building_name: string
+  output_per_minute: number | null
+  installed_buildings: number | null
+  presence_status: string
+  selected: boolean
+}
+
+export interface ProductionFactoryNode {
+  node_id: string
+  kind: 'factory'
+  recipe_id: string
+  building_guid: string
+  building_name: string
+  building_icon: string | null
+  workforce_guid: string | null
+  workforce_name: string | null
+  cycle_seconds: number
+  output_product_guid: string
+  output_amount: number
+  output_per_minute_per_building: number
+  installed_buildings: number | null
+  presence_status: string
+  base_maintenance: number | null
+  depth: number
+  alternatives: ProductionRecipeAlternative[]
+  required_output_rate: number | null
+  required_buildings: number | null
+  buildings_needed: number | null
+  available_output_rate: number | null
+  capacity_balance_rate: number | null
+  capacity_balance_buildings: number | null
+  utilization: number | null
+  status: ProductionStatus
+}
+
+export interface ProductionExplorerEdge {
+  edge_id: string
+  source: string
+  target: string
+  kind: 'produced_by' | 'requires'
+  recipe_amount: number
+  required_rate: number | null
+}
+
+export interface ProductionExplorerResponse {
+  meta: ObservationMeta
+  catalog: CatalogSummary
+  area: CityStockPlanningResponse['area']
+  root_product_guid: string | null
+  resource_options: ProductionResourceOption[]
+  demand: {
+    required_rate: number | null
+    population: number | null
+    production: number | null
+    construction: number | null
+    other: number | null
+    completeness: 'modeled_base' | 'partial' | 'not_observed'
+    sources: StockPlanningSource[]
+  }
+  resources: ProductionResourceNode[]
+  factories: ProductionFactoryNode[]
+  edges: ProductionExplorerEdge[]
+  summary: {
+    required_rate: number | null
+    available_rate: number | null
+    capacity_balance_rate: number | null
+    required_buildings: number | null
+    installed_buildings: number | null
+    status: ProductionStatus
+    bottleneck_count: number
+    bottlenecks: Array<{ node_id: string; kind: 'resource' | 'factory'; name: string; status: ProductionStatus }>
+  }
+  capabilities: Record<string, boolean>
   measurement_notice: string
 }
 

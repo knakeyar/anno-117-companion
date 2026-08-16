@@ -1,8 +1,9 @@
-import { screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { App } from '../App'
+import { calculateProductionLayout } from '../components/productionChainLayout'
 import { calculateTradeLayout, selectTradeHub } from '../components/tradeNetworkLayout'
-import { inventory, overview, stockPlanning, tradeNetwork } from './fixtures'
+import { inventory, overview, productionExplorer, stockPlanning, tradeNetwork } from './fixtures'
 import { installFetchMock, renderApp } from './render'
 
 describe('first-class management dashboard', () => {
@@ -160,14 +161,31 @@ describe('first-class management dashboard', () => {
     expect(screen.getByText(/12 target/i)).toBeInTheDocument()
   })
 
-  it('shows factory presence and pressure by city', async () => {
-    installFetchMock({ '/api/v1/inventory/latest': inventory })
-    renderApp(<App />, '/production')
-    expect(await screen.findByRole('heading', { name: 'Manage each city by chain.' })).toBeInTheDocument()
-    expect(screen.getAllByText('Juliana').length).toBeGreaterThan(0)
-    expect(screen.getAllByText(/installed/i).length).toBeGreaterThan(0)
-    expect(screen.getAllByText(/Net stock change/).length).toBeGreaterThan(0)
-    expect(document.querySelector('.presence-dot.healthy')).toBeInTheDocument()
+  it('calculates a resource-first production chain and places capacity problems on their nodes', async () => {
+    const layout = await calculateProductionLayout(productionExplorer)
+    const bread = layout.nodes.find((node) => node.id === 'resource:2175')!
+    const bakery = layout.nodes.find((node) => node.id === 'factory:bakery:2175')!
+    const flour = layout.nodes.find((node) => node.id === 'resource:flour')!
+    expect(bread.position.y).toBeLessThan(bakery.position.y)
+    expect(bakery.position.y).toBeLessThan(flour.position.y)
+
+    installFetchMock()
+    renderApp(<App />, '/production?city=1')
+    expect(await screen.findByRole('heading', { name: 'Build exactly what your city needs.' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Production region')).toHaveValue('Latium')
+    expect(screen.getByLabelText('Production city')).toHaveValue('1')
+    expect(screen.getByRole('combobox', { name: 'Resource' })).toHaveAttribute('placeholder', 'Bread')
+    expect(await screen.findByText('Bakery')).toBeInTheDocument()
+    expect(screen.getAllByText('Mill').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('1.1 req. · 2 built').length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/Capacity shortfall/i).length).toBeGreaterThan(0)
+    expect(screen.queryByText('Stock-derived production view')).not.toBeInTheDocument()
+    expect(screen.queryByText('Input pressure')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByLabelText(/Bakery, 1.1 buildings required, 2 installed/i))
+    expect(screen.getByRole('dialog', { name: 'Factory details for Bakery' })).toBeInTheDocument()
+    expect(screen.getByText('Base recipe')).toBeInTheDocument()
+    expect(screen.getByText(/catalog base cycles/i)).toBeInTheDocument()
   })
 
   it('groups the stock selector by producing region and workforce on city detail', async () => {

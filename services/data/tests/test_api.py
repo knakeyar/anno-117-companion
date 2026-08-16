@@ -346,6 +346,7 @@ def test_api_contract_and_observed_types(session_factory, app_settings) -> None:
             "/api/v1/areas/{area_pk}/stock-planning",
             "/api/v1/trade/opportunities",
             "/api/v1/production/chains",
+            "/api/v1/production/explorer",
             "/api/v1/finance",
             "/api/v1/workforce",
             "/api/v1/policies",
@@ -372,6 +373,10 @@ def test_api_contract_and_observed_types(session_factory, app_settings) -> None:
             ).json(),
             client.get("/api/v1/trade/opportunities").json(),
             client.get("/api/v1/production/chains").json(),
+            client.get(
+                "/api/v1/production/explorer",
+                params={"area_pk": area["area_pk"], "product_guid": "2174"},
+            ).json(),
             client.get("/api/v1/finance").json(),
             client.get("/api/v1/workforce").json(),
             client.get("/api/v1/dashboard/overview").json(),

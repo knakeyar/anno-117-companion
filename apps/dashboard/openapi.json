@@ -1416,6 +1416,49 @@
         "title": "PolicyWrite",
         "type": "object"
       },
+      "ProductionBottleneckView": {
+        "properties": {
+          "kind": {
+            "enum": [
+              "resource",
+              "factory"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "node_id": {
+            "title": "Node Id",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "missing",
+              "deficit",
+              "constrained",
+              "risk",
+              "import_required",
+              "unknown",
+              "healthy",
+              "neutral",
+              "raw"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "node_id",
+          "kind",
+          "name",
+          "status"
+        ],
+        "title": "ProductionBottleneckView",
+        "type": "object"
+      },
       "ProductionChainsResponse": {
         "properties": {
           "catalog": {
@@ -1443,6 +1486,777 @@
           "chains"
         ],
         "title": "ProductionChainsResponse",
+        "type": "object"
+      },
+      "ProductionEdgeView": {
+        "properties": {
+          "edge_id": {
+            "title": "Edge Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "produced_by",
+              "requires"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "recipe_amount": {
+            "title": "Recipe Amount",
+            "type": "number"
+          },
+          "required_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Required Rate"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "target": {
+            "title": "Target",
+            "type": "string"
+          }
+        },
+        "required": [
+          "edge_id",
+          "source",
+          "target",
+          "kind",
+          "recipe_amount",
+          "required_rate"
+        ],
+        "title": "ProductionEdgeView",
+        "type": "object"
+      },
+      "ProductionExplorerResponse": {
+        "properties": {
+          "area": {
+            "additionalProperties": true,
+            "title": "Area",
+            "type": "object"
+          },
+          "capabilities": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "title": "Capabilities",
+            "type": "object"
+          },
+          "catalog": {
+            "additionalProperties": true,
+            "title": "Catalog",
+            "type": "object"
+          },
+          "demand": {
+            "additionalProperties": true,
+            "title": "Demand",
+            "type": "object"
+          },
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/ProductionEdgeView"
+            },
+            "title": "Edges",
+            "type": "array"
+          },
+          "factories": {
+            "items": {
+              "$ref": "#/components/schemas/ProductionFactoryNodeView"
+            },
+            "title": "Factories",
+            "type": "array"
+          },
+          "measurement_notice": {
+            "title": "Measurement Notice",
+            "type": "string"
+          },
+          "meta": {
+            "additionalProperties": true,
+            "title": "Meta",
+            "type": "object"
+          },
+          "resource_options": {
+            "items": {
+              "$ref": "#/components/schemas/ProductionResourceOptionView"
+            },
+            "title": "Resource Options",
+            "type": "array"
+          },
+          "resources": {
+            "items": {
+              "$ref": "#/components/schemas/ProductionResourceNodeView"
+            },
+            "title": "Resources",
+            "type": "array"
+          },
+          "root_product_guid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Root Product Guid"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/ProductionExplorerSummaryView"
+          }
+        },
+        "required": [
+          "meta",
+          "catalog",
+          "area",
+          "root_product_guid",
+          "resource_options",
+          "demand",
+          "resources",
+          "factories",
+          "edges",
+          "summary",
+          "capabilities",
+          "measurement_notice"
+        ],
+        "title": "ProductionExplorerResponse",
+        "type": "object"
+      },
+      "ProductionExplorerSummaryView": {
+        "properties": {
+          "available_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Available Rate"
+          },
+          "bottleneck_count": {
+            "title": "Bottleneck Count",
+            "type": "integer"
+          },
+          "bottlenecks": {
+            "items": {
+              "$ref": "#/components/schemas/ProductionBottleneckView"
+            },
+            "title": "Bottlenecks",
+            "type": "array"
+          },
+          "capacity_balance_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capacity Balance Rate"
+          },
+          "installed_buildings": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Installed Buildings"
+          },
+          "required_buildings": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Required Buildings"
+          },
+          "required_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Required Rate"
+          },
+          "status": {
+            "enum": [
+              "missing",
+              "deficit",
+              "constrained",
+              "risk",
+              "import_required",
+              "unknown",
+              "healthy",
+              "neutral",
+              "raw"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "required_rate",
+          "available_rate",
+          "capacity_balance_rate",
+          "required_buildings",
+          "installed_buildings",
+          "status",
+          "bottleneck_count",
+          "bottlenecks"
+        ],
+        "title": "ProductionExplorerSummaryView",
+        "type": "object"
+      },
+      "ProductionFactoryNodeView": {
+        "properties": {
+          "alternatives": {
+            "items": {
+              "$ref": "#/components/schemas/ProductionRecipeAlternativeView"
+            },
+            "title": "Alternatives",
+            "type": "array"
+          },
+          "available_output_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Available Output Rate"
+          },
+          "base_maintenance": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Maintenance"
+          },
+          "building_guid": {
+            "title": "Building Guid",
+            "type": "string"
+          },
+          "building_icon": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Building Icon"
+          },
+          "building_name": {
+            "title": "Building Name",
+            "type": "string"
+          },
+          "buildings_needed": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Buildings Needed"
+          },
+          "capacity_balance_buildings": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capacity Balance Buildings"
+          },
+          "capacity_balance_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capacity Balance Rate"
+          },
+          "cycle_seconds": {
+            "title": "Cycle Seconds",
+            "type": "number"
+          },
+          "depth": {
+            "title": "Depth",
+            "type": "integer"
+          },
+          "installed_buildings": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Installed Buildings"
+          },
+          "kind": {
+            "const": "factory",
+            "title": "Kind",
+            "type": "string"
+          },
+          "node_id": {
+            "title": "Node Id",
+            "type": "string"
+          },
+          "output_amount": {
+            "title": "Output Amount",
+            "type": "number"
+          },
+          "output_per_minute_per_building": {
+            "title": "Output Per Minute Per Building",
+            "type": "number"
+          },
+          "output_product_guid": {
+            "title": "Output Product Guid",
+            "type": "string"
+          },
+          "presence_status": {
+            "title": "Presence Status",
+            "type": "string"
+          },
+          "recipe_id": {
+            "title": "Recipe Id",
+            "type": "string"
+          },
+          "required_buildings": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Required Buildings"
+          },
+          "required_output_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Required Output Rate"
+          },
+          "status": {
+            "enum": [
+              "missing",
+              "deficit",
+              "constrained",
+              "risk",
+              "import_required",
+              "unknown",
+              "healthy",
+              "neutral",
+              "raw"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "utilization": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Utilization"
+          },
+          "workforce_guid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workforce Guid"
+          },
+          "workforce_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workforce Name"
+          }
+        },
+        "required": [
+          "node_id",
+          "kind",
+          "recipe_id",
+          "building_guid",
+          "building_name",
+          "building_icon",
+          "workforce_guid",
+          "workforce_name",
+          "cycle_seconds",
+          "output_product_guid",
+          "output_amount",
+          "output_per_minute_per_building",
+          "installed_buildings",
+          "presence_status",
+          "base_maintenance",
+          "depth",
+          "alternatives",
+          "required_output_rate",
+          "required_buildings",
+          "buildings_needed",
+          "available_output_rate",
+          "capacity_balance_rate",
+          "capacity_balance_buildings",
+          "utilization",
+          "status"
+        ],
+        "title": "ProductionFactoryNodeView",
+        "type": "object"
+      },
+      "ProductionRecipeAlternativeView": {
+        "properties": {
+          "building_guid": {
+            "title": "Building Guid",
+            "type": "string"
+          },
+          "building_name": {
+            "title": "Building Name",
+            "type": "string"
+          },
+          "installed_buildings": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Installed Buildings"
+          },
+          "output_per_minute": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Output Per Minute"
+          },
+          "presence_status": {
+            "title": "Presence Status",
+            "type": "string"
+          },
+          "recipe_id": {
+            "title": "Recipe Id",
+            "type": "string"
+          },
+          "selected": {
+            "title": "Selected",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "recipe_id",
+          "building_guid",
+          "building_name",
+          "output_per_minute",
+          "installed_buildings",
+          "presence_status",
+          "selected"
+        ],
+        "title": "ProductionRecipeAlternativeView",
+        "type": "object"
+      },
+      "ProductionResourceNodeView": {
+        "properties": {
+          "alerts": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Alerts",
+            "type": "array"
+          },
+          "capacity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capacity"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "cycle_detected": {
+            "title": "Cycle Detected",
+            "type": "boolean"
+          },
+          "depth": {
+            "title": "Depth",
+            "type": "integer"
+          },
+          "icon": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Icon"
+          },
+          "kind": {
+            "const": "resource",
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "node_id": {
+            "title": "Node Id",
+            "type": "string"
+          },
+          "producer_factory_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Producer Factory Id"
+          },
+          "producer_state": {
+            "enum": [
+              "not_selected",
+              "selected",
+              "unavailable_in_region",
+              "no_recipe",
+              "invalid_recipe",
+              "cycle_detected"
+            ],
+            "title": "Producer State",
+            "type": "string"
+          },
+          "product_guid": {
+            "title": "Product Guid",
+            "type": "string"
+          },
+          "required_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Required Rate"
+          },
+          "status": {
+            "enum": [
+              "missing",
+              "deficit",
+              "constrained",
+              "risk",
+              "import_required",
+              "unknown",
+              "healthy",
+              "neutral",
+              "raw"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "stock": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stock"
+          },
+          "stock_trend": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stock Trend"
+          },
+          "trend_confidence": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trend Confidence"
+          }
+        },
+        "required": [
+          "node_id",
+          "kind",
+          "product_guid",
+          "name",
+          "icon",
+          "category",
+          "stock",
+          "capacity",
+          "stock_trend",
+          "trend_confidence",
+          "depth",
+          "producer_factory_id",
+          "producer_state",
+          "cycle_detected",
+          "required_rate",
+          "status",
+          "alerts"
+        ],
+        "title": "ProductionResourceNodeView",
+        "type": "object"
+      },
+      "ProductionResourceOptionView": {
+        "properties": {
+          "category": {
+            "enum": [
+              "consumer_goods",
+              "intermediate_goods",
+              "raw_materials",
+              "construction_materials"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "has_local_recipe": {
+            "title": "Has Local Recipe",
+            "type": "boolean"
+          },
+          "icon": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Icon"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "product_guid": {
+            "title": "Product Guid",
+            "type": "string"
+          },
+          "required_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Required Rate"
+          },
+          "stock": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stock"
+          }
+        },
+        "required": [
+          "product_guid",
+          "name",
+          "icon",
+          "category",
+          "required_rate",
+          "has_local_recipe",
+          "stock"
+        ],
+        "title": "ProductionResourceOptionView",
         "type": "object"
       },
       "RouteLinkPatch": {
@@ -4098,6 +4912,78 @@
           }
         },
         "summary": "Chains",
+        "tags": [
+          "management"
+        ]
+      }
+    },
+    "/api/v1/production/explorer": {
+      "get": {
+        "operationId": "production_explorer_api_v1_production_explorer_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "area_pk",
+            "required": true,
+            "schema": {
+              "exclusiveMinimum": 0,
+              "title": "Area Pk",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "product_guid",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Product Guid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "recipe_override",
+            "required": false,
+            "schema": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "title": "Recipe Override",
+              "type": "array"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductionExplorerResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Production Explorer",
         "tags": [
           "management"
         ]
