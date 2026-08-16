@@ -67,6 +67,18 @@ test('production coverage and health remain transparent', async ({ page }) => {
   await expect(page.getByText('/data/anno-companion.sqlite3')).toBeVisible()
 })
 
+test('city cards open the persisted area detail view', async ({ page }) => {
+  const pageErrors: string[] = []
+  page.on('pageerror', (error) => pageErrors.push(error.message))
+  await page.goto('/areas')
+  await expect(page.getByRole('heading', { name: 'Your cities stay on the map.' })).toBeVisible()
+  await page.locator('.area-card').filter({ hasText: 'Juliana' }).click()
+  await expect(page).toHaveURL(/\/areas\/1$/)
+  await expect(page.getByRole('heading', { name: 'Juliana' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Stock history' })).toBeVisible()
+  expect(pageErrors).toEqual([])
+})
+
 test('live events refresh data and navigation fits the viewport', async ({ page }, testInfo) => {
   await page.goto('/')
   await expect(page.getByRole('heading', { name: 'Decide what to fix next.' })).toBeVisible()

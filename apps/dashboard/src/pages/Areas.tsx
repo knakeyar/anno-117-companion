@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import ReactEChartsCore from 'echarts-for-react/lib/core'
+import ReactEChartsCoreImport from 'echarts-for-react/lib/core'
+import type { ComponentType, CSSProperties } from 'react'
 import * as echarts from 'echarts/core'
 import { LineChart } from 'echarts/charts'
 import { GridComponent, TooltipComponent } from 'echarts/components'
@@ -14,6 +15,17 @@ import type { InventoryItem } from '../types'
 import { formatMoney, formatNumber, formatRate } from '../utils'
 
 echarts.use([LineChart, GridComponent, TooltipComponent, CanvasRenderer])
+
+// echarts-for-react publishes this entry point as CommonJS. Vite can expose
+// that default export as a module object in a production build even though the
+// development transform sees the component directly.
+const ReactEChartsCore = (
+  typeof ReactEChartsCoreImport === 'object'
+    && ReactEChartsCoreImport !== null
+    && 'default' in ReactEChartsCoreImport
+    ? (ReactEChartsCoreImport as { default: unknown }).default
+    : ReactEChartsCoreImport
+) as ComponentType<{ echarts: typeof echarts; option: object; style?: CSSProperties }>
 
 export function AreasPage() {
   const areas = useAreas()
