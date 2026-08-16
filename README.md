@@ -2,6 +2,8 @@
 
 Anno Companion is a local, read-only economic workspace for Anno 117. It turns JSON records emitted to the game log into durable campaign state, interactive regional maps, ranked actions and trade plans, city-specific production pressure, finance guidance, workforce facts, and an optional on-demand advisor.
 
+> Manage your empire the way Caesar definitely did: with fancy dashboards and up-to-date information about trade and resource production. Better yet, Caesar's greatest achievements were apparently powered by AI workers—although at the time he used the word “slaves.” Please do not quote us on these completely made-up historical facts. Connect your game data to AI for suggestions on keeping your people happy. Note: this only works for Anno, not real life.
+
 ## What runs
 
 - `anno-companion-data` polls the mounted game-log directory, creates `/data/anno-companion.sqlite3`, normalizes only complete production snapshots, owns persistent campaign state, calculates deterministic management signals, and serves the private API. The optional OpenAI call also runs here so the API key never enters the browser image.
