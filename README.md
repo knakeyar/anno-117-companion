@@ -2,13 +2,65 @@
 
 Manage your empire the way Caesar definitely did: with fancy dashboards and up-to-date information about trade and resource production. Better yet, Caesar's greatest achievements were apparently powered by AI workers—although at the time he used the word “slaves.” Please do not quote us on these completely made-up historical facts. Connect your game data to AI for suggestions on keeping your people happy. Note: this only works for Anno, not real life.
 
-> Anno Companion is a local, read-only economic workspace for Anno 117. It turns JSON records emitted to the game log into durable campaign state, interactive regional trade networks, ranked actions and tagged route plans, city-specific production pressure, finance guidance, workforce facts, and an optional on-demand advisor.
+> Anno Companion is a local, read-only economic workspace for Anno 117. It turns JSON records emitted to the game log into durable campaign state, interactive regional trade networks, ranked actions and tagged route plans, city stock planning, a visual production-chain calculator, finance guidance, workforce facts, and an optional on-demand advisor.
 
 ## Why Anno Companion?
 
 If you're anything like me, finding a meaningful block of uninterrupted time for Anno 117 is difficult—and let's be honest, two hours is barely enough to remember why you opened the trade-route screen. By the time I return to a campaign, I often no longer remember which shortage I was fixing, what needed to move between cities, or what I planned to build next.
 
 Anno Companion is designed for that stop-and-start way of playing. It preserves the last known state of your empire—along with your trade plans, resource pressures, and economic priorities—so you can end a session and return later without losing the thread. Instead of reconstructing yesterday's plans, you can see where you left off and decide what to do next.
+
+## See it in action
+
+[▶ Watch the complete feature tour (MP4, 4.2 MB)](media/anno-companion-feature-tour.mp4)
+
+Click any preview to watch its short walkthrough.
+
+<table>
+  <tr>
+    <td width="50%">
+      <a href="media/clips/01-command.mp4"><img src="media/posters/command.jpg" alt="Command Center showing the trade network, ranked economic actions, and balance analysis"></a><br>
+      <strong>Command Center</strong><br>
+      See the trade network, the next economic actions, and why your balance is changing.
+    </td>
+    <td width="50%">
+      <a href="media/clips/02-trade.mp4"><img src="media/posters/trade.jpg" alt="Trade planner showing ranked city-to-city route suggestions and specific goods to move"></a><br>
+      <strong>Trade Planner</strong><br>
+      Review city relationships and turn shortages into evidence-backed route plans.
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <a href="media/clips/03-production.mp4"><img src="media/posters/production.jpg" alt="Production calculator showing the upstream factory chain for a selected resource"></a><br>
+      <strong>Production Calculator</strong><br>
+      Follow a resource upstream and compare required capacity with installed factories.
+    </td>
+    <td width="50%">
+      <a href="media/clips/04-areas.mp4"><img src="media/posters/areas.jpg" alt="Areas page showing persisted Latium and Albion cities and their economic pressure"></a><br>
+      <strong>Areas and City Stock</strong><br>
+      Return to every city and its last known stock-planning state after Anno closes.
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2">
+      <a href="media/clips/05-ask-advisor.mp4"><img src="media/posters/ask-advisor.jpg" alt="Economic advisor drawer grounded in deterministic companion actions"></a><br>
+      <strong>Optional Economic Advisor</strong><br>
+      Ask what to do next using compact campaign facts and deterministic companion actions.
+    </td>
+  </tr>
+</table>
+
+## What can it do?
+
+| Workspace | What you can see | What it helps you do |
+|---|---|---|
+| **Command Center** | Your trade network, ranked economic actions, gross income, expenses, net profit, treasury movement, and largest cost categories | Resume a campaign quickly and choose the next useful task instead of reconstructing your plans |
+| **Trade** | Directed city-to-city relationships, named ships, route issues, and ranked route suggestions with specific goods, quantities, confidence, and evidence | Understand the health of existing trade and turn shortages into clear one-time transfer or recurring-supply plans |
+| **Production** | A city- and resource-specific production tree with recipe flow, required throughput, current stock, and required versus installed factories | Work backward from a needed good, find the constrained step, and see exactly what production capacity to expand |
+| **Areas and City Stock** | Every persisted city grouped by region, plus a dense workforce-based table of stock, demand, supply, per-1,000 consumption, and balance | Find deficits and surpluses at a glance—even after Anno has closed—and inspect one resource's history only when needed |
+| **Economic Advisor** | An optional conversation grounded in the companion's current deterministic actions and selected-campaign facts | Ask for the most useful immediate economic task without sending raw game logs or the full database |
+
+The companion is deliberately read-only. Saving a route plan, accepting an action, or asking the advisor changes only companion data; it never creates buildings, moves goods, or edits a route in Anno.
 
 ## What runs
 
