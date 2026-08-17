@@ -12,38 +12,38 @@ Anno Companion is designed for that stop-and-start way of playing. It preserves 
 
 ## See it in action
 
-[▶ Watch the complete feature tour (MP4, 4.2 MB)](media/anno-companion-feature-tour.mp4)
+[▶ Watch the complete feature tour (MP4, 4.2 MB)](https://github.com/user-attachments/assets/5745eb44-0215-4837-b8fe-6d6621a70e59)
 
 Click any preview to watch its short walkthrough.
 
 <table>
   <tr>
     <td width="50%">
-      <a href="media/clips/01-command.mp4"><img src="media/posters/command.jpg" alt="Command Center showing the trade network, ranked economic actions, and balance analysis"></a><br>
+      <a href="https://github.com/user-attachments/assets/31d6e3bd-4733-4592-8226-ae257a6682e9"><img src="media/posters/command.jpg" alt="Command Center showing the trade network, ranked economic actions, and balance analysis"></a><br>
       <strong>Command Center</strong><br>
       See the trade network, the next economic actions, and why your balance is changing.
     </td>
     <td width="50%">
-      <a href="media/clips/02-trade.mp4"><img src="media/posters/trade.jpg" alt="Trade planner showing ranked city-to-city route suggestions and specific goods to move"></a><br>
+      <a href="https://github.com/user-attachments/assets/f470cf89-632e-4352-bd0a-57bcbf50f3c5"><img src="media/posters/trade.jpg" alt="Trade planner showing ranked city-to-city route suggestions and specific goods to move"></a><br>
       <strong>Trade Planner</strong><br>
       Review city relationships and turn shortages into evidence-backed route plans.
     </td>
   </tr>
   <tr>
     <td width="50%">
-      <a href="media/clips/03-production.mp4"><img src="media/posters/production.jpg" alt="Production calculator showing the upstream factory chain for a selected resource"></a><br>
+      <a href="https://github.com/user-attachments/assets/d7a91d68-00f3-4060-98dd-569ed0ccf4b3"><img src="media/posters/production.jpg" alt="Production calculator showing the upstream factory chain for a selected resource"></a><br>
       <strong>Production Calculator</strong><br>
       Follow a resource upstream and compare required capacity with installed factories.
     </td>
     <td width="50%">
-      <a href="media/clips/04-areas.mp4"><img src="media/posters/areas.jpg" alt="Areas page showing persisted Latium and Albion cities and their economic pressure"></a><br>
+      <a href="https://github.com/user-attachments/assets/a31871bd-057d-4bc7-ac34-b6ea75f0cd52"><img src="media/posters/areas.jpg" alt="Areas page showing persisted Latium and Albion cities and their economic pressure"></a><br>
       <strong>Areas and City Stock</strong><br>
       Return to every city and its last known stock-planning state after Anno closes.
     </td>
   </tr>
   <tr>
     <td colspan="2">
-      <a href="media/clips/05-ask-advisor.mp4"><img src="media/posters/ask-advisor.jpg" alt="Economic advisor drawer grounded in deterministic companion actions"></a><br>
+      <a href="https://github.com/user-attachments/assets/2d629b72-b07e-4ae9-a54c-9b811130c526"><img src="media/posters/ask-advisor.jpg" alt="Economic advisor drawer grounded in deterministic companion actions"></a><br>
       <strong>Optional Economic Advisor</strong><br>
       Ask what to do next using compact campaign facts and deterministic companion actions.
     </td>
