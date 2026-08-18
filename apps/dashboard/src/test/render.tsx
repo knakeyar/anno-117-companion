@@ -29,7 +29,7 @@ export function installFetchMock(overrides: Record<string, unknown> = {}) {
     }
     if (method === 'POST' && url.pathname === '/api/v1/trade-plans') {
       const parsed = JSON.parse(body)
-      return Response.json({ trade_plan_id: 'plan-new', campaign_id: parsed.campaign_id, source_area_pk: parsed.source_area_pk, source_area_name: 'Juliana', destination_area_pk: parsed.destination_area_pk, destination_area_name: 'Naissus', status: 'planned', plan_kind: parsed.plan_kind, route_tag: 'AC-NEW1', suggested_route_name: 'AC-NEW1 Jul-Nai', usable_ship_capacity: null, expected_round_trip_minutes: null, estimated_required_ships: null, runtime_status: 'not_detected', runtime_freshness: 'historical', goods_verification: 'planned_only', last_runtime_match_at: null, reason: parsed.reason, evidence: parsed.evidence, goods: parsed.goods, created_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+      return Response.json({ trade_plan_id: 'plan-new', campaign_id: parsed.campaign_id, source_area_pk: parsed.source_area_pk, source_area_name: 'Juliana', destination_area_pk: parsed.destination_area_pk, destination_area_name: 'Naissus', status: 'planned', plan_kind: parsed.plan_kind, route_tag: 'AC-NEW1', suggested_route_name: 'AC-NEW1 Jul-Nai', usable_ship_capacity: parsed.usable_ship_capacity, cargo_slots: parsed.cargo_slots, cargo_slot_capacity: 50, expected_round_trip_minutes: parsed.expected_round_trip_minutes, ship_cost: parsed.ship_cost, total_slots_required: 1, estimated_required_ships: 1, estimated_fleet_cost: parsed.ship_cost, capacity_basis: 'one_time_single_wave', quantity_unit: parsed.plan_kind === 'recurring_supply' ? 'tons_per_minute' : 'tons_total', runtime_status: 'not_detected', runtime_freshness: 'historical', goods_verification: 'planned_only', last_runtime_match_at: null, reason: parsed.reason, evidence: parsed.evidence, goods: parsed.goods, created_at: new Date().toISOString(), updated_at: new Date().toISOString() })
     }
     if (method === 'POST' && url.pathname === '/api/v1/trade/route-links') {
       const parsed = JSON.parse(body)
@@ -44,7 +44,10 @@ export function installFetchMock(overrides: Record<string, unknown> = {}) {
     if (url.pathname === '/api/v1/inventory/history/group') {
       return Response.json({ series: url.searchParams.getAll('product_guid').map((productGuid) => ({ product_guid: productGuid, items: [] })) })
     }
-    const fixture = fixtures[url.pathname]
+    const variantKey = url.pathname === '/api/v1/trade/opportunities'
+      ? `${url.pathname}?plan_kind=${url.searchParams.get('plan_kind') ?? 'emergency_transfer'}`
+      : url.pathname
+    const fixture = fixtures[variantKey] ?? fixtures[url.pathname]
     if (fixture === undefined) return new Response('Not found', { status: 404 })
     return Response.json(fixture)
   })

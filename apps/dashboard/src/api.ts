@@ -32,6 +32,12 @@ const client = createClient<paths>({
   fetch: (request) => globalThis.fetch(request),
 })
 
+export interface ShipPlanAssumptions {
+  cargoSlots: number
+  expectedRoundTripMinutes: number | null
+  shipCost: number | null
+}
+
 async function unwrap<T>(pending: Promise<unknown>): Promise<T> {
   const result = await pending as { data?: unknown; error?: unknown; response: Response }
   if (!result.response.ok || result.error !== undefined) {
@@ -73,18 +79,41 @@ export const api = {
       params: { query: { area_pk: areaPk, product_guid: productGuids } },
     })),
   overview: () => unwrap<OverviewResponse>(client.GET('/api/v1/dashboard/overview')),
-  trade: () => unwrap<TradeResponse>(client.GET('/api/v1/trade/opportunities')),
+  trade: (
+    planKind: TradePlan['plan_kind'] = 'emergency_transfer',
+    recurringSafetyMargin = 0.2,
+  ) => unwrap<TradeResponse>(client.GET('/api/v1/trade/opportunities', {
+    params: { query: { plan_kind: planKind, recurring_safety_margin: recurringSafetyMargin } },
+  })),
   activeTradeRoutes: () => unwrap<ActiveTradeRoutesResponse>(client.GET('/api/v1/trade/routes')),
   tradeNetwork: () => unwrap<TradeNetworkResponse>(client.GET('/api/v1/trade/network')),
   tradePlans: () => unwrap<{ campaign_id: string | null; items: TradePlan[] }>(client.GET('/api/v1/trade-plans')),
-  createTradePlan: (route: TradeResponse['suggested_routes'][number], campaignId: string, planKind: TradePlan['plan_kind'] = 'emergency_transfer') => unwrap<TradePlan>(client.POST('/api/v1/trade-plans', { body: {
+  createTradePlan: (
+    route: TradeResponse['suggested_routes'][number],
+    campaignId: string,
+    assumptions: ShipPlanAssumptions,
+  ) => unwrap<TradePlan>(client.POST('/api/v1/trade-plans', { body: {
     campaign_id: campaignId,
     source_area_pk: route.source_area_pk,
     destination_area_pk: route.destination_area_pk,
-    goods: route.goods.map((item) => ({ product_guid: item.product_guid, amount: item.advisory_amount })),
+    goods: route.goods.flatMap((item) => item.advisory_amount == null
+      ? []
+      : [{ product_guid: item.product_guid, amount: item.advisory_amount }]),
     reason: route.reason,
-    evidence: route.evidence,
-    plan_kind: planKind,
+    evidence: {
+      ...route.evidence,
+      ship_assumptions: {
+        cargo_slots: assumptions.cargoSlots,
+        cargo_slot_capacity_tons: 50,
+        expected_round_trip_minutes: assumptions.expectedRoundTripMinutes,
+        ship_cost: assumptions.shipCost,
+      },
+    },
+    plan_kind: route.plan_kind,
+    cargo_slots: assumptions.cargoSlots,
+    usable_ship_capacity: assumptions.cargoSlots * 50,
+    expected_round_trip_minutes: assumptions.expectedRoundTripMinutes,
+    ship_cost: assumptions.shipCost,
   } })),
   patchTradePlan: (tradePlanId: string, status: TradePlan['status']) => unwrap<TradePlan>(client.PATCH('/api/v1/trade-plans/{trade_plan_id}', { params: { path: { trade_plan_id: tradePlanId } }, body: { status } })),
   linkTradeRoute: (body: { campaign_id: string; route_key: string; source_area_pk: number; destination_area_pk: number; trade_plan_id?: string }) =>
@@ -125,7 +154,9 @@ export const queryKeys = {
   inventory: ['inventory'] as const,
   stockPlanning: (areaPk: number) => ['stock-planning', areaPk] as const,
   overview: ['overview'] as const,
-  trade: ['trade'] as const,
+  tradeRoot: ['trade'] as const,
+  trade: (planKind: TradePlan['plan_kind'], recurringSafetyMargin: number) =>
+    ['trade', planKind, recurringSafetyMargin] as const,
   activeTradeRoutes: ['active-trade-routes'] as const,
   tradeNetwork: ['trade-network'] as const,
   tradePlans: ['trade-plans'] as const,
@@ -157,7 +188,14 @@ export const useStockPlanning = (areaPk: number) =>
   })
 export const useOverview = () =>
   useQuery({ queryKey: queryKeys.overview, queryFn: api.overview, ...queryOptions })
-export const useTrade = () => useQuery({ queryKey: queryKeys.trade, queryFn: api.trade, ...queryOptions })
+export const useTrade = (
+  planKind: TradePlan['plan_kind'] = 'emergency_transfer',
+  recurringSafetyMargin = 0.2,
+) => useQuery({
+  queryKey: queryKeys.trade(planKind, recurringSafetyMargin),
+  queryFn: () => api.trade(planKind, recurringSafetyMargin),
+  ...queryOptions,
+})
 export const useActiveTradeRoutes = () => useQuery({ queryKey: queryKeys.activeTradeRoutes, queryFn: api.activeTradeRoutes, ...queryOptions })
 export const useTradeNetwork = () => useQuery({ queryKey: queryKeys.tradeNetwork, queryFn: api.tradeNetwork, ...queryOptions })
 export const useTradePlans = () => useQuery({ queryKey: queryKeys.tradePlans, queryFn: api.tradePlans, ...queryOptions })
@@ -196,7 +234,7 @@ export function useCompanionMutations() {
   const refresh = () => queries.invalidateQueries()
   return {
     mapPosition: useMutation({ mutationFn: ({ areaPk, ...body }: { areaPk: number; region_guid?: string; x?: number; y?: number; clear?: boolean }) => api.setMapPosition(areaPk, body), onSuccess: refresh }),
-    createTradePlan: useMutation({ mutationFn: ({ route, campaignId, planKind = 'emergency_transfer' }: { route: TradeResponse['suggested_routes'][number]; campaignId: string; planKind?: TradePlan['plan_kind'] }) => api.createTradePlan(route, campaignId, planKind), onSuccess: refresh }),
+    createTradePlan: useMutation({ mutationFn: ({ route, campaignId, assumptions }: { route: TradeResponse['suggested_routes'][number]; campaignId: string; assumptions: ShipPlanAssumptions }) => api.createTradePlan(route, campaignId, assumptions), onSuccess: refresh }),
     patchTradePlan: useMutation({ mutationFn: ({ id, status }: { id: string; status: TradePlan['status'] }) => api.patchTradePlan(id, status), onSuccess: refresh }),
     linkTradeRoute: useMutation({ mutationFn: (body: { campaign_id: string; route_key: string; source_area_pk: number; destination_area_pk: number; trade_plan_id?: string }) => api.linkTradeRoute(body), onSuccess: refresh }),
     unlinkTradeRoute: useMutation({ mutationFn: (linkId: string) => api.unlinkTradeRoute(linkId), onSuccess: refresh }),

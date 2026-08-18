@@ -29,7 +29,7 @@ test.beforeEach(async ({ page }) => {
     if (url.pathname === '/api/v1/trade-plans' && route.request().method() === 'POST') {
       acceptedPlans += 1
       const body = route.request().postDataJSON()
-      await route.fulfill({ json: { trade_plan_id: 'plan-new', campaign_id: body.campaign_id, source_area_pk: body.source_area_pk, source_area_name: 'Juliana', destination_area_pk: body.destination_area_pk, destination_area_name: 'Naissus', status: 'planned', plan_kind: body.plan_kind, route_tag: 'AC-NEW1', suggested_route_name: 'AC-NEW1 JUL-NAI', usable_ship_capacity: null, expected_round_trip_minutes: null, estimated_required_ships: null, runtime_status: 'not_detected', runtime_freshness: 'historical', goods_verification: 'planned_only', last_runtime_match_at: null, reason: body.reason, evidence: body.evidence, goods: body.goods.map((item: { product_guid: string; amount: number }) => ({ ...item, product_name: 'Timber' })), created_at: new Date().toISOString(), updated_at: new Date().toISOString() } })
+      await route.fulfill({ json: { trade_plan_id: 'plan-new', campaign_id: body.campaign_id, source_area_pk: body.source_area_pk, source_area_name: 'Juliana', destination_area_pk: body.destination_area_pk, destination_area_name: 'Naissus', status: 'planned', plan_kind: body.plan_kind, route_tag: 'AC-NEW1', suggested_route_name: 'AC-NEW1 JUL-NAI', usable_ship_capacity: body.usable_ship_capacity, cargo_slots: body.cargo_slots, cargo_slot_capacity: 50, expected_round_trip_minutes: body.expected_round_trip_minutes, ship_cost: body.ship_cost, total_slots_required: 1, estimated_required_ships: 1, estimated_fleet_cost: body.ship_cost, capacity_basis: 'one_time_single_wave', quantity_unit: 'tons_total', runtime_status: 'not_detected', runtime_freshness: 'historical', goods_verification: 'planned_only', last_runtime_match_at: null, reason: body.reason, evidence: body.evidence, goods: body.goods.map((item: { product_guid: string; amount: number }) => ({ ...item, product_name: 'Timber' })), created_at: new Date().toISOString(), updated_at: new Date().toISOString() } })
       return
     }
     if (url.pathname === '/api/v1/trade/route-links' && route.request().method() === 'POST') {
@@ -80,7 +80,7 @@ test('command center and trade workflow stay actionable', async ({ page }) => {
   await page.getByRole('button', { name: 'Associate plan' }).click()
   await expect.poll(() => linkedRoutes).toBe(1)
   await expect(page.getByText('Route feasibility unknown').first()).toBeVisible()
-  await page.getByRole('button', { name: 'Save plan' }).click()
+  await page.getByRole('button', { name: 'Save one-time plan' }).click()
   await expect.poll(() => acceptedPlans).toBe(1)
 })
 

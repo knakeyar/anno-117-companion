@@ -38,7 +38,7 @@ export function PolicyEditor({ item, onClose }: { item: InventoryItem | null; on
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.inventory }),
         queryClient.invalidateQueries({ queryKey: queryKeys.overview }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.trade }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.tradeRoot }),
         queryClient.invalidateQueries({ queryKey: queryKeys.policies }),
       ])
       onClose()
@@ -79,4 +79,3 @@ export function PolicyEditor({ item, onClose }: { item: InventoryItem | null; on
     </div>
   )
 }
-

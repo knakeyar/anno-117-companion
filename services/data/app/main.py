@@ -74,6 +74,7 @@ from .trade_network import (
     sync_trade_plan_runtime,
 )
 from .stock_planning import city_stock_planning
+from .trade_planning import CARGO_SLOT_CAPACITY_TONS, ship_plan_analysis
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -184,24 +185,42 @@ class TradePlanCreate(BaseModel):
     goods: list[TradePlanGoodWrite] = Field(min_length=1, max_length=113)
     plan_kind: Literal["emergency_transfer", "recurring_supply"] = "emergency_transfer"
     usable_ship_capacity: float | None = Field(default=None, gt=0)
+    cargo_slots: int | None = Field(default=None, ge=1, le=20)
     expected_round_trip_minutes: float | None = Field(default=None, gt=0)
+    ship_cost: float | None = Field(default=None, ge=0)
     reason: str | None = Field(default=None, max_length=1000)
     evidence: dict[str, Any] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def consistent_ship_capacity(self) -> "TradePlanCreate":
+        if (
+            self.cargo_slots is not None
+            and self.usable_ship_capacity is not None
+            and not math.isclose(
+                self.usable_ship_capacity,
+                self.cargo_slots * CARGO_SLOT_CAPACITY_TONS,
+            )
+        ):
+            raise ValueError("usable_ship_capacity must equal cargo_slots × 50t")
+        return self
 
 
 class TradePlanPatch(BaseModel):
     status: Literal["planned", "implemented", "implemented_unverified", "completed", "dismissed"] | None = None
-    plan_kind: Literal["emergency_transfer", "recurring_supply"] | None = None
     usable_ship_capacity: float | None = Field(default=None, gt=0)
+    cargo_slots: int | None = Field(default=None, ge=1, le=20)
     expected_round_trip_minutes: float | None = Field(default=None, gt=0)
+    ship_cost: float | None = Field(default=None, ge=0)
 
     @model_validator(mode="after")
     def includes_a_change(self) -> "TradePlanPatch":
         clearable_assumption = bool(
-            self.model_fields_set & {"usable_ship_capacity", "expected_round_trip_minutes"}
+            self.model_fields_set & {
+                "usable_ship_capacity", "cargo_slots", "expected_round_trip_minutes", "ship_cost"
+            }
         )
         if not self.model_fields_set or (
-            self.status is None and self.plan_kind is None and not clearable_assumption
+            self.status is None and not clearable_assumption
         ):
             raise ValueError("at least one trade-plan field is required")
         return self
@@ -273,8 +292,15 @@ class TradePlanView(BaseModel):
     route_tag: str
     suggested_route_name: str
     usable_ship_capacity: float | None
+    cargo_slots: int | None
+    cargo_slot_capacity: float
     expected_round_trip_minutes: float | None
+    ship_cost: float | None
+    total_slots_required: int | None
     estimated_required_ships: int | None
+    estimated_fleet_cost: float | None
+    capacity_basis: str
+    quantity_unit: Literal["tons_total", "tons_per_minute"]
     runtime_status: str
     runtime_freshness: str
     goods_verification: str
@@ -1068,10 +1094,20 @@ def create_app(
         }
 
     @app.get("/api/v1/trade/opportunities", tags=["management"], response_model=TradeOpportunitiesResponse)
-    def opportunities(database: Database, campaign_id: str | None = None) -> dict:
+    def opportunities(
+        database: Database,
+        campaign_id: str | None = None,
+        plan_kind: Literal["emergency_transfer", "recurring_supply"] = "emergency_transfer",
+        recurring_safety_margin: float = Query(default=0.2, ge=0, le=0.95),
+    ) -> dict:
         inventory = _inventory(database, campaign_id, app_settings)
         effective = resolve_campaign_id(database, campaign_id)
-        routes = suggested_routes(database, inventory)
+        routes = suggested_routes(
+            database,
+            inventory,
+            plan_kind=plan_kind,
+            recurring_safety_margin=recurring_safety_margin,
+        )
         existing_pairs = {
             (item.source_area_pk, item.destination_area_pk)
             for item in database.scalars(
@@ -1082,12 +1118,19 @@ def create_app(
             ).all()
         } if effective else set()
         snapshot = latest_complete_snapshot(database, effective)
+        management_routes = (
+            suggested_routes(
+                database,
+                inventory,
+                deduct_existing_commitments=False,
+            )
+        )
         _sync_management(
             database,
             effective,
             inventory,
             finance_analysis(database, snapshot),
-            routes,
+            management_routes,
             workforce_latest(database, snapshot),
             route_issues_latest(database, snapshot),
         )
@@ -1097,7 +1140,10 @@ def create_app(
             "catalog": inventory["catalog"],
             "items": trade_opportunities(inventory),
             "suggested_routes": [item for item in routes if (item["source_area_pk"], item["destination_area_pk"]) not in existing_pairs][:8],
-            "notice": "Advisory transfer candidates; route feasibility is unknown.",
+            "notice": (
+                "One-time quantities are protected-stock-bounded totals; recurring quantities are sustainable tons/minute. "
+                "Per-trip loads, ship count, and cost stay unknown until cargo slots and round-trip assumptions are supplied."
+            ),
         }
 
     @app.get("/api/v1/trade/routes", tags=["management"], response_model=ActiveTradeRoutesResponse)
@@ -1259,8 +1305,21 @@ def create_app(
         ]
         balance = finance_analysis(database, snapshot)
         routes = suggested_routes(database, inventory)
+        management_routes = suggested_routes(
+            database,
+            inventory,
+            deduct_existing_commitments=False,
+        )
         route_issues = route_issues_latest(database, snapshot)
-        action_rows = _sync_management(database, effective, inventory, balance, routes, workforce_items, route_issues)
+        action_rows = _sync_management(
+            database,
+            effective,
+            inventory,
+            balance,
+            management_routes,
+            workforce_items,
+            route_issues,
+        )
         database.commit()
         return {
             "meta": inventory["meta"],
@@ -1307,7 +1366,9 @@ def create_app(
         workforce_items = workforce_latest(database, snapshot)
         rows = _sync_management(
             database, effective, inventory, finance_analysis(database, snapshot),
-            suggested_routes(database, inventory), workforce_items, route_issues_latest(database, snapshot),
+            suggested_routes(database, inventory, deduct_existing_commitments=False),
+            workforce_items,
+            route_issues_latest(database, snapshot),
         )
         database.commit()
         allowed = rows if include_resolved else [item for item in rows if item.status not in {"resolved", "dismissed", "completed"}]
@@ -1352,12 +1413,64 @@ def create_app(
             raise HTTPException(status_code=404, detail="source or destination area not found in campaign")
         if source.area_pk == destination.area_pk:
             raise HTTPException(status_code=422, detail="source and destination must differ")
+        recommendation_id = write.evidence.get("recommendation_id")
+        if recommendation_id:
+            evidence_kind = write.evidence.get("plan_kind")
+            if evidence_kind != write.plan_kind:
+                raise HTTPException(
+                    status_code=422,
+                    detail="plan type changed without recalculating the recommendation",
+                )
+            safety_margin = write.evidence.get("recurring_safety_margin", 0.2)
+            inventory = _inventory(database, effective, app_settings)
+            current_routes = suggested_routes(
+                database,
+                inventory,
+                plan_kind=write.plan_kind,
+                recurring_safety_margin=float(safety_margin or 0),
+            )
+            current = next(
+                (
+                    route for route in current_routes
+                    if route["suggestion_id"] == recommendation_id
+                    and route["source_area_pk"] == source.area_pk
+                    and route["destination_area_pk"] == destination.area_pk
+                ),
+                None,
+            )
+            current_limits = {
+                item["product_guid"]: item["advisory_amount"]
+                for item in (current or {}).get("goods", [])
+                if item["advisory_amount"] is not None
+            }
+            if current is None or current.get("planning_status") != "ready" or any(
+                item.product_guid not in current_limits
+                or item.amount > current_limits[item.product_guid] + 1e-6
+                for item in write.goods
+            ):
+                raise HTTPException(
+                    status_code=409,
+                    detail="recommendation is stale or exceeds the current protected trade budget; recalculate it",
+                )
+        resolved_cargo_slots = write.cargo_slots
+        if (
+            resolved_cargo_slots is None
+            and write.usable_ship_capacity is not None
+            and math.isclose(write.usable_ship_capacity % CARGO_SLOT_CAPACITY_TONS, 0)
+        ):
+            inferred_slots = round(write.usable_ship_capacity / CARGO_SLOT_CAPACITY_TONS)
+            resolved_cargo_slots = inferred_slots if 1 <= inferred_slots <= 20 else None
         plan = TradePlan(
             trade_plan_id=str(uuid.uuid4()), campaign_id=effective,
             source_area_pk=source.area_pk, destination_area_pk=destination.area_pk,
             plan_kind=write.plan_kind,
-            usable_ship_capacity=write.usable_ship_capacity,
+            usable_ship_capacity=(
+                resolved_cargo_slots * CARGO_SLOT_CAPACITY_TONS
+                if resolved_cargo_slots is not None else write.usable_ship_capacity
+            ),
+            cargo_slots=resolved_cargo_slots,
             expected_round_trip_minutes=write.expected_round_trip_minutes,
+            ship_cost=write.ship_cost,
             reason=write.reason, evidence_json=json.dumps(write.evidence, ensure_ascii=False, sort_keys=True),
         )
         plan.route_tag, plan.suggested_route_name = new_route_identity(
@@ -1382,12 +1495,18 @@ def create_app(
             raise HTTPException(status_code=404, detail="trade plan not found")
         if patch.status is not None:
             plan.status = patch.status
-        if patch.plan_kind is not None:
-            plan.plan_kind = patch.plan_kind
         if "usable_ship_capacity" in patch.model_fields_set:
             plan.usable_ship_capacity = patch.usable_ship_capacity
+        if "cargo_slots" in patch.model_fields_set:
+            plan.cargo_slots = patch.cargo_slots
+            plan.usable_ship_capacity = (
+                patch.cargo_slots * CARGO_SLOT_CAPACITY_TONS
+                if patch.cargo_slots is not None else None
+            )
         if "expected_round_trip_minutes" in patch.model_fields_set:
             plan.expected_round_trip_minutes = patch.expected_round_trip_minutes
+        if "ship_cost" in patch.model_fields_set:
+            plan.ship_cost = patch.ship_cost
         plan.updated_at = utcnow()
         database.commit()
         return _trade_plan_dict(database, plan)
@@ -1662,10 +1781,13 @@ def _trade_plan_dict(database: Session, plan: TradePlan) -> dict:
     goods = database.scalars(
         select(TradePlanItem).where(TradePlanItem.trade_plan_id == plan.trade_plan_id)
     ).all()
-    total_target = sum(item.amount for item in goods)
-    estimated_required_ships = None
-    if plan.usable_ship_capacity and plan.expected_round_trip_minutes:
-        estimated_required_ships = max(1, math.ceil(total_target / plan.usable_ship_capacity))
+    ship_analysis = ship_plan_analysis(
+        [item.amount for item in goods],
+        plan_kind=plan.plan_kind,
+        cargo_slots=plan.cargo_slots,
+        expected_round_trip_minutes=plan.expected_round_trip_minutes,
+        ship_cost=plan.ship_cost,
+    )
     return {
         "trade_plan_id": plan.trade_plan_id,
         "campaign_id": plan.campaign_id,
@@ -1678,8 +1800,15 @@ def _trade_plan_dict(database: Session, plan: TradePlan) -> dict:
         "route_tag": plan.route_tag,
         "suggested_route_name": plan.suggested_route_name,
         "usable_ship_capacity": plan.usable_ship_capacity,
+        "cargo_slots": plan.cargo_slots,
+        "cargo_slot_capacity": CARGO_SLOT_CAPACITY_TONS,
         "expected_round_trip_minutes": plan.expected_round_trip_minutes,
-        "estimated_required_ships": estimated_required_ships,
+        "ship_cost": plan.ship_cost,
+        "total_slots_required": ship_analysis["total_slots_required"],
+        "estimated_required_ships": ship_analysis["estimated_required_ships"],
+        "estimated_fleet_cost": ship_analysis["estimated_fleet_cost"],
+        "capacity_basis": ship_analysis["capacity_basis"],
+        "quantity_unit": "tons_per_minute" if plan.plan_kind == "recurring_supply" else "tons_total",
         "runtime_status": plan.runtime_status,
         "runtime_freshness": plan.runtime_freshness,
         "goods_verification": plan.goods_verification,

@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { App } from '../App'
 import { calculateProductionLayout } from '../components/productionChainLayout'
 import { calculateTradeLayout, selectTradeHub } from '../components/tradeNetworkLayout'
-import { inventory, overview, productionExplorer, stockPlanning, tradeNetwork } from './fixtures'
+import { inventory, overview, productionExplorer, stockPlanning, trade, tradeNetwork } from './fixtures'
 import { installFetchMock, renderApp } from './render'
 
 describe('first-class management dashboard', () => {
@@ -135,14 +135,55 @@ describe('first-class management dashboard', () => {
     expect(screen.getAllByText(/route feasibility unknown/i).length).toBeGreaterThan(0)
     await userEvent.click(screen.getByRole('button', { name: /Explain plan/i }))
     expect(screen.getByText('What saving this plan means')).toBeInTheDocument()
-    expect(screen.getByText(/Capacity loads/i)).toBeInTheDocument()
-    expect(screen.getByText(/planning assumption only/i)).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: /Save plan/i }))
+    expect(screen.getByText(/Total movement/i)).toBeInTheDocument()
+    expect(screen.getByText(/every slot holds at most 50t/i)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: /Save one-time plan/i }))
     await waitFor(() => expect(fetchMock.mock.calls.some(([input, init]) => {
       const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url, 'http://localhost')
       const method = init?.method ?? (input instanceof Request ? input.method : 'GET')
       return url.pathname === '/api/v1/trade-plans' && method === 'POST'
     })).toBe(true))
+  })
+
+  it('recalculates recurring routes as rates and keeps ship sizing unknown without trip time', async () => {
+    const recurringRoute = {
+      ...trade.suggested_routes[0],
+      suggestion_id: 'route:recurring_supply:1:2',
+      plan_kind: 'recurring_supply' as const,
+      quantity_unit: 'tons_per_minute' as const,
+      reason: 'Recurring supply capped by current stable source growth.',
+      evidence: { recommendation_id: 'route:recurring_supply:1:2', plan_kind: 'recurring_supply', recurring_safety_margin: .2 },
+      goods: [{
+        ...trade.suggested_routes[0].goods[0],
+        advisory_amount: 3.2,
+        quantity_unit: 'tons_per_minute' as const,
+        source_velocity_confidence: 'stable',
+        destination_velocity_confidence: 'stable',
+        committed_export_rate_per_minute: 0,
+        committed_import_rate_per_minute: 0,
+        safety_margin_rate_per_minute: .8,
+        projected_source_rate_per_minute: .8,
+        projected_destination_rate_per_minute: -.3,
+        projected_source_stock: null,
+        projected_destination_stock: null,
+      }],
+    }
+    installFetchMock({
+      '/api/v1/trade/opportunities?plan_kind=recurring_supply': { ...trade, suggested_routes: [recurringRoute] },
+    })
+    renderApp(<App />, '/trade')
+    await screen.findByRole('heading', { name: 'Turn shortages into route plans.' })
+    await userEvent.selectOptions(screen.getByLabelText('Recommendation type'), 'recurring_supply')
+    expect(await screen.findByText('3.2 t/min')).toBeInTheDocument()
+    expect(screen.getAllByText('Recurring supply').length).toBeGreaterThan(1)
+    expect(screen.getAllByText(/Ship count unknown/i).length).toBeGreaterThan(0)
+    await userEvent.click(screen.getByRole('button', { name: /Explain plan/i }))
+    expect(screen.getAllByText(/unknown until round-trip time is supplied/i).length).toBeGreaterThan(0)
+    expect(screen.getByText(/\+4 t\/min observed/i)).toBeInTheDocument()
+    await userEvent.type(screen.getByLabelText('Round trip for Juliana to Naissus'), '10')
+    await userEvent.type(screen.getByLabelText('Ship cost for Juliana to Naissus'), '1000')
+    expect(screen.getByText(/32t must move each 10-minute cycle/i)).toBeInTheDocument()
+    expect(screen.getByText(/cost per supported t\/min: 312.5/i)).toBeInTheDocument()
   })
 
   it('opens a mapped trade edge with route, ship, and goods evidence', async () => {
@@ -158,7 +199,7 @@ describe('first-class management dashboard', () => {
     expect(screen.getByText(/ID 8121/)).toBeInTheDocument()
     expect(screen.getByText(/Not exposed by validated telemetry/i)).toBeInTheDocument()
     expect(screen.getByText(/tested ship cargo binding returned invalid weak references/i)).toBeInTheDocument()
-    expect(screen.getByText(/12 target/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/12 t\/min/i).length).toBeGreaterThan(0)
   })
 
   it('calculates a resource-first production chain and places capacity problems on their nodes', async () => {

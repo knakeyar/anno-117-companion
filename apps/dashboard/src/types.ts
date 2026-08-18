@@ -642,22 +642,54 @@ export interface SuggestedRoute {
   source_area_name: string
   destination_area_pk: number
   destination_area_name: string
+  plan_kind: 'emergency_transfer' | 'recurring_supply'
+  quantity_unit: 'tons_total' | 'tons_per_minute'
+  planning_status: 'ready' | 'unsupported'
   goods: Array<{
     product_guid: string
     product_name: string
-    advisory_amount: number
+    advisory_amount: number | null
+    quantity_unit: 'tons_total' | 'tons_per_minute'
+    planning_status: 'ready' | 'unsupported'
+    blocker: string | null
     active_production_input?: boolean
     imminent_stockout?: boolean
     source_available_stock?: number
     source_high_target?: number
-    projected_source_stock?: number
+    source_protected_target?: number
+    source_committed_transfer?: number | null
+    projected_source_stock?: number | null
     destination_available_stock?: number
     destination_low_target?: number
-    projected_destination_stock?: number
+    destination_capacity?: number | null
+    destination_committed_transfer?: number | null
+    projected_destination_stock?: number | null
+    source_net_stock_change_per_minute?: number | null
+    source_velocity_confidence?: string | null
+    committed_export_rate_per_minute?: number | null
+    safety_margin_rate_per_minute?: number | null
+    projected_source_rate_per_minute?: number | null
+    destination_net_stock_change_per_minute?: number | null
+    destination_velocity_confidence?: string | null
+    committed_import_rate_per_minute?: number | null
+    projected_destination_rate_per_minute?: number | null
   }>
   confidence: 'high' | 'medium' | 'low'
   reason: string
   evidence: Record<string, unknown>
+  route_distance: {
+    value: number | null
+    unit: 'relative_map_distance'
+    source: 'manual' | 'telemetry' | 'mixed' | 'unavailable'
+    limitation: string
+  }
+  ship_capacity: {
+    cargo_slot_capacity_tons: 50
+    cargo_slots: null
+    expected_round_trip_minutes: null
+    per_trip_quantities: null
+    required_ships: null
+  }
   route_feasibility: 'unknown'
 }
 
@@ -689,8 +721,15 @@ export interface TradePlan {
   route_tag: string
   suggested_route_name: string
   usable_ship_capacity: number | null
+  cargo_slots: number | null
+  cargo_slot_capacity: number
   expected_round_trip_minutes: number | null
+  ship_cost: number | null
+  total_slots_required: number | null
   estimated_required_ships: number | null
+  estimated_fleet_cost: number | null
+  capacity_basis: string
+  quantity_unit: 'tons_total' | 'tons_per_minute'
   runtime_status: 'not_detected' | 'running' | 'partially_paused' | 'paused' | 'issue' | 'inactive' | 'ambiguous'
   runtime_freshness: 'live' | 'stale' | 'historical'
   goods_verification: 'planned_only' | 'configured_match' | 'configured_mismatch' | 'cargo_partial' | 'unavailable'

@@ -3528,6 +3528,19 @@
             ],
             "title": "Campaign Id"
           },
+          "cargo_slots": {
+            "anyOf": [
+              {
+                "maximum": 20.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cargo Slots"
+          },
           "destination_area_pk": {
             "title": "Destination Area Pk",
             "type": "integer"
@@ -3579,6 +3592,18 @@
             ],
             "title": "Reason"
           },
+          "ship_cost": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ship Cost"
+          },
           "source_area_pk": {
             "title": "Source Area Pk",
             "type": "integer"
@@ -3625,6 +3650,19 @@
       },
       "TradePlanPatch": {
         "properties": {
+          "cargo_slots": {
+            "anyOf": [
+              {
+                "maximum": 20.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cargo Slots"
+          },
           "expected_round_trip_minutes": {
             "anyOf": [
               {
@@ -3637,20 +3675,17 @@
             ],
             "title": "Expected Round Trip Minutes"
           },
-          "plan_kind": {
+          "ship_cost": {
             "anyOf": [
               {
-                "enum": [
-                  "emergency_transfer",
-                  "recurring_supply"
-                ],
-                "type": "string"
+                "minimum": 0.0,
+                "type": "number"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Plan Kind"
+            "title": "Ship Cost"
           },
           "status": {
             "anyOf": [
@@ -3692,6 +3727,25 @@
             "title": "Campaign Id",
             "type": "string"
           },
+          "capacity_basis": {
+            "title": "Capacity Basis",
+            "type": "string"
+          },
+          "cargo_slot_capacity": {
+            "title": "Cargo Slot Capacity",
+            "type": "number"
+          },
+          "cargo_slots": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cargo Slots"
+          },
           "created_at": {
             "title": "Created At",
             "type": "string"
@@ -3703,6 +3757,17 @@
           "destination_area_pk": {
             "title": "Destination Area Pk",
             "type": "integer"
+          },
+          "estimated_fleet_cost": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estimated Fleet Cost"
           },
           "estimated_required_ships": {
             "anyOf": [
@@ -3762,6 +3827,14 @@
             "title": "Plan Kind",
             "type": "string"
           },
+          "quantity_unit": {
+            "enum": [
+              "tons_total",
+              "tons_per_minute"
+            ],
+            "title": "Quantity Unit",
+            "type": "string"
+          },
           "reason": {
             "anyOf": [
               {
@@ -3785,6 +3858,17 @@
             "title": "Runtime Status",
             "type": "string"
           },
+          "ship_cost": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ship Cost"
+          },
           "source_area_name": {
             "title": "Source Area Name",
             "type": "string"
@@ -3800,6 +3884,17 @@
           "suggested_route_name": {
             "title": "Suggested Route Name",
             "type": "string"
+          },
+          "total_slots_required": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Slots Required"
           },
           "trade_plan_id": {
             "title": "Trade Plan Id",
@@ -3833,8 +3928,15 @@
           "route_tag",
           "suggested_route_name",
           "usable_ship_capacity",
+          "cargo_slots",
+          "cargo_slot_capacity",
           "expected_round_trip_minutes",
+          "ship_cost",
+          "total_slots_required",
           "estimated_required_ships",
+          "estimated_fleet_cost",
+          "capacity_basis",
+          "quantity_unit",
           "runtime_status",
           "runtime_freshness",
           "goods_verification",
@@ -5283,6 +5385,32 @@
                 }
               ],
               "title": "Campaign Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "plan_kind",
+            "required": false,
+            "schema": {
+              "default": "emergency_transfer",
+              "enum": [
+                "emergency_transfer",
+                "recurring_supply"
+              ],
+              "title": "Plan Kind",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "recurring_safety_margin",
+            "required": false,
+            "schema": {
+              "default": 0.2,
+              "maximum": 0.95,
+              "minimum": 0,
+              "title": "Recurring Safety Margin",
+              "type": "number"
             }
           }
         ],

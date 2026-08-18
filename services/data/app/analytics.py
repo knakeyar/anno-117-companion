@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 from datetime import UTC, datetime
 import json
+import math
 from statistics import median
 from typing import Any
 import hashlib
@@ -16,6 +17,7 @@ from .models import (
     ActiveTradeRouteCurrent,
     ActiveTradeRouteShipCurrent,
     AreaBuildingCurrent,
+    AreaLocation,
     AreaProductCurrent,
     AreaProductObservation,
     AreaProductPolicy,
@@ -32,6 +34,8 @@ from .models import (
     ProductionRecipeItem,
     SnapshotBatch,
     SnapshotSectionStatus,
+    TradePlan,
+    TradePlanItem,
     TradeRouteIssueObservation,
 )
 
@@ -1224,9 +1228,134 @@ def finance_analysis(session: Session, snapshot: SnapshotBatch | None) -> dict |
     }
 
 
-def suggested_routes(session: Session, inventory: dict) -> list[dict]:
+ACTIVE_PLAN_STATUSES = ("planned", "implemented", "implemented_unverified")
+
+
+def _trade_commitments(session: Session, campaign_id: str | None) -> dict[str, dict[tuple[int, str], float]]:
+    commitments: dict[str, dict[tuple[int, str], float]] = {
+        "emergency_export": defaultdict(float),
+        "emergency_import": defaultdict(float),
+        "recurring_export": defaultdict(float),
+        "recurring_import": defaultdict(float),
+    }
+    if campaign_id is None:
+        return commitments
+    rows = session.execute(
+        select(TradePlan, TradePlanItem)
+        .join(TradePlanItem, TradePlanItem.trade_plan_id == TradePlan.trade_plan_id)
+        .where(
+            TradePlan.campaign_id == campaign_id,
+            TradePlan.status.in_(ACTIVE_PLAN_STATUSES),
+        )
+    ).all()
+    for plan, item in rows:
+        prefix = "recurring" if plan.plan_kind == "recurring_supply" else "emergency"
+        commitments[f"{prefix}_export"][(plan.source_area_pk, item.product_guid)] += item.amount
+        commitments[f"{prefix}_import"][(plan.destination_area_pk, item.product_guid)] += item.amount
+    return commitments
+
+
+def _route_distances(session: Session, campaign_id: str | None) -> dict[tuple[int, int], dict[str, Any]]:
+    if campaign_id is None:
+        return {}
+    areas = session.scalars(select(Area).where(Area.campaign_id == campaign_id)).all()
+    locations = {
+        item.area_pk: item
+        for item in session.scalars(
+            select(AreaLocation).where(AreaLocation.area_pk.in_([area.area_pk for area in areas]))
+        ).all()
+    } if areas else {}
+    positions: dict[int, tuple[str | None, float, float, str]] = {}
+    for area in areas:
+        location = locations.get(area.area_pk)
+        if location is None:
+            continue
+        if location.manual_x is not None and location.manual_y is not None:
+            positions[area.area_pk] = (
+                location.manual_region_guid or area.confirmed_region_guid,
+                location.manual_x,
+                location.manual_y,
+                "manual",
+            )
+        elif location.observed_x is not None and location.observed_y is not None:
+            positions[area.area_pk] = (
+                location.observed_region_guid or area.confirmed_region_guid,
+                location.observed_x,
+                location.observed_y,
+                "telemetry",
+            )
+    distances: dict[tuple[int, int], dict[str, Any]] = {}
+    for source in areas:
+        for destination in areas:
+            if source.area_pk == destination.area_pk:
+                continue
+            source_position = positions.get(source.area_pk)
+            destination_position = positions.get(destination.area_pk)
+            if source_position is None or destination_position is None:
+                continue
+            if source_position[0] != destination_position[0]:
+                continue
+            distances[(source.area_pk, destination.area_pk)] = {
+                "value": round(math.hypot(
+                    destination_position[1] - source_position[1],
+                    destination_position[2] - source_position[2],
+                ), 3),
+                "unit": "relative_map_distance",
+                "source": source_position[3] if source_position[3] == destination_position[3] else "mixed",
+                "limitation": "Relative same-region map distance; it is not travel time and does not include loading, wind, or cross-region transitions.",
+            }
+    return distances
+
+
+def _velocity_blocker(item: dict[str, Any], inventory: dict, role: str) -> str | None:
+    if inventory.get("meta", {}).get("is_stale", True):
+        return f"{role}_telemetry_stale"
+    if item.get("section_status") not in {None, "success"}:
+        return f"{role}_inventory_section_stale"
+    velocity = item.get("velocity")
+    if not velocity:
+        return f"{role}_velocity_insufficient_history"
+    if velocity.get("is_historical", False):
+        return f"{role}_velocity_historical"
+    if velocity.get("confidence") != "stable":
+        return f"{role}_velocity_learning"
+    if velocity.get("net_stock_change_per_minute") is None:
+        return f"{role}_velocity_unavailable"
+    return None
+
+
+def suggested_routes(
+    session: Session,
+    inventory: dict,
+    *,
+    plan_kind: str = "emergency_transfer",
+    recurring_safety_margin: float = 0.2,
+    deduct_existing_commitments: bool = True,
+) -> list[dict]:
+    """Generate explicitly typed one-time or sustainable recurring recommendations.
+
+    One-time plans spend only uncommitted stock above the source protected target.
+    Recurring plans remain rate-first and require stable, current source and
+    destination velocity. Ship loads are deliberately left unknown here because
+    they require user-specific round-trip and cargo-slot assumptions.
+    """
     release_id = inventory["catalog"].get("release_id")
     campaign_id = resolve_campaign_id(session)
+    recurring_safety_margin = min(0.95, max(0.0, recurring_safety_margin))
+    commitments = (
+        _trade_commitments(session, campaign_id)
+        if deduct_existing_commitments
+        else {
+            "emergency_export": defaultdict(float),
+            "emergency_import": defaultdict(float),
+            "recurring_export": defaultdict(float),
+            "recurring_import": defaultdict(float),
+        }
+    )
+    distances = _route_distances(session, campaign_id)
+    inventory_by_key = {
+        (item["area_pk"], item["product_guid"]): item for item in inventory["items"]
+    }
     installed = set()
     if campaign_id:
         installed = {
@@ -1264,6 +1393,7 @@ def suggested_routes(session: Session, inventory: dict) -> list[dict]:
     grouped: dict[tuple[int, int], list[dict]] = defaultdict(list)
     for item in trade_opportunities(inventory):
         destination_key = (item["destination_area_pk"], item["product_guid"])
+        source_key = (item["source_area_pk"], item["product_guid"])
         codes = signal_codes[destination_key]
         active_input = any(
             (item["destination_area_pk"], building_guid) in installed
@@ -1274,23 +1404,152 @@ def suggested_routes(session: Session, inventory: dict) -> list[dict]:
         score += 5 if "low_stock" in codes else 0
         score += 3 if "falling_stock" in codes else 0
         score += 7 if active_input else 0
-        grouped[(item["source_area_pk"], item["destination_area_pk"])].append({
+        common = {
             **item,
             "active_production_input": active_input,
             "imminent_stockout": "estimated_stockout" in codes,
             "priority_score": score,
+            "planning_status": "ready",
+            "blocker": None,
+            "source_protected_target": item["source_high_target"],
+            "destination_capacity": inventory_by_key[destination_key].get("capacity"),
+        }
+        if plan_kind == "emergency_transfer":
+            committed_export = commitments["emergency_export"][source_key]
+            committed_import = commitments["emergency_import"][destination_key]
+            source_surplus = max(
+                0.0,
+                item["source_available_stock"] - item["source_high_target"] - committed_export,
+            )
+            destination_need = max(
+                0.0,
+                item["destination_low_target"] - item["destination_available_stock"] - committed_import,
+            )
+            amount = min(source_surplus, destination_need)
+            if amount <= 0:
+                continue
+            grouped[(item["source_area_pk"], item["destination_area_pk"])].append({
+                **common,
+                "advisory_amount": round(amount, 1),
+                "quantity_unit": "tons_total",
+                "source_committed_transfer": round(committed_export, 3),
+                "destination_committed_transfer": round(committed_import, 3),
+                "projected_source_stock": round(
+                    item["source_available_stock"] - committed_export - amount, 1
+                ),
+                "projected_destination_stock": round(
+                    item["destination_available_stock"] + committed_import + amount, 1
+                ),
+                "source_net_stock_change_per_minute": (
+                    (inventory_by_key[source_key].get("velocity") or {}).get("net_stock_change_per_minute")
+                ),
+                "destination_net_stock_change_per_minute": (
+                    (inventory_by_key[destination_key].get("velocity") or {}).get("net_stock_change_per_minute")
+                ),
+            })
+            continue
+
+        source = inventory_by_key[source_key]
+        destination = inventory_by_key[destination_key]
+        blocker = _velocity_blocker(source, inventory, "source") or _velocity_blocker(
+            destination, inventory, "destination"
+        )
+        source_velocity = source.get("velocity") or {}
+        destination_velocity = destination.get("velocity") or {}
+        source_rate = source_velocity.get("net_stock_change_per_minute")
+        destination_rate = destination_velocity.get("net_stock_change_per_minute")
+        committed_export_rate = commitments["recurring_export"][source_key]
+        committed_import_rate = commitments["recurring_import"][destination_key]
+        safety_margin_rate = (
+            max(0.0, source_rate) * recurring_safety_margin
+            if source_rate is not None else None
+        )
+        proposed_rate: float | None = None
+        if blocker is None and source_rate is not None and source_rate <= 0:
+            blocker = "source_velocity_not_positive"
+        if blocker is None and destination_rate is not None and destination_rate >= 0:
+            blocker = "destination_has_no_supported_deficit_rate"
+        if blocker is None and source_rate is not None and destination_rate is not None and safety_margin_rate is not None:
+            remaining_export_budget = max(
+                0.0, source_rate - committed_export_rate - safety_margin_rate
+            )
+            remaining_destination_need = max(
+                0.0, -destination_rate - committed_import_rate
+            )
+            proposed_rate = min(remaining_export_budget, remaining_destination_need)
+            if proposed_rate <= 0:
+                blocker = (
+                    "source_export_budget_committed"
+                    if remaining_export_budget <= 0
+                    else "destination_deficit_already_committed"
+                )
+                proposed_rate = None
+        grouped[(item["source_area_pk"], item["destination_area_pk"])].append({
+            **common,
+            "planning_status": "ready" if proposed_rate is not None else "unsupported",
+            "blocker": blocker,
+            "advisory_amount": round(proposed_rate, 3) if proposed_rate is not None else None,
+            "quantity_unit": "tons_per_minute",
+            "source_velocity_confidence": source_velocity.get("confidence"),
+            "destination_velocity_confidence": destination_velocity.get("confidence"),
+            "source_net_stock_change_per_minute": source_rate,
+            "destination_net_stock_change_per_minute": destination_rate,
+            "committed_export_rate_per_minute": round(committed_export_rate, 3),
+            "committed_import_rate_per_minute": round(committed_import_rate, 3),
+            "safety_margin_rate_per_minute": round(safety_margin_rate, 3) if safety_margin_rate is not None else None,
+            "projected_source_rate_per_minute": (
+                round(source_rate - committed_export_rate - proposed_rate, 3)
+                if source_rate is not None and proposed_rate is not None else None
+            ),
+            "projected_destination_rate_per_minute": (
+                round(destination_rate + committed_import_rate + proposed_rate, 3)
+                if destination_rate is not None and proposed_rate is not None else None
+            ),
+            "source_committed_transfer": None,
+            "destination_committed_transfer": None,
+            "projected_source_stock": None,
+            "projected_destination_stock": None,
         })
     result = []
     for (source_pk, destination_pk), goods in grouped.items():
-        goods.sort(key=lambda item: (-item["priority_score"], -item["advisory_amount"]))
+        goods.sort(key=lambda item: (
+            item["planning_status"] != "ready",
+            -item["priority_score"],
+            -(item["advisory_amount"] or 0),
+        ))
         urgency = sum(item["priority_score"] + 1 for item in goods)
         reasons = []
         if any(item["active_production_input"] for item in goods): reasons.append("active production inputs")
         if any(item["imminent_stockout"] for item in goods): reasons.append("estimated stockout risk")
         if any(item["destination_priority"] > 0 for item in goods): reasons.append("explicit destination priority")
         reason_suffix = f" Priority includes {', '.join(reasons)}." if reasons else ""
-        suggestion_id = f"route:{source_pk}:{destination_pk}"
+        suggestion_id = f"route:{plan_kind}:{source_pk}:{destination_pk}"
         selected_goods = goods[:8]
+        quantified_count = sum(item["advisory_amount"] is not None for item in selected_goods)
+        route_status = "ready" if quantified_count else "unsupported"
+        if plan_kind == "emergency_transfer":
+            reason = (
+                f"One-time transfer: move the listed total quantities once. Each amount is bounded by "
+                f"uncommitted source stock above its protected target and remaining destination need.{reason_suffix}"
+            )
+        elif route_status == "ready":
+            reason = (
+                f"Recurring supply: {quantified_count} sustainable rate"
+                f"{'s are' if quantified_count != 1 else ' is'} capped by observed source growth, existing "
+                f"commitments, a {round(recurring_safety_margin * 100)}% source-flow reserve, and observed destination decline."
+                f"{reason_suffix}"
+            )
+        else:
+            reason = (
+                "Recurring rate unavailable: current stable source growth and destination deficit evidence "
+                "is required before a quantity can be recommended."
+            )
+        distance = distances.get((source_pk, destination_pk), {
+            "value": None,
+            "unit": "relative_map_distance",
+            "source": "unavailable",
+            "limitation": "Place both cities on the same regional map to compare relative distance. Travel time still requires a user assumption.",
+        })
         result.append({
             "suggestion_id": suggestion_id,
             "action_id": "act_" + hashlib.sha256(suggestion_id.encode()).hexdigest()[:20],
@@ -1298,32 +1557,71 @@ def suggested_routes(session: Session, inventory: dict) -> list[dict]:
             "source_area_name": goods[0]["source_area_name"],
             "destination_area_pk": destination_pk,
             "destination_area_name": goods[0]["destination_area_name"],
+            "plan_kind": plan_kind,
+            "quantity_unit": "tons_total" if plan_kind == "emergency_transfer" else "tons_per_minute",
+            "planning_status": route_status,
             "goods": [
                 {
                     "product_guid": item["product_guid"],
                     "product_name": item["product_name"],
                     "advisory_amount": item["advisory_amount"],
+                    "quantity_unit": item["quantity_unit"],
+                    "planning_status": item["planning_status"],
+                    "blocker": item["blocker"],
                     "active_production_input": item["active_production_input"],
                     "imminent_stockout": item["imminent_stockout"],
                     "source_available_stock": item["source_available_stock"],
                     "source_high_target": item["source_high_target"],
+                    "source_protected_target": item["source_protected_target"],
+                    "source_committed_transfer": item.get("source_committed_transfer"),
                     "projected_source_stock": item["projected_source_stock"],
                     "destination_available_stock": item["destination_available_stock"],
                     "destination_low_target": item["destination_low_target"],
+                    "destination_capacity": item["destination_capacity"],
+                    "destination_committed_transfer": item.get("destination_committed_transfer"),
                     "projected_destination_stock": item["projected_destination_stock"],
+                    "source_net_stock_change_per_minute": item.get("source_net_stock_change_per_minute"),
+                    "source_velocity_confidence": item.get("source_velocity_confidence"),
+                    "committed_export_rate_per_minute": item.get("committed_export_rate_per_minute"),
+                    "safety_margin_rate_per_minute": item.get("safety_margin_rate_per_minute"),
+                    "projected_source_rate_per_minute": item.get("projected_source_rate_per_minute"),
+                    "destination_net_stock_change_per_minute": item.get("destination_net_stock_change_per_minute"),
+                    "destination_velocity_confidence": item.get("destination_velocity_confidence"),
+                    "committed_import_rate_per_minute": item.get("committed_import_rate_per_minute"),
+                    "projected_destination_rate_per_minute": item.get("projected_destination_rate_per_minute"),
                 }
                 for item in selected_goods
             ],
-            "confidence": "high" if urgency >= 8 else "medium",
-            "reason": f"A focused bundle of {len(selected_goods)} good{'s' if len(selected_goods) != 1 else ''} was selected from {len(goods)} observed destination deficit{'s' if len(goods) != 1 else ''}; each amount is bounded by source surplus and destination need.{reason_suffix}",
+            "confidence": "low" if route_status == "unsupported" else "high" if urgency >= 8 else "medium",
+            "reason": reason,
             "evidence": {
+                "recommendation_id": suggestion_id,
+                "plan_kind": plan_kind,
+                "quantity_unit": "tons_total" if plan_kind == "emergency_transfer" else "tons_per_minute",
                 "priority_score": urgency,
                 "candidate_goods_count": len(goods),
                 "planned_goods_count": len(selected_goods),
+                "quantified_goods_count": quantified_count,
+                "recurring_safety_margin": recurring_safety_margin if plan_kind == "recurring_supply" else None,
+                "source_freshness": inventory.get("meta", {}),
+                "route_distance": distance,
+                "unsupported_capabilities": ["configured_route_goods", "ship_cargo", "verified_travel_time"],
+            },
+            "route_distance": distance,
+            "ship_capacity": {
+                "cargo_slot_capacity_tons": 50,
+                "cargo_slots": None,
+                "expected_round_trip_minutes": None,
+                "per_trip_quantities": None,
+                "required_ships": None,
             },
             "route_feasibility": "unknown",
         })
-    return sorted(result, key=lambda item: (-item["evidence"]["priority_score"], -len(item["goods"])))
+    return sorted(result, key=lambda item: (
+        -item["evidence"]["priority_score"],
+        item["route_distance"]["value"] if item["route_distance"]["value"] is not None else math.inf,
+        -len(item["goods"]),
+    ))
 
 
 def deterministic_action_specs(

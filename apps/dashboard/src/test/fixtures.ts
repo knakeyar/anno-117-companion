@@ -47,7 +47,7 @@ export const inventory: InventoryResponse = {
 export const trade: TradeResponse = {
   meta: { ...meta }, catalog,
   items: [{ product_guid: '2174', product_name: 'Timber', source_area_pk: 1, source_area_name: 'Juliana', destination_area_pk: 2, destination_area_name: 'Naissus', advisory_amount: 12, source_available_stock: 92, source_high_target: 80, projected_source_stock: 80, destination_available_stock: 8, destination_low_target: 25, projected_destination_stock: 20, destination_priority: 2, route_feasibility: 'unknown', interpretation: 'transfer_candidate' }],
-  suggested_routes: [{ suggestion_id: 'route:1:2', action_id: 'act-route', source_area_pk: 1, source_area_name: 'Juliana', destination_area_pk: 2, destination_area_name: 'Naissus', goods: [{ product_guid: '2174', product_name: 'Timber', advisory_amount: 12, source_available_stock: 92, source_high_target: 80, projected_source_stock: 80, destination_available_stock: 8, destination_low_target: 25, projected_destination_stock: 20 }], confidence: 'high', reason: 'Observed destination deficit can be supplied from bounded source surplus.', evidence: { priority_score: 2 }, route_feasibility: 'unknown' }],
+  suggested_routes: [{ suggestion_id: 'route:emergency_transfer:1:2', action_id: 'act-route', source_area_pk: 1, source_area_name: 'Juliana', destination_area_pk: 2, destination_area_name: 'Naissus', plan_kind: 'emergency_transfer', quantity_unit: 'tons_total', planning_status: 'ready', goods: [{ product_guid: '2174', product_name: 'Timber', advisory_amount: 12, quantity_unit: 'tons_total', planning_status: 'ready', blocker: null, source_available_stock: 92, source_high_target: 80, source_protected_target: 80, source_committed_transfer: 0, projected_source_stock: 80, destination_available_stock: 8, destination_low_target: 25, destination_capacity: 100, destination_committed_transfer: 0, projected_destination_stock: 20, source_net_stock_change_per_minute: 4, destination_net_stock_change_per_minute: -3.5 }], confidence: 'high', reason: 'One-time transfer bounded by protected source stock.', evidence: { recommendation_id: 'route:emergency_transfer:1:2', plan_kind: 'emergency_transfer', priority_score: 2 }, route_distance: { value: null, unit: 'relative_map_distance', source: 'unavailable', limitation: 'Travel time requires a user assumption.' }, ship_capacity: { cargo_slot_capacity_tons: 50, cargo_slots: null, expected_round_trip_minutes: null, per_trip_quantities: null, required_ships: null }, route_feasibility: 'unknown' }],
   notice: 'Advisory transfer candidates; route feasibility is unknown.',
 }
 
@@ -71,8 +71,8 @@ export const activeTradeRoutes: ActiveTradeRoutesResponse = {
 
 export const tradePlan: TradePlan = {
   trade_plan_id: 'plan-1', campaign_id: 'campaign-1', source_area_pk: 1, source_area_name: 'Juliana', destination_area_pk: 2, destination_area_name: 'Naissus',
-  status: 'implemented', plan_kind: 'recurring_supply', route_tag: 'AC-7K2P', suggested_route_name: 'AC-7K2P Jul-Nai', usable_ship_capacity: null,
-  expected_round_trip_minutes: null, estimated_required_ships: null, runtime_status: 'partially_paused', runtime_freshness: 'live', goods_verification: 'planned_only',
+  status: 'implemented', plan_kind: 'recurring_supply', route_tag: 'AC-7K2P', suggested_route_name: 'AC-7K2P Jul-Nai', usable_ship_capacity: null, cargo_slots: null, cargo_slot_capacity: 50,
+  expected_round_trip_minutes: null, ship_cost: null, total_slots_required: null, estimated_required_ships: null, estimated_fleet_cost: null, capacity_basis: 'unknown', quantity_unit: 'tons_per_minute', runtime_status: 'partially_paused', runtime_freshness: 'live', goods_verification: 'planned_only',
   last_runtime_match_at: meta.observed_at, reason: 'Keep Naissus supplied with Timber.', evidence: { source: 'deterministic_action' },
   goods: [{ product_guid: '2174', product_name: 'Timber', amount: 12 }], created_at: meta.observed_at, updated_at: meta.observed_at,
 }

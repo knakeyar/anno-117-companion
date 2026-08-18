@@ -54,7 +54,7 @@ Materialized state changes only after a complete baseline, delta, or reconciliat
 | Table | Role |
 |---|---|
 | `management_action` | Stable deterministic action identity and active/accepted/snoozed/dismissed/completed/resolved workflow. |
-| `trade_plan` / `trade_plan_item` | Companion-only route intent; no write is made to Anno. |
+| `trade_plan` / `trade_plan_item` | Companion-only route intent; item amounts are total tons for one-time plans or tons/minute for recurring plans. Cargo slots, round-trip time, and ship cost are user assumptions; no write is made to Anno. |
 | `trade_route_link` | Exact-tag, exact unique route-name convention, or user-confirmed evidence connecting an opaque observed Anno route to source/destination cities and, optionally, a companion plan. |
 | `trade_route_good_observation` | Optional future normalized evidence for configured route goods or cargo aboard. Evidence kind is mandatory; planned intent is never written here. |
 | `advisor_conversation` / `advisor_message` | Campaign-scoped local conversation history and validated action references. |

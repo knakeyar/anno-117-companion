@@ -1655,6 +1655,8 @@ export interface components {
         TradePlanCreate: {
             /** Campaign Id */
             campaign_id?: string | null;
+            /** Cargo Slots */
+            cargo_slots?: number | null;
             /** Destination Area Pk */
             destination_area_pk: number;
             /** Evidence */
@@ -1673,6 +1675,8 @@ export interface components {
             plan_kind: "emergency_transfer" | "recurring_supply";
             /** Reason */
             reason?: string | null;
+            /** Ship Cost */
+            ship_cost?: number | null;
             /** Source Area Pk */
             source_area_pk: number;
             /** Usable Ship Capacity */
@@ -1687,10 +1691,12 @@ export interface components {
         };
         /** TradePlanPatch */
         TradePlanPatch: {
+            /** Cargo Slots */
+            cargo_slots?: number | null;
             /** Expected Round Trip Minutes */
             expected_round_trip_minutes?: number | null;
-            /** Plan Kind */
-            plan_kind?: ("emergency_transfer" | "recurring_supply") | null;
+            /** Ship Cost */
+            ship_cost?: number | null;
             /** Status */
             status?: ("planned" | "implemented" | "implemented_unverified" | "completed" | "dismissed") | null;
             /** Usable Ship Capacity */
@@ -1700,12 +1706,20 @@ export interface components {
         TradePlanView: {
             /** Campaign Id */
             campaign_id: string;
+            /** Capacity Basis */
+            capacity_basis: string;
+            /** Cargo Slot Capacity */
+            cargo_slot_capacity: number;
+            /** Cargo Slots */
+            cargo_slots: number | null;
             /** Created At */
             created_at: string;
             /** Destination Area Name */
             destination_area_name: string;
             /** Destination Area Pk */
             destination_area_pk: number;
+            /** Estimated Fleet Cost */
+            estimated_fleet_cost: number | null;
             /** Estimated Required Ships */
             estimated_required_ships: number | null;
             /** Evidence */
@@ -1727,6 +1741,11 @@ export interface components {
              * @enum {string}
              */
             plan_kind: "emergency_transfer" | "recurring_supply";
+            /**
+             * Quantity Unit
+             * @enum {string}
+             */
+            quantity_unit: "tons_total" | "tons_per_minute";
             /** Reason */
             reason: string | null;
             /** Route Tag */
@@ -1735,6 +1754,8 @@ export interface components {
             runtime_freshness: string;
             /** Runtime Status */
             runtime_status: string;
+            /** Ship Cost */
+            ship_cost: number | null;
             /** Source Area Name */
             source_area_name: string;
             /** Source Area Pk */
@@ -1743,6 +1764,8 @@ export interface components {
             status: string;
             /** Suggested Route Name */
             suggested_route_name: string;
+            /** Total Slots Required */
+            total_slots_required: number | null;
             /** Trade Plan Id */
             trade_plan_id: string;
             /** Updated At */
@@ -2688,6 +2711,8 @@ export interface operations {
         parameters: {
             query?: {
                 campaign_id?: string | null;
+                plan_kind?: "emergency_transfer" | "recurring_supply";
+                recurring_safety_margin?: number;
             };
             header?: never;
             path?: never;
