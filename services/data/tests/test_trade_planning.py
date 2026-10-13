@@ -165,6 +165,67 @@ def test_recurring_multiple_goods_are_balanced_independently(session_factory) ->
         assert goods["bread"]["projected_source_rate_per_minute"] == 1
 
 
+def test_automatic_plan_type_uses_both_cities_rates(session_factory) -> None:
+    seed_complete_snapshots(session_factory)
+    with session_factory() as session:
+        routes = suggested_routes(
+            session,
+            _inventory(
+                _item(1, "wood", name="Wood", stock=100, rate=4),
+                _item(2, "wood", name="Wood", stock=0, rate=-5),
+                _item(1, "bread", name="Bread", stock=100, rate=2),
+                _item(2, "bread", name="Bread", stock=0, rate=1),
+            ),
+            plan_kind="auto",
+        )
+
+        by_kind = {route["plan_kind"]: route for route in routes}
+        assert [good["product_guid"] for good in by_kind["recurring_supply"]["goods"]] == ["wood"]
+        assert [good["product_guid"] for good in by_kind["emergency_transfer"]["goods"]] == ["bread"]
+        assert by_kind["recurring_supply"]["evidence"]["selection_basis"] == (
+            "stable_positive_source_and_negative_destination_flow"
+        )
+
+
+def test_recommendations_share_source_flow_across_multiple_destinations(session_factory) -> None:
+    seed_complete_snapshots(session_factory)
+    with session_factory() as session:
+        routes = suggested_routes(
+            session,
+            _inventory(
+                _item(1, "wood", name="Wood", stock=100, rate=4),
+                _item(2, "wood", name="Wood", stock=0, rate=-3),
+                _item(3, "wood", name="Wood", stock=0, rate=-3),
+            ),
+            plan_kind="recurring_supply",
+            recurring_safety_margin=0.2,
+        )
+
+        amounts = [good["advisory_amount"] for route in routes for good in route["goods"]]
+        assert amounts == [3, 0.2]
+        assert sum(amounts) == pytest.approx(3.2)
+        assert {
+            route["goods"][0]["projected_source_rate_per_minute"] for route in routes
+        } == {0.8}
+
+
+def test_one_time_recommendations_share_stock_across_multiple_destinations(session_factory) -> None:
+    seed_complete_snapshots(session_factory)
+    with session_factory() as session:
+        routes = suggested_routes(
+            session,
+            _inventory(
+                _item(1, "wood", name="Wood", stock=100, rate=4),
+                _item(2, "wood", name="Wood", stock=0, rate=-3),
+                _item(3, "wood", name="Wood", stock=0, rate=-3),
+            ),
+        )
+
+        amounts = [good["advisory_amount"] for route in routes for good in route["goods"]]
+        assert amounts == [20]
+        assert sum(amounts) <= 20
+
+
 def test_negative_source_velocity_never_produces_a_recurring_quantity(session_factory) -> None:
     seed_complete_snapshots(session_factory)
     with session_factory() as session:

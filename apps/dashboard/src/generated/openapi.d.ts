@@ -2711,7 +2711,7 @@ export interface operations {
         parameters: {
             query?: {
                 campaign_id?: string | null;
-                plan_kind?: "emergency_transfer" | "recurring_supply";
+                plan_kind?: "auto" | "emergency_transfer" | "recurring_supply";
                 recurring_safety_margin?: number;
             };
             header?: never;

@@ -1101,7 +1101,7 @@ def create_app(
     def opportunities(
         database: Database,
         campaign_id: str | None = None,
-        plan_kind: Literal["emergency_transfer", "recurring_supply"] = "emergency_transfer",
+        plan_kind: Literal["auto", "emergency_transfer", "recurring_supply"] = "auto",
         recurring_safety_margin: float = Query(default=0.2, ge=0, le=0.95),
     ) -> dict:
         inventory = _inventory(database, campaign_id, app_settings)
@@ -1145,8 +1145,10 @@ def create_app(
             "items": trade_opportunities(inventory),
             "suggested_routes": [item for item in routes if (item["source_area_pk"], item["destination_area_pk"]) not in existing_pairs][:8],
             "notice": (
-                "One-time quantities are protected-stock-bounded totals; recurring quantities are sustainable tons/minute. "
-                "Per-trip loads, ship count, and cost stay unknown until cargo slots and round-trip assumptions are supplied."
+                "Automatic recommendations use recurring supply only for stable positive source flow paired with stable "
+                "destination consumption; other stock shortages remain one-time. Source budgets are shared across all "
+                "destinations. Per-trip loads, ship count, and cost stay unknown until cargo slots and round-trip "
+                "assumptions are supplied."
             ),
         }
 

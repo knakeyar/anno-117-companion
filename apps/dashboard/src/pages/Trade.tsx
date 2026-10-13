@@ -7,6 +7,8 @@ import { TradeNetworkExplorer } from '../components/TradeNetworkGraph'
 import type { SuggestedRoute, TradePlan } from '../types'
 import { formatNumber, titleCase } from '../utils'
 
+type RecommendationMode = 'auto' | TradePlan['plan_kind']
+
 interface ShipInputs {
   cargoSlots: number
   roundTripMinutes: string
@@ -54,7 +56,7 @@ function signedRate(value: number | null | undefined) {
 }
 
 export function TradePage() {
-  const [planKind, setPlanKind] = useState<TradePlan['plan_kind']>('emergency_transfer')
+  const [planKind, setPlanKind] = useState<RecommendationMode>('auto')
   const [safetyMarginPercent, setSafetyMarginPercent] = useState(20)
   const trade = useTrade(planKind, safetyMarginPercent / 100)
   const plans = useTradePlans()
@@ -74,13 +76,13 @@ export function TradePage() {
   }))
 
   return <div className="page">
-    <PageHeader eyebrow="Trade planner" title="Turn shortages into route plans." description="Choose a one-time stock movement or a sustainable recurring flow. Every quantity is labeled before you save it." actions={<CatalogBadge catalog={trade.data.catalog} />} />
+    <PageHeader eyebrow="Trade planner" title="Turn shortages into route plans." description="The planner classifies temporary stock gaps as one-time deliveries and stable production/consumption imbalances as recurring supply, while sharing each source budget across every destination." actions={<CatalogBadge catalog={trade.data.catalog} />} />
     <FreshnessBanner meta={trade.data.meta} />
     <TradeNetworkExplorer network={network.data} plans={plans.data.items} onLink={(body) => mutations.linkTradeRoute.mutate(body)} onUnlink={(linkId) => mutations.unlinkTradeRoute.mutate(linkId)} onRelink={(linkId, routeKey) => mutations.relinkTradeRoute.mutate({ linkId, routeKey })} />
     <section className="panel trade-opportunities"><SectionHeader title="Recommended routes" description="Changing the plan type recalculates quantities, labels, rationale, and source/destination evidence." />
       <div className="trade-planning-controls">
-        <label><span>Recommendation type</span><select aria-label="Recommendation type" value={planKind} onChange={(event) => { setPlanKind(event.target.value as TradePlan['plan_kind']); setExplaining(null) }}><option value="emergency_transfer">One-time transfer</option><option value="recurring_supply">Recurring supply</option></select><small>{planKind === 'emergency_transfer' ? 'Total tons moved once from protected stock.' : 'Sustainable tons/minute; never a guessed per-trip setting.'}</small></label>
-        {planKind === 'recurring_supply' && <label><span>Source flow reserve</span><input aria-label="Source flow reserve percent" type="number" min="0" max="95" step="5" value={safetyMarginPercent} onChange={(event) => setSafetyMarginPercent(Math.min(95, Math.max(0, Number(event.target.value) || 0)))} /><small>Percent of observed positive source flow left uncommitted.</small></label>}
+        <label><span>Recommendation type</span><select aria-label="Recommendation type" value={planKind} onChange={(event) => { setPlanKind(event.target.value as RecommendationMode); setExplaining(null) }}><option value="auto">Choose from city rates</option><option value="emergency_transfer">One-time transfer</option><option value="recurring_supply">Recurring supply</option></select><small>{planKind === 'auto' ? 'Recurring for stable opposing flows; otherwise a protected-stock delivery.' : planKind === 'emergency_transfer' ? 'Total tons moved once from protected stock.' : 'Sustainable tons/minute; never a guessed per-trip setting.'}</small></label>
+        {planKind !== 'emergency_transfer' && <label><span>Source flow reserve</span><input aria-label="Source flow reserve percent" type="number" min="0" max="95" step="5" value={safetyMarginPercent} onChange={(event) => setSafetyMarginPercent(Math.min(95, Math.max(0, Number(event.target.value) || 0)))} /><small>Percent of observed positive source flow left uncommitted across all destinations.</small></label>}
       </div>
       {suggestions.length ? <div className="route-suggestion-list">{suggestions.map((route, index) => {
         const inputs = shipInputs[route.suggestion_id] ?? defaultShipInputs
@@ -132,7 +134,7 @@ export function TradePage() {
           </div>
           <div className="route-controls"><button className="button ghost" aria-expanded={isExplaining} onClick={() => setExplaining(isExplaining ? null : route.suggestion_id)}><CircleHelp size={14} /> {isExplaining ? 'Hide details' : 'Explain plan'}</button><button className="button primary" disabled={!plans.data.campaign_id || !canSave || mutations.createTradePlan.isPending} onClick={() => plans.data.campaign_id && mutations.createTradePlan.mutate({ route, campaignId: plans.data.campaign_id, assumptions: { cargoSlots: inputs.cargoSlots, expectedRoundTripMinutes: analysis.roundTrip, shipCost: analysis.shipCost } })}><Check size={14} /> Save {isRecurring ? 'recurring' : 'one-time'} plan</button><button className="button ghost" onClick={() => { mutations.patchAction.mutate({ id: route.action_id, status: 'snoozed' }); setHidden((current) => [...current, route.suggestion_id]) }}><Clock3 size={14} /> Snooze</button><button className="icon-button" aria-label="Dismiss route suggestion" onClick={() => { mutations.patchAction.mutate({ id: route.action_id, status: 'dismissed' }); setHidden((current) => [...current, route.suggestion_id]) }}><X size={14} /></button></div>
         </article>
-      })}</div> : <EmptyState title={planKind === 'recurring_supply' ? 'No sustainable recurring routes yet' : 'No new one-time transfers'} description={planKind === 'recurring_supply' ? 'Recurring rates require current stable positive source flow and a current stable destination deficit. Learning, stale, or already-committed flow is never quantified.' : 'New proposals appear when one city has uncommitted stock above its protected target and another has remaining need.'} />}
+      })}</div> : <EmptyState title={planKind === 'recurring_supply' ? 'No sustainable recurring routes yet' : planKind === 'auto' ? 'No supported deliveries right now' : 'No new one-time transfers'} description={planKind === 'recurring_supply' ? 'Recurring rates require current stable positive source flow and a current stable destination deficit. Learning, stale, or already-committed flow is never quantified.' : planKind === 'auto' ? 'Automatic plans appear when protected stock can address a shortage; stable opposing city rates determine whether that delivery should recur.' : 'New proposals appear when one city has uncommitted stock above its protected target and another has remaining need.'} />}
     </section>
 
     <section className="panel"><SectionHeader title="Saved route checklists" description="These are planning records for changes you make yourself in Anno; saving never changes the game." />

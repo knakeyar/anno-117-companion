@@ -1332,13 +1332,59 @@ def suggested_routes(
     recurring_safety_margin: float = 0.2,
     deduct_existing_commitments: bool = True,
 ) -> list[dict]:
-    """Generate explicitly typed one-time or sustainable recurring recommendations.
+    """Generate one-time, recurring, or automatically classified recommendations.
 
-    One-time plans spend only uncommitted stock above the source protected target.
-    Recurring plans remain rate-first and require stable, current source and
-    destination velocity. Ship loads are deliberately left unknown here because
-    they require user-specific round-trip and cargo-slot assumptions.
+    Automatic classification uses a recurring plan only when both endpoints have
+    current stable evidence: positive source flow and negative destination flow.
+    A stock shortage without that structural flow pairing remains a one-time
+    transfer. Proposed allocations share each source's budget across every
+    destination, because one source route may serve several stops.
     """
+    if plan_kind == "auto":
+        recurring = suggested_routes(
+            session,
+            inventory,
+            plan_kind="recurring_supply",
+            recurring_safety_margin=recurring_safety_margin,
+            deduct_existing_commitments=deduct_existing_commitments,
+        )
+        recurring_keys = {
+            (route["source_area_pk"], route["destination_area_pk"], good["product_guid"])
+            for route in recurring
+            for good in route["goods"]
+            if good["advisory_amount"] is not None
+        }
+        selected_recurring: list[dict] = []
+        for route in recurring:
+            goods = [good for good in route["goods"] if good["advisory_amount"] is not None]
+            if goods:
+                route["goods"] = goods
+                route["reason"] = "Automatically classified as recurring: stable source production exceeds local use while the destination has a stable consumption deficit. " + route["reason"]
+                route["evidence"]["selection_basis"] = "stable_positive_source_and_negative_destination_flow"
+                selected_recurring.append(route)
+        one_time = suggested_routes(
+            session,
+            inventory,
+            plan_kind="emergency_transfer",
+            recurring_safety_margin=recurring_safety_margin,
+            deduct_existing_commitments=deduct_existing_commitments,
+        )
+        selected_one_time: list[dict] = []
+        for route in one_time:
+            route["goods"] = [
+                good for good in route["goods"]
+                if (route["source_area_pk"], route["destination_area_pk"], good["product_guid"])
+                not in recurring_keys
+            ]
+            if route["goods"]:
+                route["reason"] = "Automatically classified as one-time: current stock can cover the shortage, but the two cities do not have enough stable opposing production/consumption evidence for permanent supply. " + route["reason"]
+                route["evidence"]["selection_basis"] = "stock_imbalance_without_supported_recurring_flow"
+                selected_one_time.append(route)
+        return sorted(
+            selected_recurring + selected_one_time,
+            key=lambda route: (-route["evidence"]["priority_score"], route["plan_kind"]),
+        )
+
     release_id = inventory["catalog"].get("release_id")
     campaign_id = resolve_campaign_id(session)
     recurring_safety_margin = min(0.95, max(0.0, recurring_safety_margin))
@@ -1391,6 +1437,11 @@ def suggested_routes(
         signal_codes[(signal["area_pk"], signal["product_guid"])].add(signal["code"])
 
     grouped: dict[tuple[int, int], list[dict]] = defaultdict(list)
+    # Include allocations made earlier in this recommendation pass. Without
+    # these ledgers, two destinations can each be offered the source's entire
+    # surplus or production rate, overcommitting a multi-stop route.
+    proposed_export: dict[tuple[int, str], float] = defaultdict(float)
+    proposed_import: dict[tuple[int, str], float] = defaultdict(float)
     for item in trade_opportunities(inventory):
         destination_key = (item["destination_area_pk"], item["product_guid"])
         source_key = (item["source_area_pk"], item["product_guid"])
@@ -1417,17 +1468,23 @@ def suggested_routes(
         if plan_kind == "emergency_transfer":
             committed_export = commitments["emergency_export"][source_key]
             committed_import = commitments["emergency_import"][destination_key]
+            allocated_export = proposed_export[source_key]
+            allocated_import = proposed_import[destination_key]
             source_surplus = max(
                 0.0,
-                item["source_available_stock"] - item["source_high_target"] - committed_export,
+                item["source_available_stock"] - item["source_high_target"]
+                - committed_export - allocated_export,
             )
             destination_need = max(
                 0.0,
-                item["destination_low_target"] - item["destination_available_stock"] - committed_import,
+                item["destination_low_target"] - item["destination_available_stock"]
+                - committed_import - allocated_import,
             )
             amount = min(source_surplus, destination_need)
             if amount <= 0:
                 continue
+            proposed_export[source_key] += amount
+            proposed_import[destination_key] += amount
             grouped[(item["source_area_pk"], item["destination_area_pk"])].append({
                 **common,
                 "advisory_amount": round(amount, 1),
@@ -1435,10 +1492,10 @@ def suggested_routes(
                 "source_committed_transfer": round(committed_export, 3),
                 "destination_committed_transfer": round(committed_import, 3),
                 "projected_source_stock": round(
-                    item["source_available_stock"] - committed_export - amount, 1
+                    item["source_available_stock"] - committed_export - proposed_export[source_key], 1
                 ),
                 "projected_destination_stock": round(
-                    item["destination_available_stock"] + committed_import + amount, 1
+                    item["destination_available_stock"] + committed_import + proposed_import[destination_key], 1
                 ),
                 "source_net_stock_change_per_minute": (
                     (inventory_by_key[source_key].get("velocity") or {}).get("net_stock_change_per_minute")
@@ -1460,6 +1517,8 @@ def suggested_routes(
         destination_rate = destination_velocity.get("net_stock_change_per_minute")
         committed_export_rate = commitments["recurring_export"][source_key]
         committed_import_rate = commitments["recurring_import"][destination_key]
+        allocated_export_rate = proposed_export[source_key]
+        allocated_import_rate = proposed_import[destination_key]
         safety_margin_rate = (
             max(0.0, source_rate) * recurring_safety_margin
             if source_rate is not None else None
@@ -1471,10 +1530,10 @@ def suggested_routes(
             blocker = "destination_has_no_supported_deficit_rate"
         if blocker is None and source_rate is not None and destination_rate is not None and safety_margin_rate is not None:
             remaining_export_budget = max(
-                0.0, source_rate - committed_export_rate - safety_margin_rate
+                0.0, source_rate - committed_export_rate - allocated_export_rate - safety_margin_rate
             )
             remaining_destination_need = max(
-                0.0, -destination_rate - committed_import_rate
+                0.0, -destination_rate - committed_import_rate - allocated_import_rate
             )
             proposed_rate = min(remaining_export_budget, remaining_destination_need)
             if proposed_rate <= 0:
@@ -1484,6 +1543,9 @@ def suggested_routes(
                     else "destination_deficit_already_committed"
                 )
                 proposed_rate = None
+        if proposed_rate is not None:
+            proposed_export[source_key] += proposed_rate
+            proposed_import[destination_key] += proposed_rate
         grouped[(item["source_area_pk"], item["destination_area_pk"])].append({
             **common,
             "planning_status": "ready" if proposed_rate is not None else "unsupported",
@@ -1498,11 +1560,11 @@ def suggested_routes(
             "committed_import_rate_per_minute": round(committed_import_rate, 3),
             "safety_margin_rate_per_minute": round(safety_margin_rate, 3) if safety_margin_rate is not None else None,
             "projected_source_rate_per_minute": (
-                round(source_rate - committed_export_rate - proposed_rate, 3)
+                round(source_rate - committed_export_rate - proposed_export[source_key], 3)
                 if source_rate is not None and proposed_rate is not None else None
             ),
             "projected_destination_rate_per_minute": (
-                round(destination_rate + committed_import_rate + proposed_rate, 3)
+                round(destination_rate + committed_import_rate + proposed_import[destination_key], 3)
                 if destination_rate is not None and proposed_rate is not None else None
             ),
             "source_committed_transfer": None,
@@ -1510,6 +1572,31 @@ def suggested_routes(
             "projected_source_stock": None,
             "projected_destination_stock": None,
         })
+    # Show every stop the final source balance after all recommended
+    # destinations, not the intermediate balance at the point that stop was
+    # allocated.
+    for goods in grouped.values():
+        for good in goods:
+            source_key = (good["source_area_pk"], good["product_guid"])
+            if good["advisory_amount"] is None:
+                continue
+            if plan_kind == "emergency_transfer":
+                good["projected_source_stock"] = round(
+                    good["source_available_stock"]
+                    - commitments["emergency_export"][source_key]
+                    - proposed_export[source_key],
+                    1,
+                )
+            else:
+                source_rate = good.get("source_net_stock_change_per_minute")
+                if source_rate is not None:
+                    good["projected_source_rate_per_minute"] = round(
+                        source_rate
+                        - commitments["recurring_export"][source_key]
+                        - proposed_export[source_key],
+                        3,
+                    )
+
     result = []
     for (source_pk, destination_pk), goods in grouped.items():
         goods.sort(key=lambda item: (
@@ -1604,6 +1691,7 @@ def suggested_routes(
                 "quantified_goods_count": quantified_count,
                 "recurring_safety_margin": recurring_safety_margin if plan_kind == "recurring_supply" else None,
                 "source_freshness": inventory.get("meta", {}),
+                "source_budget_scope": "shared_across_all_recommended_destinations",
                 "route_distance": distance,
                 "unsupported_capabilities": ["configured_route_goods", "ship_cargo", "verified_travel_time"],
             },

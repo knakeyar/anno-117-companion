@@ -144,7 +144,7 @@ Cities, current inventory, finance, last-observed workforce, actions, conversati
 
 ### Using the trade network
 
-1. Save a recommended route as either a one-time emergency transfer or recurring supply plan.
+1. Use **Choose from city rates** to classify each shortage automatically. A stable positive net flow at the source paired with a stable negative net flow at the destination becomes recurring supply; a stock gap without that evidence remains a one-time transfer. The planner allocates each source's protected stock and sustainable flow once across all proposed destinations, so a route with several stops cannot spend the same source budget repeatedly.
 2. Copy its short generated route name, such as `AC-7K2P Aga-Tit`, into the route name in Anno and assign a ship.
 3. After the next complete telemetry cadence, the exact tag links the observed route to the plan. Running, partially paused, paused, issue, and freshness state remain separate from the plan workflow.
 4. Click a directed graph edge to see every underlying plan, observed route, named ship, warning, and goods-evidence category. One-time quantities are protected-stock-bounded total tons; recurring quantities are sustainable tons/minute after existing companion commitments and a source-flow reserve.

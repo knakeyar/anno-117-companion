@@ -83,7 +83,7 @@ export const api = {
     })),
   overview: () => unwrap<OverviewResponse>(client.GET('/api/v1/dashboard/overview')),
   trade: (
-    planKind: TradePlan['plan_kind'] = 'emergency_transfer',
+    planKind: 'auto' | TradePlan['plan_kind'] = 'auto',
     recurringSafetyMargin = 0.2,
   ) => unwrap<TradeResponse>(client.GET('/api/v1/trade/opportunities', {
     params: { query: { plan_kind: planKind, recurring_safety_margin: recurringSafetyMargin } },
@@ -158,7 +158,7 @@ export const queryKeys = {
   stockPlanning: (areaPk: number) => ['stock-planning', areaPk] as const,
   overview: ['overview'] as const,
   tradeRoot: ['trade'] as const,
-  trade: (planKind: TradePlan['plan_kind'], recurringSafetyMargin: number) =>
+  trade: (planKind: 'auto' | TradePlan['plan_kind'], recurringSafetyMargin: number) =>
     ['trade', planKind, recurringSafetyMargin] as const,
   activeTradeRoutes: ['active-trade-routes'] as const,
   tradeNetwork: ['trade-network'] as const,
@@ -194,7 +194,7 @@ export const useStockPlanning = (areaPk: number) =>
 export const useOverview = () =>
   useQuery({ queryKey: queryKeys.overview, queryFn: api.overview, ...queryOptions })
 export const useTrade = (
-  planKind: TradePlan['plan_kind'] = 'emergency_transfer',
+  planKind: 'auto' | TradePlan['plan_kind'] = 'auto',
   recurringSafetyMargin = 0.2,
 ) => useQuery({
   queryKey: queryKeys.trade(planKind, recurringSafetyMargin),

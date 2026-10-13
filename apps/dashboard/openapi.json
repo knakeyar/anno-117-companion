@@ -5392,8 +5392,9 @@
             "name": "plan_kind",
             "required": false,
             "schema": {
-              "default": "emergency_transfer",
+              "default": "auto",
               "enum": [
+                "auto",
                 "emergency_transfer",
                 "recurring_supply"
               ],
