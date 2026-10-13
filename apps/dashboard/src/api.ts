@@ -41,9 +41,12 @@ export interface ShipPlanAssumptions {
 async function unwrap<T>(pending: Promise<unknown>): Promise<T> {
   const result = await pending as { data?: unknown; error?: unknown; response: Response }
   if (!result.response.ok || result.error !== undefined) {
-    const detail = typeof result.error === 'string'
-      ? result.error
-      : JSON.stringify(result.error ?? result.response.statusText)
+    const error = result.error
+    const detail = typeof error === 'string'
+      ? error
+      : error && typeof error === 'object' && 'detail' in error && typeof error.detail === 'string'
+        ? error.detail
+        : JSON.stringify(error ?? result.response.statusText)
     throw new Error(detail || `${result.response.status} ${result.response.statusText}`)
   }
   return result.data as T

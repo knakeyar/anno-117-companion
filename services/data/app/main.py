@@ -832,7 +832,11 @@ def create_app(
     app.state.broker = broker
 
     @app.get("/healthz", tags=["system"])
-    def healthz() -> dict:
+    def healthz(database: Database) -> dict:
+        # Liveness alone is misleading for this service: every useful route
+        # requires SQLite. Fail readiness if the mounted database disappears
+        # or becomes inaccessible so Compose reports the actual broken tier.
+        database.execute(select(1)).scalar_one()
         return {"status": "ok"}
 
     @app.get("/api/v1/status", tags=["system"])

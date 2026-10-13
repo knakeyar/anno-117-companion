@@ -29,9 +29,10 @@ services:
         source: ${ANNO_LOG_DIR:-./runtime-data/telemetry}
         target: /telemetry
         read_only: true
-      - type: bind
-        source: ${ANNO_DATA_DIR:-./runtime-data/data}
-        target: /data
+      # A named volume is the safe default: it remains writable by UID 10001
+      # and survives repository moves and Docker/WSL restarts. Setting
+      # ANNO_DATA_DIR keeps the existing host-directory behavior.
+      - ${ANNO_DATA_DIR:-anno-companion-data}:/data
     tmpfs:
       - /tmp:size=32m,mode=1777
     expose:
@@ -67,3 +68,6 @@ services:
       timeout: 3s
       start_period: 5s
       retries: 5
+
+volumes:
+  anno-companion-data:

@@ -68,7 +68,7 @@ The companion is deliberately read-only. Saving a route plan, accepting an actio
 - `anno-companion-dashboard` serves the React application on `http://127.0.0.1:8080` and proxies API/SSE traffic over the internal Compose network.
 - `mod/anno-companion-telemetry` is the production game mod. The research probe remains separate and is not required at runtime.
 
-The dashboard never mounts or opens SQLite directly. Mount a directory for `/data`, not an individual database file, because SQLite also maintains WAL and shared-memory files.
+The dashboard never mounts or opens SQLite directly. By default Compose stores SQLite in the `anno-companion-data` named volume, which survives container recreation and repository moves. If `ANNO_DATA_DIR` is set, mount a directory for `/data`, not an individual database file, because SQLite also maintains WAL and shared-memory files.
 
 ## Windows setup
 
@@ -136,7 +136,7 @@ To stop without deleting data:
 docker compose down
 ```
 
-The SQLite database remains in `ANNO_DATA_DIR`. Do not use `docker compose down -v` as a cleanup shortcut when changing to a named-volume configuration later.
+The SQLite database remains in `ANNO_DATA_DIR` (or in the default `anno-companion-data` named volume when that variable is unset). Do not use `docker compose down -v` unless you intend to delete named-volume data.
 
 Campaigns start with an automatically generated “Unassigned” name. Settings can rename the current campaign or move the current play session to another campaign when the game seed/participant evidence belongs to an existing save.
 
@@ -230,7 +230,16 @@ Catalog consistency:
 python3 tools/generate_catalog.py --check
 ```
 
-Compose defaults to ignored local `runtime-data` directories when `.env` is absent, which is useful for Linux development. Because the data image runs as UID 10001, make that local bind directory writable before the first Linux smoke test, for example with `sudo chown -R 10001:10001 runtime-data/data`. Docker Desktop users should configure the absolute Windows paths in `.env`.
+When `.env` is absent, Compose uses the `anno-companion-data` named volume for SQLite and `runtime-data/telemetry` for local log fixtures. A custom `ANNO_DATA_DIR` is a bind mount; on native Linux it must remain at the same path and be writable by image UID 10001 (for example, `sudo chown -R 10001:10001 /your/data/directory`). Docker Desktop users should configure the absolute Windows paths in `.env`.
+
+If the UI reports that the data service is unavailable or Compose reports it as unhealthy, inspect the backend rather than the nginx 502 wrapper:
+
+```bash
+docker compose ps
+docker compose logs --tail=200 anno-companion-data
+```
+
+`unable to open database file` means `ANNO_DATA_DIR` is missing or not writable. Correct the path/permissions and recreate the services with `docker compose up -d`; the default named volume avoids this class of restart failure.
 
 ## License
 
