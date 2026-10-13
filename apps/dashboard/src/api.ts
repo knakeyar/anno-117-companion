@@ -175,7 +175,9 @@ export const queryKeys = {
   historyGroup: (areaPk: number, productGuids: string[]) => ['history-group', areaPk, [...productGuids].sort().join(',')] as const,
 }
 
-const queryOptions = { refetchInterval: 30_000, staleTime: 10_000, retry: 2 }
+// Snapshot events provide the normal live refresh. Keep a slow polling fallback
+// for reconnects without launching a full set of analytics queries every 30s.
+const queryOptions = { refetchInterval: 120_000, staleTime: 10_000, retry: 1 }
 
 export const useStatus = () => useQuery({ queryKey: queryKeys.status, queryFn: api.status, ...queryOptions })
 export const useCampaigns = () => useQuery({ queryKey: queryKeys.campaigns, queryFn: api.campaigns })

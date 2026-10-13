@@ -5,6 +5,7 @@ from pathlib import Path
 
 from sqlalchemy import Engine, create_engine, event
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
+from sqlalchemy.pool import NullPool
 
 from .config import settings
 
@@ -19,6 +20,12 @@ def create_sqlite_engine(database_path: Path | str) -> Engine:
     engine = create_engine(
         f"sqlite:///{path}",
         connect_args={"check_same_thread": False, "timeout": 30},
+        # A request may outlive its browser fetch when an analytics query is
+        # slow.  A bounded QueuePool then turns those still-running SQLite
+        # readers into a service-wide 30 second pool timeout.  SQLite is a
+        # local file database, so short-lived connections are cheap and avoid
+        # an arbitrary connection ceiling while WAL handles concurrent reads.
+        poolclass=NullPool,
         future=True,
     )
 

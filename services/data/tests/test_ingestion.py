@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import threading
 from pathlib import Path
 
 from sqlalchemy import func, select
@@ -85,6 +86,34 @@ def test_tailer_waits_for_complete_lines_and_recovers_from_truncation(
     asyncio.run(tailer.poll_once())
     with session_factory() as session:
         assert session.scalar(select(func.count()).select_from(TelemetryRaw)) == 3
+
+
+def test_tailer_polling_does_not_block_the_event_loop(session_factory, tmp_path: Path) -> None:
+    tailer = TelemetryTailer(
+        telemetry_dir=tmp_path,
+        glob_pattern="*.log",
+        poll_interval=0.01,
+        session_factory=session_factory,
+    )
+    started = threading.Event()
+    release = threading.Event()
+
+    def blocking_poll() -> list[int]:
+        started.set()
+        release.wait(timeout=2)
+        return []
+
+    tailer._poll_once_sync = blocking_poll  # type: ignore[method-assign]
+
+    async def exercise() -> None:
+        task = asyncio.create_task(tailer.poll_once())
+        await asyncio.sleep(0.01)
+        assert started.is_set()
+        assert not task.done()
+        release.set()
+        assert await task == 0
+
+    asyncio.run(exercise())
 
 
 def test_tailer_ignores_archives_then_finishes_renamed_active_log(

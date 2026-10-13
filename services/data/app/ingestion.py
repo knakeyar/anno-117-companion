@@ -156,15 +156,25 @@ class TelemetryTailer:
         self._stopping.set()
 
     async def poll_once(self) -> int:
+        # File replay, JSON normalization, and SQLite writes are synchronous.
+        # Keep them off Uvicorn's event loop so a large telemetry log cannot
+        # delay startup, health checks, or API response handling.
+        completed_ids = await asyncio.to_thread(self._poll_once_sync)
+        if self.on_snapshot is not None:
+            for snapshot_id in completed_ids:
+                await self.on_snapshot(snapshot_id)
+        return len(completed_ids)
+
+    def _poll_once_sync(self) -> list[int]:
         if not self.telemetry_dir.exists():
-            return 0
-        processed = 0
+            return []
+        completed_ids: list[int] = []
         matching_paths = sorted(
             (path for path in self.telemetry_dir.glob(self.glob_pattern) if path.is_file()),
             key=lambda path: (path.stat().st_mtime_ns, str(path)),
         )
         if not matching_paths:
-            return 0
+            return []
         with self.session_factory() as session:
             known_fingerprints = {
                 cursor.source_fingerprint.split(":reset:", 1)[0]
@@ -182,12 +192,8 @@ class TelemetryTailer:
         candidates.add(matching_paths[-1])
         paths = sorted(candidates, key=lambda path: (path.stat().st_mtime_ns, str(path)))
         for path in paths:
-            completed_ids = self._process_file(path)
-            processed += len(completed_ids)
-            if self.on_snapshot is not None:
-                for snapshot_id in completed_ids:
-                    await self.on_snapshot(snapshot_id)
-        return processed
+            completed_ids.extend(self._process_file(path))
+        return completed_ids
 
     def _process_file(self, path: Path) -> list[int]:
         base_fingerprint = _fingerprint(path)
